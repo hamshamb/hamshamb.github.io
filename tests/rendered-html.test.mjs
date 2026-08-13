@@ -13,5 +13,6 @@ test("static export contains portfolio identity and accessible terminal", () => 
 
 test("static export metadata is portfolio-specific", () => {
   assert.match(html, /hamshamb — Software Developer &amp; Toolmaker/);
-  assert.match(html, /creator of PyForge/);
+  assert.match(html, /creator of StudyFilter, AreUHuman, and PyForge/);
+  assert.match(html, /og\.png/);
 });

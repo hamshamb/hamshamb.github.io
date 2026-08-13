@@ -10,7 +10,7 @@
     "build": "vinext build",
     "start": "vinext start",
     "test": "node --test tests/rendered-html.test.mjs",
-    "lint": "eslint . --ignore-pattern dist --ignore-pattern .next",
+    "lint": "eslint . --ignore-pattern dist --ignore-pattern .next --ignore-pattern work --ignore-pattern outputs",
     "db:generate": "drizzle-kit generate"
   },
   "dependencies": {

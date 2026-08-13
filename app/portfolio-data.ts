@@ -8,6 +8,7 @@ export type Project = {
   result: string;
   stack: string[];
   source: string;
+  live?: string;
   featured?: boolean;
 };
 
@@ -29,6 +30,38 @@ export const portfolio = {
   },
   projects: [
     {
+      slug: "studyfilter",
+      name: "StudyFilter",
+      eyebrow: "EDTECH · FULL STACK · LIVE",
+      description: "A focused CBSE learning workspace for Classes 8–12.",
+      problem:
+        "Students move between disconnected tools for explanations, NCERT material, revision, practice, exams, and progress tracking.",
+      built:
+        "A unified React learning workspace with syllabus-aware study assistance, subject hubs, practice and mock exams, an NCERT library, authentication, progress loops, and responsive mobile navigation.",
+      result:
+        "A production learning platform that brings asking, understanding, revision, practice, official resources, and progress into one coherent workflow.",
+      stack: ["TypeScript", "React", "Node.js", "PostgreSQL", "Drizzle", "OpenAI"],
+      source: "https://github.com/hamshamb/StudyFilter",
+      live: "https://studyfilter.online",
+      featured: true,
+    },
+    {
+      slug: "areuhuman",
+      name: "AreUHuman",
+      eyebrow: "TOUCHSCREEN · PWA · LIVE",
+      description: "A production touchscreen skill game for supervised carnival and kiosk use.",
+      problem:
+        "Touchscreen attractions need varied, fair, measurable challenges plus practical tools for operators and real kiosk hardware.",
+      built:
+        "54 playable variants across 44 mechanics, adaptive difficulty, persistent conditions, measured scoring, local leaderboards, operator playtesting, touch diagnostics, procedural audio, and an offline PWA shell.",
+      result:
+        "A fully client-side kiosk game with no account, API, database, analytics, paid service, or core network dependency.",
+      stack: ["TypeScript", "React", "Pointer Events", "Web Audio", "PWA", "Vitest"],
+      source: "https://github.com/hamshamb/AreUHuman",
+      live: "https://areuhuman.netlify.app",
+      featured: true,
+    },
+    {
       slug: "pyforge",
       name: "PyForge",
       eyebrow: "WINDOWS · OPEN SOURCE · 2026",
@@ -43,17 +76,6 @@ export const portfolio = {
       source: "https://github.com/hamshamb/PyForge",
       featured: true,
     },
-    {
-      slug: "areuhuman",
-      name: "AreUHuman",
-      eyebrow: "EXPERIMENT · IN DEVELOPMENT",
-      description: "A new experiment currently taking shape behind the curtain.",
-      problem: "Exploring playful ways to ask a familiar question: what makes an interaction feel human?",
-      built: "Private prototyping and product exploration are underway.",
-      result: "Repository is intentionally private while the first version is being developed.",
-      stack: ["Prototype", "Interaction design", "R&D"],
-      source: "https://github.com/hamshamb",
-    },
   ] satisfies Project[],
   skills: [
     { group: "CORE", items: ["Python", "JavaScript / TypeScript", "Git", "systems thinking"] },
@@ -61,12 +83,13 @@ export const portfolio = {
     { group: "SHIP", items: ["Windows apps", "open source", "packaging", "documentation"] },
   ],
   timeline: [
-    { date: "NOW", title: "Independent developer", detail: "Building focused utilities and unusual, useful software." },
+    { date: "NOW", title: "Released StudyFilter", detail: "Shipped a full-stack CBSE learning workspace for Classes 8–12." },
+    { date: "2026", title: "Released AreUHuman", detail: "Built a production touchscreen skill game with 54 playable variants and offline kiosk support." },
     { date: "2026", title: "Released PyForge", detail: "Designed and shipped an approachable Python-to-EXE desktop workflow." },
   ],
 };
 
 export const commandNames = [
-  "help", "whoami", "about", "projects", "open pyforge", "experience",
+  "help", "whoami", "about", "projects", "open studyfilter", "open areuhuman", "open pyforge", "experience",
   "skills", "contact", "status", "theme green", "theme amber", "fx on", "fx off", "clear",
 ];

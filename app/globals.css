@@ -90,6 +90,7 @@ button { color: inherit; }
 .identity-grid strong { font-size: 11px; font-weight: 400; letter-spacing: .05em; }
 .identity-grid .status-copy { color: var(--phosphor); }
 .hero-actions, .case-footer { display: flex; align-items: center; flex-wrap: wrap; gap: 12px; margin-top: 28px; }
+.case-links { display: flex; flex-wrap: wrap; gap: 10px; }
 .primary-button, .secondary-button { display: inline-flex; align-items: center; justify-content: space-between; min-height: 44px; padding: 0 17px; border: 1px solid var(--phosphor); text-decoration: none; font-size: 10px; letter-spacing: .12em; cursor: pointer; }
 .primary-button { min-width: 190px; background: var(--phosphor); color: var(--black); font-weight: 800; }
 .primary-button:hover, .primary-button:focus-visible { background: var(--phosphor-bright); }
@@ -185,6 +186,8 @@ blockquote { max-width: 720px; margin: 42px 0 0; padding: 20px 24px; border-left
   .project-card .text-button { justify-self: start; min-height: 36px; }
   .case-grid, .skills-grid { grid-template-columns: 1fr; }
   .case-footer { align-items: flex-start; flex-direction: column; }
+  .case-links { width: 100%; }
+  .case-links .primary-button, .case-links .secondary-button { width: auto; }
   .timeline article { grid-template-columns: 70px 1fr; }
   .contact-links a { grid-template-columns: 64px minmax(0, 1fr) 16px; overflow-wrap: anywhere; }
   .terminal-log { max-height: 66px; padding-inline: 10px; }

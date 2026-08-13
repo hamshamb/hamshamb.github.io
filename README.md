@@ -9,7 +9,7 @@ An interactive, terminal-inspired developer portfolio for **hamshamb**. It combi
 - Shareable hash links for every section and project case study
 - Green and amber phosphor profiles with persistent preferences
 - Optional CRT effects and reduced-motion support
-- Real project content sourced from [PyForge](https://github.com/hamshamb/PyForge)
+- Real project content sourced from [StudyFilter](https://github.com/hamshamb/StudyFilter), [AreUHuman](https://github.com/hamshamb/AreUHuman), and [PyForge](https://github.com/hamshamb/PyForge)
 - Static export and GitHub Pages deployment workflow
 
 ## Commands

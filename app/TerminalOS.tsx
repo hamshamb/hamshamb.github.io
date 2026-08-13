@@ -19,7 +19,7 @@ const viewLabels: { id: View; label: string; shortcut: string }[] = [
 function ProjectCard({ project, onOpen }: { project: Project; onOpen: () => void }) {
   return (
     <article className={`project-card${project.featured ? " featured" : ""}`}>
-      <div className="project-index">{project.featured ? "FEATURED_01" : "LAB_02"}</div>
+      <div className="project-index">{project.featured ? "PUBLISHED" : "ARCHIVE"}</div>
       <div>
         <p className="eyebrow">{project.eyebrow}</p>
         <h3>{project.name}</h3>
@@ -128,7 +128,7 @@ export function TerminalOS() {
     else if (["skills", "toolbox", "stack"].includes(command)) { target = "skills"; message = "Toolchain mounted."; }
     else if (["contact", "sudo hire-me"].includes(command)) { target = "contact"; message = command.startsWith("sudo") ? "Permission granted. Opening secure channel." : "Opening contact channel."; }
     else if (["status", "system status"].includes(command)) { message = "ONLINE · open to collaborations · response channel available"; }
-    else if (command === "help") { message = "whoami · about · projects · open <project> · experience · skills · contact · status · theme green|amber · fx on|off · clear"; }
+    else if (command === "help") { message = "whoami · about · projects · open studyfilter|areuhuman|pyforge · experience · skills · contact · status · theme green|amber · fx on|off · clear"; }
     else if (command === "theme green" || command === "theme amber") { const next = command.endsWith("amber") ? "amber" : "green"; setThemeAndSave(next); message = `${next.toUpperCase()} phosphor profile applied.`; }
     else if (command === "fx on" || command === "fx off") { const next = command.endsWith("on"); setFxAndSave(next); message = `CRT effects ${next ? "enabled" : "disabled"}.`; }
     else if (command === "clear") { setLog([]); setInput(""); return; }
@@ -196,7 +196,10 @@ export function TerminalOS() {
         </div>
         <div className="case-footer">
           <div className="tag-row">{project.stack.map((item) => <span key={item}>{item}</span>)}</div>
-          <a className="primary-button" href={project.source} target="_blank" rel="noreferrer">VIEW ON GITHUB ↗</a>
+          <div className="case-links">
+            {project.live && <a className="primary-button" href={project.live} target="_blank" rel="noreferrer">OPEN LIVE APP ↗</a>}
+            <a className="secondary-button" href={project.source} target="_blank" rel="noreferrer">VIEW SOURCE ↗</a>
+          </div>
         </div>
       </section>
     );

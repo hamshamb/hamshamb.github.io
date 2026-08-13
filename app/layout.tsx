@@ -2,20 +2,23 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
+  metadataBase: new URL("https://hamshamb.github.io"),
   title: "hamshamb — Software Developer & Toolmaker",
   description:
-    "The interactive terminal portfolio of hamshamb — software developer, open-source builder, and creator of PyForge.",
+    "The interactive terminal portfolio of hamshamb — creator of StudyFilter, AreUHuman, and PyForge.",
   authors: [{ name: "hamshamb", url: "https://github.com/hamshamb" }],
-  keywords: ["hamshamb", "software developer", "Python", "PyForge", "developer portfolio"],
+  keywords: ["hamshamb", "software developer", "StudyFilter", "AreUHuman", "PyForge", "developer portfolio"],
   openGraph: {
     title: "hamshamb — Software Developer & Toolmaker",
-    description: "An interactive portfolio operating system, built in phosphor green.",
+    description: "Three shipped systems inside an interactive portfolio OS, built in phosphor green.",
     type: "website",
+    images: [{ url: "/og.png", width: 1200, height: 630, alt: "hamshamb portfolio OS featuring StudyFilter, AreUHuman, and PyForge" }],
   },
   twitter: {
-    card: "summary",
+    card: "summary_large_image",
     title: "hamshamb — Software Developer & Toolmaker",
-    description: "An interactive portfolio operating system, built in phosphor green.",
+    description: "Three shipped systems inside an interactive portfolio OS, built in phosphor green.",
+    images: ["/og.png"],
   },
   icons: { icon: "favicon.svg", shortcut: "favicon.svg" },
 };
