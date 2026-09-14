@@ -599,11 +599,6 @@ export function TerminalOS({ initialView = "home" }: { initialView?: View }) {
       <section className="view writing-empty" aria-labelledby="writing-title">
         <p className="eyebrow">LS ~/WRITING</p>
         <h2 id="writing-title" tabIndex={-1}>nothing here yet.</h2>
-        <div className="empty-copy">
-          <p>i deleted the three posts that used to be here because they sounded like chatgpt wrote them.</p>
-          <p>they did.</p>
-          <p>the next one will be about something i actually built.</p>
-        </div>
         <div className="future-list">
           <span>things i might genuinely write</span>
           <ol>{futureWriting.map((title) => <li key={title}>{title}</li>)}</ol>
