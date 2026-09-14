@@ -47,7 +47,7 @@ test("fake essays are gone and writing is intentionally empty", () => {
   assert.doesNotMatch(portfolioData, /OSINT starts with restraint|Why I kept the terminal|Geopolitics is a systems problem/);
   assert.doesNotMatch(portfolioData, /const blog/);
   assert.match(terminalSource, /nothing here yet/);
-  assert.match(terminalSource, /they sounded like chatgpt wrote them/);
+  assert.doesNotMatch(terminalSource, /they sounded like chatgpt wrote them|the next one will be about something i actually built/);
 });
 
 test("stuff and now are real sections", () => {
