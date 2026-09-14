@@ -34,6 +34,8 @@ jobs:
         run: npm run build
         env:
           PAGES_BASE_PATH: ${{ steps.pages.outputs.base_path }}
+      - name: Verify rendered portfolio
+        run: npm test
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v4
         with:
