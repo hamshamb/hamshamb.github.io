@@ -11,41 +11,39 @@ import {
 } from "react";
 import {
   commandNames,
-  latestPost,
+  futureWriting,
   latestProject,
   portfolio,
   releaseLog,
-  type BlogPost,
   type Project,
 } from "./portfolio-data";
 
-type View = "home" | "about" | "projects" | "log" | "blog" | "skills" | "contact";
+type View = "home" | "about" | "projects" | "log" | "stuff" | "writing" | "stack" | "contact" | "now";
 type Theme = "green" | "amber" | "cyan";
 type LogEntry = { command: string; message: string };
 type StaggerStyle = CSSProperties & { "--stagger": string };
 
-const viewLabels: { id: View; label: string; shortcut: string }[] = [
+const viewLabels: { id: Exclude<View, "now">; label: string; shortcut: string }[] = [
   { id: "home", label: "HOME", shortcut: "01" },
-  { id: "about", label: "IDENTITY", shortcut: "02" },
+  { id: "about", label: "ABOUT", shortcut: "02" },
   { id: "projects", label: "PROJECTS", shortcut: "03" },
-  { id: "log", label: "LOGBOOK", shortcut: "04" },
-  { id: "blog", label: "FIELD NOTES", shortcut: "05" },
-  { id: "skills", label: "STACK", shortcut: "06" },
-  { id: "contact", label: "CONTACT", shortcut: "07" },
+  { id: "log", label: "LOG", shortcut: "04" },
+  { id: "stuff", label: "STUFF", shortcut: "05" },
+  { id: "writing", label: "WRITING", shortcut: "06" },
+  { id: "stack", label: "STACK", shortcut: "07" },
+  { id: "contact", label: "CONTACT", shortcut: "08" },
 ];
 
-const themeOrder: Theme[] = ["green", "amber", "cyan"];
-const stagger = (index: number): StaggerStyle => ({ "--stagger": String(index * 65) + "ms" });
+const themes: Theme[] = ["green", "amber", "cyan"];
+const stagger = (index: number): StaggerStyle => ({ "--stagger": String(index * 55) + "ms" });
 
 function ProjectCard({
   project,
   index,
-  isLatest,
   onOpen,
 }: {
   project: Project;
   index: number;
-  isLatest: boolean;
   onOpen: () => void;
 }) {
   return (
@@ -58,25 +56,25 @@ function ProjectCard({
         <div className="project-meta">
           <span className={"phase-pill " + project.phase}>● {project.availability}</span>
           <time dateTime={project.releasedOn}>{project.releaseLabel}</time>
-          {isLatest && <b>LATEST</b>}
         </div>
         <p className="eyebrow">{project.eyebrow}</p>
         <h3>{project.name}</h3>
-        <p>{project.description}</p>
+        <p className="project-hook">{project.intro[0]}</p>
+        <p>{project.intro[1]}</p>
         <div className="tag-row" aria-label="Technologies">
           {project.stack.slice(0, 5).map((item) => <span key={item}>{item}</span>)}
         </div>
       </div>
       <div className="project-card-actions">
-        <button onClick={onOpen} aria-label={"Inspect " + project.name}>
-          <span>INSPECT RECORD</span><b aria-hidden="true">→</b>
+        <button onClick={onOpen} aria-label={"Open " + project.name + " project page"}>
+          <span>MORE</span><b aria-hidden="true">→</b>
         </button>
         <a href={project.source} target="_blank" rel="noopener noreferrer">
-          <span>SOURCE</span><b aria-hidden="true">↗</b>
+          <span>CODE</span><b aria-hidden="true">↗</b>
         </a>
         {project.live && (
           <a className="live-action" href={project.live} target="_blank" rel="noopener noreferrer">
-            <span>LAUNCH</span><b aria-hidden="true">↗</b>
+            <span>TRY IT</span><b aria-hidden="true">↗</b>
           </a>
         )}
       </div>
@@ -84,34 +82,17 @@ function ProjectCard({
   );
 }
 
-function NoteCard({ post, index, onOpen }: { post: BlogPost; index: number; onOpen: () => void }) {
-  return (
-    <article className="note-card" style={stagger(index)}>
-      <div className="note-card-top">
-        <span>{post.category}</span>
-        <time dateTime={post.publishedOn}>{post.dateLabel}</time>
-      </div>
-      <h3>{post.title}</h3>
-      <p>{post.excerpt}</p>
-      <button onClick={onOpen}>READ NOTE <span aria-hidden="true">→</span></button>
-      <small>{post.readTime} READ</small>
-    </article>
-  );
-}
-
-export function TerminalOS() {
-  const [view, setView] = useState<View>("home");
+export function TerminalOS({ initialView = "home" }: { initialView?: View }) {
+  const [view, setView] = useState<View>(initialView);
   const [project, setProject] = useState<Project | null>(null);
-  const [post, setPost] = useState<BlogPost | null>(null);
   const [input, setInput] = useState("");
   const [history, setHistory] = useState<string[]>([]);
   const [historyIndex, setHistoryIndex] = useState(-1);
   const [log, setLog] = useState<LogEntry[]>([
-    { command: "./boot --portfolio", message: "System ready. Type help or use the launcher." },
+    { command: "whoami", message: "hamshamb. student. makes stuff." },
   ]);
   const [theme, setTheme] = useState<Theme>("green");
   const [fx, setFx] = useState(true);
-  const [booting, setBooting] = useState(true);
   const [clock, setClock] = useState("--:--");
   const [copied, setCopied] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -121,36 +102,26 @@ export function TerminalOS() {
   const setRoute = useCallback((
     nextView: View,
     nextProject: Project | null = null,
-    nextPost: BlogPost | null = null,
     shouldFocus = true,
   ) => {
     focusContent.current = shouldFocus;
     setView(nextView);
     setProject(nextProject);
-    setPost(nextPost);
-    let hash = nextView;
-    if (nextProject) hash = "project-" + nextProject.slug;
-    if (nextPost) hash = "note-" + nextPost.slug;
-    window.history.pushState({}, "", "#" + hash);
+
+    if (nextProject) {
+      window.history.pushState({}, "", "/#project-" + nextProject.slug);
+    } else if (nextView === "now") {
+      window.history.pushState({}, "", "/now/");
+    } else {
+      window.history.pushState({}, "", "/#" + nextView);
+    }
   }, []);
 
   useEffect(() => {
-    const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    const visited = window.sessionStorage.getItem("portfolio-booted");
     const savedTheme = window.localStorage.getItem("portfolio-theme");
     const savedFx = window.localStorage.getItem("portfolio-fx");
-
-    if (savedTheme === "green" || savedTheme === "amber" || savedTheme === "cyan") {
-      setTheme(savedTheme);
-    }
+    if (savedTheme === "green" || savedTheme === "amber" || savedTheme === "cyan") setTheme(savedTheme);
     if (savedFx === "off") setFx(false);
-
-    const finishBoot = () => {
-      window.sessionStorage.setItem("portfolio-booted", "true");
-      setBooting(false);
-    };
-    const timer = window.setTimeout(finishBoot, reduceMotion || visited ? 0 : 1450);
-    return () => window.clearTimeout(timer);
   }, []);
 
   useEffect(() => {
@@ -166,40 +137,39 @@ export function TerminalOS() {
   }, []);
 
   useEffect(() => {
-    const readHash = () => {
+    const readLocation = () => {
       focusContent.current = false;
       const hash = window.location.hash.replace("#", "");
+      const path = window.location.pathname.replace(/\/+$/, "");
+
       if (hash.startsWith("project-")) {
         const match = portfolio.projects.find((item) => item.slug === hash.replace("project-", ""));
         if (match) {
           setProject(match);
-          setPost(null);
           setView("projects");
           return;
         }
       }
-      if (hash.startsWith("note-")) {
-        const match = portfolio.blog.find((item) => item.slug === hash.replace("note-", ""));
-        if (match) {
-          setPost(match);
-          setProject(null);
-          setView("blog");
-          return;
-        }
+
+      if (!hash && path === "/now") {
+        setProject(null);
+        setView("now");
+        return;
       }
-      const destination = viewLabels.find((item) => item.id === hash);
+
+      const destination = [...viewLabels.map((item) => item.id), "now"].find((item) => item === hash) as View | undefined;
       if (destination) {
         setProject(null);
-        setPost(null);
-        setView(destination.id);
+        setView(destination);
       }
     };
-    readHash();
-    window.addEventListener("popstate", readHash);
-    window.addEventListener("hashchange", readHash);
+
+    readLocation();
+    window.addEventListener("popstate", readLocation);
+    window.addEventListener("hashchange", readLocation);
     return () => {
-      window.removeEventListener("popstate", readHash);
-      window.removeEventListener("hashchange", readHash);
+      window.removeEventListener("popstate", readLocation);
+      window.removeEventListener("hashchange", readLocation);
     };
   }, []);
 
@@ -213,7 +183,7 @@ export function TerminalOS() {
       focusContent.current = false;
     });
     return () => window.cancelAnimationFrame(frame);
-  }, [view, project, post]);
+  }, [view, project]);
 
   const applyTheme = (next: Theme) => {
     setTheme(next);
@@ -221,7 +191,7 @@ export function TerminalOS() {
   };
 
   const cycleTheme = () => {
-    const next = themeOrder[(themeOrder.indexOf(theme) + 1) % themeOrder.length];
+    const next = themes[(themes.indexOf(theme) + 1) % themes.length];
     applyTheme(next);
   };
 
@@ -236,66 +206,63 @@ export function TerminalOS() {
 
     setHistory((items) => [...items.slice(-24), command]);
     setHistoryIndex(-1);
-    let message = "Command not found. Type help to list commands.";
+
+    let message = "command not found. try help.";
     let nextView: View | null = null;
     let nextProject: Project | null = null;
-    let nextPost: BlogPost | null = null;
 
     if (["whoami", "home"].includes(command)) {
       nextView = "home";
-      message = "Identity record loaded.";
-    } else if (command === "about" || command === "identity") {
+      message = "hamshamb. student. makes stuff.";
+    } else if (command === "about") {
       nextView = "about";
-      message = "Opening /usr/hamshamb/identity.txt";
+      message = "opening about.txt";
     } else if (["projects", "ls", "ls projects"].includes(command)) {
       nextView = "projects";
-      message = String(portfolio.projects.length) + " original public project records found. Forks excluded.";
+      message = String(portfolio.projects.length) + " things found. forks ignored.";
     } else if (["latest", "open latest"].includes(command)) {
       nextView = "projects";
       nextProject = latestProject;
-      message = "Latest build: " + latestProject.name + " · " + latestProject.releaseLabel;
+      message = "opening " + latestProject.name;
     } else if (command.startsWith("open ") || command.startsWith("./projects/")) {
       const slug = command.replace("open ", "").replace("./projects/", "");
       nextProject = portfolio.projects.find((item) => item.slug === slug) ?? null;
       if (nextProject) {
         nextView = "projects";
-        message = "Executing ./projects/" + slug;
+        message = "opening " + nextProject.name;
       } else {
-        message = "No original project named " + slug + ". Try projects.";
+        message = "can't find that. try projects.";
       }
-    } else if (["log", "logbook", "releases"].includes(command)) {
+    } else if (["log", "releases"].includes(command)) {
       nextView = "log";
-      message = "Reading ~/release.log · " + String(releaseLog.length) + " entries";
-    } else if (["blog", "notes", "field notes"].includes(command)) {
-      nextView = "blog";
-      message = "Mounted /notes · " + String(portfolio.blog.length) + " essays";
-    } else if (command.startsWith("read ")) {
-      const slug = command.replace("read ", "");
-      nextPost = portfolio.blog.find((item) => item.slug === slug) ?? null;
-      if (nextPost) {
-        nextView = "blog";
-        message = "Opening /notes/" + slug + ".md";
-      } else {
-        message = "No note named " + slug + ". Try blog.";
-      }
-    } else if (["skills", "stack", "toolbox", "interests"].includes(command)) {
-      nextView = command === "interests" ? "about" : "skills";
-      message = command === "interests" ? "Interest graph loaded." : "Toolchain mounted.";
-    } else if (command === "contact" || command === "sudo collaborate") {
+      message = "reading release.log";
+    } else if (["stuff", "ls ~/stuff", "interests"].includes(command)) {
+      nextView = "stuff";
+      message = "minecraft/ cubing/ maps/ rabbit-holes/ failed-projects/ misc/";
+    } else if (["writing", "blog", "notes"].includes(command)) {
+      nextView = "writing";
+      message = "empty on purpose.";
+    } else if (command === "now" || command === "/now") {
+      nextView = "now";
+      message = "what i'm doing this month.";
+    } else if (["skills", "stack", "toolbox"].includes(command)) {
+      nextView = "stack";
+      message = "opening stack.txt";
+    } else if (command === "contact") {
       nextView = "contact";
-      message = "Opening public collaboration channel.";
-    } else if (command === "status" || command === "system status") {
-      message = "ONLINE · " + String(portfolio.projects.length) + " original builds · " + String(portfolio.blog.length) + " field notes · learning in public";
+      message = "want to build something?";
+    } else if (command === "status") {
+      message = "online · " + String(portfolio.projects.length) + " projects · too many browser tabs";
     } else if (command === "help") {
-      message = "whoami · projects · latest · open <project> · log · blog · read <note> · skills · interests · contact · status · theme green|amber|cyan · fx on|off · clear";
+      message = "whoami · about · projects · latest · open <project> · log · stuff · writing · now · stack · contact · theme · fx · clear";
     } else if (command === "theme green" || command === "theme amber" || command === "theme cyan") {
       const next = command.replace("theme ", "") as Theme;
       applyTheme(next);
-      message = next.toUpperCase() + " phosphor profile applied.";
+      message = next + " selected.";
     } else if (command === "fx on" || command === "fx off") {
       const next = command.endsWith("on");
       applyFx(next);
-      message = "CRT effects " + (next ? "enabled." : "disabled.");
+      message = "effects " + (next ? "on." : "off.");
     } else if (command === "clear") {
       setLog([]);
       setInput("");
@@ -303,7 +270,7 @@ export function TerminalOS() {
     }
 
     setLog((items) => [...items.slice(-4), { command, message }]);
-    if (nextView) setRoute(nextView, nextProject, nextPost, shouldFocus);
+    if (nextView) setRoute(nextView, nextProject, shouldFocus);
     setInput("");
   }, [setRoute]);
 
@@ -340,12 +307,10 @@ export function TerminalOS() {
     const shortcut = (event: globalThis.KeyboardEvent) => {
       const target = event.target as HTMLElement;
       const isTyping = target.tagName === "INPUT" || target.tagName === "TEXTAREA";
-      if (event.key === "Escape" && booting) {
-        setBooting(false);
-      } else if (event.key === "/" && !isTyping) {
+      if (event.key === "/" && !isTyping) {
         event.preventDefault();
         inputRef.current?.focus();
-      } else if (event.altKey && /^[1-7]$/.test(event.key)) {
+      } else if (event.altKey && /^[1-8]$/.test(event.key)) {
         event.preventDefault();
         const destination = viewLabels[Number(event.key) - 1];
         if (destination) setRoute(destination.id);
@@ -356,7 +321,7 @@ export function TerminalOS() {
     };
     window.addEventListener("keydown", shortcut);
     return () => window.removeEventListener("keydown", shortcut);
-  }, [booting, setRoute]);
+  }, [setRoute]);
 
   const copyPageLink = async () => {
     try {
@@ -374,162 +339,232 @@ export function TerminalOS() {
     const next = portfolio.projects[(currentIndex + 1) % portfolio.projects.length];
 
     return (
-      <section className="view detail-view" aria-labelledby="project-title">
-        <button className="back-button" onClick={() => setRoute("projects")}>← BACK TO /PROJECTS</button>
+      <section className="view detail-view human-project" aria-labelledby="project-title">
+        <button className="back-button" onClick={() => setRoute("projects")}>← all projects</button>
+
         <div className="detail-header-grid">
           <div className={"detail-sigil phase-" + item.phase}>{item.sigil}</div>
           <div>
-            <p className="eyebrow">RUNNING ./PROJECTS/{item.slug.toUpperCase()}</p>
+            <p className="eyebrow">{item.eyebrow}</p>
             <h2 id="project-title" tabIndex={-1}>{item.name}</h2>
-            <p className="large-copy">{item.description}</p>
+            <div className="project-intro">
+              {item.intro.map((line) => <p key={line}>{line}</p>)}
+            </div>
           </div>
         </div>
+
+        {item.image && (
+          <figure className="project-shot">
+            <img src={item.image} alt={item.imageAlt ?? ""} loading="lazy" />
+            <figcaption>actual project media, not a stock photo.</figcaption>
+          </figure>
+        )}
+
+        <p className="technical-summary">{item.description}</p>
+
         <div className="case-meta" aria-label="Project details">
-          <div><span>RELEASED</span><time dateTime={item.releasedOn}>{item.releaseLabel}</time></div>
+          <div><span>WHEN</span><time dateTime={item.releasedOn}>{item.releaseLabel}</time></div>
           <div><span>STATUS</span><strong className={"phase-text " + item.phase}>● {item.availability}</strong></div>
-          <div><span>ROLE</span><b>{item.role}</b></div>
+          <div><span>WHAT I DID</span><b>{item.role}</b></div>
         </div>
+
         <div className="metric-grid">
           {item.metrics.map((metric) => <div key={metric.label}><strong>{metric.value}</strong><span>{metric.label}</span></div>)}
         </div>
+
         <div className="case-narrative">
-          <article className="story-wide"><span>01 / WHY</span><h3>The problem behind the build.</h3><p>{item.problem}</p></article>
-          <article><span>02 / SYSTEM</span><h3>What I made.</h3><p>{item.built}</p></article>
-          <article><span>03 / OUTCOME</span><h3>What is true now.</h3><p>{item.result}</p></article>
+          <article className="story-wide"><span>WHY THIS EXISTS</span><h3>the annoying bit.</h3><p>{item.problem}</p></article>
+          <article><span>UNDER THE HOOD</span><h3>what i actually built.</h3><p>{item.built}</p></article>
+          <article><span>WHERE IT IS NOW</span><h3>no fake launch language.</h3><p>{item.result}</p></article>
         </div>
+
         <section className="feature-section" aria-labelledby="features-title">
           <div className="section-heading compact">
-            <div><p className="eyebrow">SYSTEM INVENTORY</p><h3 id="features-title">Inside the build.</h3></div>
-            <span>{String(item.highlights.length).padStart(2, "0")} VERIFIED NOTES</span>
+            <div><p className="eyebrow">DETAILS</p><h3 id="features-title">the technical bits.</h3></div>
+            <span>{String(item.highlights.length).padStart(2, "0")} THINGS</span>
           </div>
           <ul className="feature-grid">
             {item.highlights.map((feature, index) => <li key={feature} style={stagger(index)}><span>{String(index + 1).padStart(2, "0")}</span>{feature}</li>)}
           </ul>
         </section>
-        {item.note && <p className="case-note"><span>LIMIT / CONTEXT</span>{item.note}</p>}
+
+        {item.note && <p className="case-note"><span>HONEST BIT</span>{item.note}</p>}
+
         <div className="detail-footer">
           <div className="tag-row">{item.stack.map((tech) => <span key={tech}>{tech}</span>)}</div>
           <div className="case-links">
-            {item.live && <a className="primary-button" href={item.live} target="_blank" rel="noopener noreferrer">LAUNCH ↗</a>}
-            <a className="secondary-button" href={item.source} target="_blank" rel="noopener noreferrer">SOURCE ↗</a>
+            {item.live && <a className="primary-button" href={item.live} target="_blank" rel="noopener noreferrer">TRY IT ↗</a>}
+            <a className="secondary-button" href={item.source} target="_blank" rel="noopener noreferrer">CODE ↗</a>
             <button className="secondary-button" onClick={copyPageLink}>{copied ? "COPIED ✓" : "COPY LINK"}</button>
           </div>
         </div>
-        <nav className="record-switcher" aria-label="Browse project records">
-          <button onClick={() => setRoute("projects", previous)}><span>← PREVIOUS RECORD</span><strong>{previous.name}</strong></button>
-          <button onClick={() => setRoute("projects", next)}><span>NEXT RECORD →</span><strong>{next.name}</strong></button>
+
+        <nav className="record-switcher" aria-label="Browse project pages">
+          <button onClick={() => setRoute("projects", previous)}><span>← PREVIOUS</span><strong>{previous.name}</strong></button>
+          <button onClick={() => setRoute("projects", next)}><span>NEXT →</span><strong>{next.name}</strong></button>
         </nav>
       </section>
     );
   };
 
-  const renderPost = (item: BlogPost) => (
-    <article className="view article-view" aria-labelledby="article-title">
-      <button className="back-button" onClick={() => setRoute("blog")}>← BACK TO /FIELD-NOTES</button>
-      <header className="article-header">
-        <p className="eyebrow">CAT /NOTES/{item.slug.toUpperCase()}.MD</p>
-        <h2 id="article-title" tabIndex={-1}>{item.title}</h2>
-        <div className="article-meta"><span>{item.category}</span><time dateTime={item.publishedOn}>{item.dateLabel}</time><span>{item.readTime} READ</span></div>
-        <p className="article-thesis">{item.thesis}</p>
-      </header>
-      <div className="article-body">
-        {item.sections.map((section, index) => (
-          <section key={section.heading}>
-            <span>{String(index + 1).padStart(2, "0")}</span>
-            <div><h3>{section.heading}</h3><p>{section.body}</p></div>
-          </section>
-        ))}
+  const renderStuff = () => (
+    <section className="view stuff-view" aria-labelledby="stuff-title">
+      <p className="eyebrow">LS ~/STUFF</p>
+      <div className="section-heading">
+        <div>
+          <h2 id="stuff-title" tabIndex={-1}>stuff.</h2>
+          <p>this page has no professional purpose. it’s just stuff i like.</p>
+        </div>
+        <span>minecraft/ cubing/ maps/ misc/</span>
       </div>
-      <footer className="article-footer">
-        <p>END OF FILE · <button onClick={copyPageLink}>{copied ? "LINK COPIED ✓" : "COPY PERMALINK"}</button></p>
-      </footer>
-    </article>
+
+      <div className="stuff-grid">
+        <article className="stuff-card stuff-wide">
+          <div className="pixel-scene" aria-label="Small Minecraft-inspired diagram">
+            <span className="pixel-sun" /><span className="pixel-cloud one" /><span className="pixel-cloud two" />
+            <span className="pixel-ground" /><span className="pixel-tree" /><span className="pixel-player" />
+          </div>
+          <div>
+            <span className="stuff-path">~/stuff/minecraft</span>
+            <h3>minecraft</h3>
+            <p>been playing this for ages.</p>
+            <p>at some point “playing minecraft” became “installing mods” became “making mods” became “why am i reading networking documentation for minecraft”.</p>
+            <p>Nexus exists because of this.</p>
+            <small>probably not the intended educational outcome of the game.</small>
+          </div>
+        </article>
+
+        <article className="stuff-card">
+          <div className="cube-diagram" aria-label="A colourful three by three cube face">
+            {["g","r","y","b","w","o","r","g","b"].map((colour, index) => <i className={colour} key={colour + index} />)}
+          </div>
+          <span className="stuff-path">~/stuff/cubing</span>
+          <h3>cubing</h3>
+          <p>newer obsession. currently doing 3x3.</p>
+          <p>i don’t have a smart cube, which immediately made me wonder if i could analyse solves without one.</p>
+          <small>apparently i cannot have normal hobbies.</small>
+        </article>
+
+        <article className="stuff-card">
+          <div className="map-diagram" aria-label="Abstract map and route diagram">
+            <svg viewBox="0 0 420 180" role="img">
+              <path d="M12 128 C58 76 96 146 138 92 S224 38 268 94 350 144 408 57" />
+              <path d="M28 42 C92 76 96 20 166 58 S264 146 388 118" />
+              <circle cx="138" cy="92" r="7" /><circle cx="268" cy="94" r="7" />
+              <line x1="138" y1="92" x2="268" y2="94" />
+            </svg>
+          </div>
+          <span className="stuff-path">~/stuff/maps</span>
+          <h3>maps</h3>
+          <p>i open maps a lot.</p>
+          <p>sometimes for osint. sometimes for geopolitics. sometimes literally just to look at places.</p>
+          <small>i have no better explanation.</small>
+        </article>
+
+        <article className="stuff-card browser-card">
+          <div className="fake-browser" aria-label="Joke browser with many open tabs">
+            <div>{Array.from({ length: 14 }, (_, index) => <i key={index}>{index === 13 ? "+" : "×"}</i>)}</div>
+            <p>undersea cables - Search</p>
+          </div>
+          <span className="stuff-path">~/stuff/rabbit-holes/browser</span>
+          <h3>my browser</h3>
+          <p>a completely healthy number of tabs.</p>
+          <small>current count: i stopped counting.</small>
+        </article>
+
+        <article className="stuff-card abandoned-card">
+          <div className="failed-window" aria-label="A fake crashed project window">
+            <div><i /><i /><i /></div>
+            <code>ERROR: good idea not found</code>
+          </div>
+          <span className="stuff-path">~/stuff/failed-projects</span>
+          <h3>abandoned things</h3>
+          <p>this folder should probably be larger than my projects section.</p>
+          <small>no. i will not be explaining this one.</small>
+        </article>
+
+        <article className="stuff-card now-card">
+          <span className="stuff-path">~/now</span>
+          <h3>right now</h3>
+          <ul>
+            <li>getting faster at 3x3</li>
+            <li>minecraft networking</li>
+            <li>osint and security</li>
+            <li>geopolitics</li>
+            <li>making this website stop sounding like chatgpt</li>
+          </ul>
+          <button onClick={() => setRoute("now")}>open /now →</button>
+          <small>last updated: whenever i remembered</small>
+        </article>
+      </div>
+
+      <p className="real-media-note">no stock photos pretending to be mine. i’ll add my own cube photos and screenshots here when i have the right ones.</p>
+    </section>
   );
 
   const renderView = () => {
     if (project) return renderProject(project);
-    if (post) return renderPost(post);
 
     if (view === "home") return (
-      <section className="view hero" aria-labelledby="hero-title">
-        <div className="hero-grid">
-          <div className="hero-copy">
-            <p className="eyebrow">SYS://IDENTITY · PUBLIC BUILD</p>
-            <p className="prompt-line"><span>guest@hamshamb</span>:~$ whoami --verbose</p>
-            <h1 id="hero-title" tabIndex={-1}>I follow signals.<br /><em>I build systems.</em><span className="cursor" aria-hidden="true">_</span></h1>
-            <p className="role">{portfolio.owner.role}</p>
-            <p className="manifesto">{portfolio.owner.statement}</p>
-            <div className="hero-actions">
-              <button className="primary-button" onClick={() => setRoute("projects")}>EXPLORE ORIGINAL WORK <span>→</span></button>
-              <button className="secondary-button" onClick={() => setRoute("blog")}>READ FIELD NOTES</button>
-            </div>
-          </div>
-          <aside className="system-dossier" aria-label="Identity summary">
-            <div className="dossier-head"><span>IDENTITY.DAT</span><b>VERIFIED</b></div>
+      <section className="view hero simple-home" aria-labelledby="hero-title">
+        <p className="prompt-line"><span>guest@hamshamb</span>:~$ whoami</p>
+        <h1 id="hero-title" tabIndex={-1}>hamshamb<span className="cursor" aria-hidden="true">_</span></h1>
+        <p className="plain-role">{portfolio.owner.role}</p>
+        <p className="plain-subtitle">{portfolio.owner.statement}</p>
+
+        <div className="home-links" aria-label="Quick links">
+          <button onClick={() => setRoute("projects")}>projects</button>
+          <button onClick={() => setRoute("about")}>about</button>
+          <button onClick={() => setRoute("stuff")}>stuff</button>
+          <button onClick={() => setRoute("writing")}>writing</button>
+          <a href={portfolio.owner.github} target="_blank" rel="noopener noreferrer">github ↗</a>
+        </div>
+
+        <div className="current-grid">
+          <section>
+            <span>currently</span>
             <dl>
-              <div><dt>HANDLE</dt><dd>{portfolio.owner.handle}</dd></div>
-              <div><dt>BASED</dt><dd>{portfolio.owner.location}</dd></div>
-              <div><dt>MODE</dt><dd>{portfolio.owner.status}</dd></div>
-              <div><dt>FOCUS</dt><dd>OSINT / OSS / GEOPOLITICS</dd></div>
+              <div><dt>working on</dt><dd>→ Nexus</dd></div>
+              <div><dt>learning</dt><dd>→ security / osint</dd></div>
+              <div><dt>wasting time on</dt><dd>→ 3x3</dd></div>
             </dl>
-            <div className="signal-map" aria-hidden="true">
-              <i /><i /><i /><i /><span />
-            </div>
-          </aside>
-        </div>
+            <button className="text-link" onClick={() => setRoute("now")}>more at /now →</button>
+          </section>
 
-        <div className="stat-strip" aria-label="Portfolio facts">
-          <div><strong>{String(portfolio.projects.length).padStart(2, "0")}</strong><span>ORIGINAL PUBLIC BUILDS</span></div>
-          <div><strong>07</strong><span>PROGRAMMING LANGUAGES</span></div>
-          <div><strong>{String(portfolio.blog.length).padStart(2, "0")}</strong><span>FIELD NOTES</span></div>
-          <div><strong>00</strong><span>FORKS IN PORTFOLIO</span></div>
-        </div>
-
-        <div className="home-feeds">
-          <button className="feed-panel" onClick={() => setRoute("projects", latestProject)}>
-            <span><i /> LATEST BUILD</span><strong>{latestProject.name}</strong><small>{latestProject.description}</small><b>INSPECT →</b>
-          </button>
-          <button className="feed-panel note-feed" onClick={() => setRoute("blog", null, latestPost)}>
-            <span>NEWEST NOTE</span><strong>{latestPost.title}</strong><small>{latestPost.excerpt}</small><b>READ →</b>
+          <button className="latest-human" onClick={() => setRoute("projects", latestProject)}>
+            <span>latest thing i made</span>
+            <strong>{latestProject.name}</strong>
+            <p>{latestProject.intro[0]}</p>
+            <small>it’s not finished.</small>
+            <b>look at it →</b>
           </button>
         </div>
       </section>
     );
 
     if (view === "about") return (
-      <section className="view" aria-labelledby="about-title">
-        <p className="eyebrow">/USR/HAMSHAMB/IDENTITY.TXT</p>
-        <div className="section-heading">
-          <div><h2 id="about-title" tabIndex={-1}>Curiosity is the<br />operating system.</h2><p>A student developer building, investigating, and learning in public.</p></div>
-          <span>PROFILE / 2026</span>
-        </div>
-        <div className="about-layout">
-          <div className="prose-block">{portfolio.owner.bio.map((line) => <p key={line}>{line}</p>)}</div>
-          <aside className="about-index"><span>CURRENT INDEX</span>{portfolio.owner.interests.map((item) => <p key={item.code}><b>{item.code}</b>{item.title}</p>)}</aside>
-        </div>
-        <div className="interest-grid">
-          {portfolio.owner.interests.map((item, index) => (
-            <article key={item.title} style={stagger(index)}><span>{item.code}</span><h3>{item.title}</h3><p>{item.detail}</p></article>
-          ))}
-        </div>
-        <div className="principle-grid">
-          {portfolio.owner.principles.map((item, index) => (
-            <article key={item.title} style={stagger(index)}><span>RULE {String(index + 1).padStart(2, "0")}</span><h3>{item.title}</h3><p>{item.detail}</p></article>
-          ))}
+      <section className="view plain-about" aria-labelledby="about-title">
+        <p className="eyebrow">CAT ABOUT.TXT</p>
+        <h2 id="about-title" tabIndex={-1}>about.txt</h2>
+        <div className="about-copy">
+          {portfolio.owner.bio.map((line, index) => index === 0
+            ? <p className="about-hello" key={line}>{line}</p>
+            : <p key={line}>{line}</p>
+          )}
         </div>
       </section>
     );
 
     if (view === "projects") return (
       <section className="view" aria-labelledby="projects-title">
-        <p className="eyebrow">FIND ~/PROJECTS -ORIGINAL -PUBLIC -NOT -FORK</p>
+        <p className="eyebrow">LS ~/PROJECTS</p>
         <div className="section-heading">
-          <div><h2 id="projects-title" tabIndex={-1}>Original work.<br />No borrowed signal.</h2><p>Every card below is a public repository created by me. Forks are intentionally filtered out.</p></div>
-          <span>{String(portfolio.projects.length).padStart(2, "0")} RECORDS / 00 FORKS</span>
+          <div><h2 id="projects-title" tabIndex={-1}>things i made.</h2><p>the simple version first. the technical rabbit hole is inside each one.</p></div>
+          <span>{String(portfolio.projects.length).padStart(2, "0")} MINE · 00 FORKS</span>
         </div>
         <div className="project-list">
           {portfolio.projects.map((item, index) => (
-            <ProjectCard key={item.slug} project={item} index={index} isLatest={item.slug === latestProject.slug} onOpen={() => setRoute("projects", item)} />
+            <ProjectCard key={item.slug} project={item} index={index} onOpen={() => setRoute("projects", item)} />
           ))}
         </div>
       </section>
@@ -537,20 +572,20 @@ export function TerminalOS() {
 
     if (view === "log") return (
       <section className="view" aria-labelledby="log-title">
-        <p className="eyebrow">TAIL -N {releaseLog.length} ~/RELEASE.LOG</p>
+        <p className="eyebrow">TAIL ~/RELEASE.LOG</p>
         <div className="section-heading">
-          <div><h2 id="log-title" tabIndex={-1}>Build log.</h2><p>Finished products, public experiments, and their exact status—newest first.</p></div>
-          <span>CHRONOLOGICAL TRACE</span>
+          <div><h2 id="log-title" tabIndex={-1}>build log.</h2><p>newest first. unfinished things are allowed to look unfinished.</p></div>
+          <span>{releaseLog.length} ENTRIES</span>
         </div>
         <div className="timeline">
           {releaseLog.map((item, index) => (
             <article key={item.slug} style={stagger(index)}>
               <div className="timeline-date"><i /><time dateTime={item.releasedOn}>{item.releaseLabel}</time><span>{item.phase.toUpperCase()}</span></div>
               <button className="timeline-entry" onClick={() => setRoute("projects", item)}>
-                <code>$ release inspect {item.slug}</code>
+                <code>$ open {item.slug}</code>
                 <h3>{item.name}</h3>
                 <p>{item.releaseNote}</p>
-                <b>OPEN RECORD →</b>
+                <b>OPEN →</b>
               </button>
             </article>
           ))}
@@ -558,29 +593,30 @@ export function TerminalOS() {
       </section>
     );
 
-    if (view === "blog") return (
-      <section className="view" aria-labelledby="blog-title">
-        <p className="eyebrow">LS /NOTES --SORT=NEWEST</p>
-        <div className="section-heading">
-          <div><h2 id="blog-title" tabIndex={-1}>Field notes.</h2><p>Short essays from the intersection of code, open information, and the systems shaping the world.</p></div>
-          <span>{String(portfolio.blog.length).padStart(2, "0")} FILES / MARKDOWN</span>
+    if (view === "stuff") return renderStuff();
+
+    if (view === "writing") return (
+      <section className="view writing-empty" aria-labelledby="writing-title">
+        <p className="eyebrow">LS ~/WRITING</p>
+        <h2 id="writing-title" tabIndex={-1}>nothing here yet.</h2>
+        <div className="empty-copy">
+          <p>i deleted the three posts that used to be here because they sounded like chatgpt wrote them.</p>
+          <p>they did.</p>
+          <p>the next one will be about something i actually built.</p>
         </div>
-        <div className="blog-feature">
-          <span>NEWEST ENTRY</span><h3>{latestPost.title}</h3><p>{latestPost.thesis}</p>
-          <button onClick={() => setRoute("blog", null, latestPost)}>READ LATEST NOTE →</button>
-        </div>
-        <div className="notes-grid">
-          {portfolio.blog.map((item, index) => <NoteCard key={item.slug} post={item} index={index} onOpen={() => setRoute("blog", null, item)} />)}
+        <div className="future-list">
+          <span>things i might genuinely write</span>
+          <ol>{futureWriting.map((title) => <li key={title}>{title}</li>)}</ol>
         </div>
       </section>
     );
 
-    if (view === "skills") return (
-      <section className="view" aria-labelledby="skills-title">
-        <p className="eyebrow">MOUNT /DEV/STACK --ALL</p>
+    if (view === "stack") return (
+      <section className="view" aria-labelledby="stack-title">
+        <p className="eyebrow">CAT STACK.TXT</p>
         <div className="section-heading">
-          <div><h2 id="skills-title" tabIndex={-1}>Tools are evidence<br />only when used.</h2><p>This is my current working set—not a claim of knowing everything inside each language.</p></div>
-          <span>BUILD / WEB / RESEARCH</span>
+          <div><h2 id="stack-title" tabIndex={-1}>stuff i use.</h2><p>not claiming mastery. these have appeared in things i’ve actually tried to make.</p></div>
+          <span>TOOLS, NOT PERSONALITY</span>
         </div>
         <div className="skills-grid">
           {portfolio.skills.map((set, index) => (
@@ -590,24 +626,36 @@ export function TerminalOS() {
             </article>
           ))}
         </div>
-        <div className="stack-statement"><span>DEFAULT MODE</span><p>Understand the system. Verify the claim. Choose the smallest reliable architecture. Document the limit. Ship the useful version.</p></div>
+      </section>
+    );
+
+    if (view === "now") return (
+      <section className="view now-view" aria-labelledby="now-title">
+        <p className="eyebrow">CAT /NOW/INDEX.TXT</p>
+        <h2 id="now-title" tabIndex={-1}>now</h2>
+        <p className="now-month">{portfolio.owner.now.month}</p>
+        <ul>
+          {portfolio.owner.now.items.map((item) => <li key={item}>{item}</li>)}
+        </ul>
+        <p className="tab-count">current unnecessary browser tab count: <b>i stopped counting</b></p>
+        <p className="now-updated">last updated: 14 sep 2026</p>
+        <button className="secondary-button" onClick={() => setRoute("stuff")}>← BACK TO STUFF</button>
       </section>
     );
 
     return (
-      <section className="view contact-view" aria-labelledby="contact-title">
-        <p className="eyebrow">./CONTACT --PUBLIC-CHANNEL</p>
-        <h2 id="contact-title" tabIndex={-1}>Bring an interesting<br />problem.</h2>
-        <p className="large-copy">Open source, OSINT, developer tools, learning systems, unusual interfaces, or a question that crosses boundaries—I am always interested in thoughtful collaboration.</p>
+      <section className="view contact-view human-contact" aria-labelledby="contact-title">
+        <p className="eyebrow">CAT CONTACT.TXT</p>
+        <h2 id="contact-title" tabIndex={-1}>want to build<br />something?</h2>
+        <p className="large-copy">send me weird stuff. project ideas, questions about something i made, open-source work, or a rabbit hole worth falling into.</p>
         <div className="contact-grid">
           <a className="contact-card" href={"mailto:" + portfolio.owner.email}>
-            <span>EMAIL</span><strong>{portfolio.owner.email}</strong><p>For thoughtful collaboration, project questions, and ideas worth exploring.</p><b>WRITE A MESSAGE ↗</b>
+            <span>EMAIL</span><strong>{portfolio.owner.email}</strong><p>probably the easiest way to reach me.</p><b>SEND MAIL ↗</b>
           </a>
           <a className="contact-card" href={portfolio.owner.github} target="_blank" rel="noopener noreferrer">
-            <span>GITHUB</span><strong>github.com/hamshamb</strong><p>Explore the repositories, open a relevant issue, or start from the work itself.</p><b>OPEN GITHUB ↗</b>
+            <span>GITHUB</span><strong>github.com/hamshamb</strong><p>the code, issues, and unfinished things.</p><b>OPEN ↗</b>
           </a>
         </div>
-        <p className="privacy-note"><span>CONTACT</span>This portfolio uses a dedicated developer email address.</p>
       </section>
     );
   };
@@ -617,39 +665,22 @@ export function TerminalOS() {
       <a className="skip-link" href="#main-content">Skip to portfolio content</a>
       <div className="crt-overlay" aria-hidden="true" />
 
-      {booting && (
-        <div className="boot-overlay" role="dialog" aria-label="Portfolio operating system booting">
-          <div className="boot-core">
-            <div className="boot-mark">H<span>/</span>OS</div>
-            <div className="boot-copy">
-              <p>PORTFOLIO/OS v3.0</p>
-              <p>VERIFYING IDENTITY ........ OK</p>
-              <p>FILTERING FORKS ........... 00 LOADED</p>
-              <p>INDEXING ORIGINAL WORK .... {String(portfolio.projects.length).padStart(2, "0")} FOUND</p>
-              <p>MOUNTING FIELD NOTES ...... {String(portfolio.blog.length).padStart(2, "0")} FOUND</p>
-              <p>CALIBRATING PHOSPHOR ...... OK</p>
-            </div>
-            <button onClick={() => setBooting(false)}>SKIP BOOT [ESC]</button>
-          </div>
-        </div>
-      )}
-
       <header className="system-bar">
-        <div className="system-brand"><span className="brand-block">H/</span><b>PORTFOLIO/OS</b><span>v3.0.0</span></div>
+        <div className="system-brand"><span className="brand-block">H/</span><b>hamshamb.exe</b><span>personal computer</span></div>
         <div className="system-actions">
           <span className="online"><i /> ONLINE</span>
-          <button onClick={cycleTheme} aria-label="Cycle phosphor colour theme">PHOSPHOR: {theme.toUpperCase()}</button>
+          <button onClick={cycleTheme} aria-label="Cycle colour theme">COLOUR: {theme.toUpperCase()}</button>
           <button onClick={() => applyFx(!fx)} aria-pressed={fx}>FX: {fx ? "ON" : "OFF"}</button>
           <time dateTime={clock}>{clock} IST</time>
         </div>
       </header>
 
       <div className="os-body">
-        <aside className="launcher" aria-label="Portfolio launcher">
-          <p>APPS <span>ALT + 1–7</span></p>
+        <aside className="launcher" aria-label="Portfolio navigation">
+          <p>FILES <span>ALT + 1–8</span></p>
           <nav>
             {viewLabels.map((item) => {
-              const active = view === item.id && !project && !post;
+              const active = view === item.id && !project;
               return (
                 <button key={item.id} className={active ? "active" : ""} aria-current={active ? "page" : undefined} onClick={() => setRoute(item.id)}>
                   <span>{item.shortcut}</span><b>{item.label}</b><kbd>↵</kbd>
@@ -658,25 +689,25 @@ export function TerminalOS() {
             })}
           </nav>
           <div className="launcher-foot">
-            <span>PUBLIC INDEX</span><i><b /></i><small>{String(portfolio.projects.length).padStart(2, "0")} ORIGINAL / 00 FORKS</small>
+            <a href="/now/">/now</a><i><b /></i><small>{String(portfolio.projects.length).padStart(2, "0")} projects · 00 forks</small>
           </div>
         </aside>
 
         <section className="terminal-window" aria-label="Interactive portfolio terminal">
           <div className="window-chrome">
             <div><span /><span /><span /></div>
-            <p>guest@hamshamb: ~/{project ? "projects/" + project.slug : post ? "notes/" + post.slug : view}</p>
+            <p>guest@hamshamb: ~/{project ? "projects/" + project.slug : view}</p>
             <b>96 × 32</b>
           </div>
           <div id="main-content" ref={contentRef} className="window-content" tabIndex={-1}>
-            <div key={view + ":" + (project?.slug ?? post?.slug ?? "index")} className="view-stage">{renderView()}</div>
+            <div key={view + ":" + (project?.slug ?? "index")} className="view-stage">{renderView()}</div>
           </div>
           <div className="terminal-log" role="log" aria-live="polite" aria-label="Terminal command output">
             {log.slice(-2).map((entry, index) => <div key={entry.command + "-" + String(index)}><p><span>guest@hamshamb</span>:~$ {entry.command}</p><small>{entry.message}</small></div>)}
           </div>
           <form className="command-bar" onSubmit={submit}>
             <label htmlFor="command-input"><span>guest@hamshamb</span>:~$</label>
-            <input id="command-input" ref={inputRef} value={input} onChange={(event) => setInput(event.target.value)} onKeyDown={keyDown} autoComplete="off" spellCheck={false} aria-describedby="command-help" placeholder="type help, projects, blog…" />
+            <input id="command-input" ref={inputRef} value={input} onChange={(event) => setInput(event.target.value)} onKeyDown={keyDown} autoComplete="off" spellCheck={false} aria-describedby="command-help" placeholder="try projects, stuff, now…" />
             <button type="submit">RUN ↵</button>
           </form>
           <p id="command-help" className="sr-only">Type help for commands. Use arrow keys for history and Tab for completion.</p>
@@ -684,8 +715,8 @@ export function TerminalOS() {
       </div>
 
       <footer className="status-bar">
-        <span>MODE: <b>CURIOUS</b></span>
-        <span className="footer-hint">/ FOCUS&nbsp;&nbsp; ↑↓ HISTORY&nbsp;&nbsp; TAB COMPLETE&nbsp;&nbsp; ALT+1–7 NAVIGATE&nbsp;&nbsp; CTRL+L CLEAR</span>
+        <span>MODE: <b>MAKING STUFF</b></span>
+        <span className="footer-hint">/ FOCUS&nbsp;&nbsp; ↑↓ HISTORY&nbsp;&nbsp; TAB COMPLETE&nbsp;&nbsp; ALT+1–8 NAVIGATE</span>
         <span>© 2026 HAMSHAMB</span>
       </footer>
     </main>

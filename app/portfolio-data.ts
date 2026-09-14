@@ -1,5 +1,3 @@
-export type ProjectMetric = { value: string; label: string };
-
 export type Project = {
   slug: string;
   name: string;
@@ -11,28 +9,19 @@ export type Project = {
   releasedOn: string;
   releaseLabel: string;
   releaseNote: string;
+  intro: string[];
   description: string;
   problem: string;
   built: string;
   result: string;
   highlights: string[];
-  metrics: ProjectMetric[];
+  metrics: { value: string; label: string }[];
   stack: string[];
   source: string;
   live?: string;
+  image?: string;
+  imageAlt?: string;
   note?: string;
-};
-
-export type BlogPost = {
-  slug: string;
-  category: string;
-  title: string;
-  publishedOn: string;
-  dateLabel: string;
-  readTime: string;
-  excerpt: string;
-  thesis: string;
-  sections: { heading: string; body: string }[];
 };
 
 const projects: Project[] = [
@@ -41,48 +30,56 @@ const projects: Project[] = [
     name: "Nexus",
     sigil: "NX",
     eyebrow: "MINECRAFT · NETWORKING · JAVA",
-    availability: "ACTIVE EXPERIMENT",
+    availability: "NOT FINISHED",
     phase: "lab",
     role: "Protocol design + Fabric development",
     releasedOn: "2026-08-31",
     releaseLabel: "AUG 31, 2026",
-    releaseNote: "Published the clean-room development build for invite-code hosting, with local coordination, authenticated bridging, and explicit release gates.",
-    description: "An experimental Fabric mod exploring how a Minecraft Java single-player world could be shared through a short invite code.",
-    problem: "Opening a world to a friend usually means server setup, port forwarding, or trusting a large third-party platform. The simple player action hides a difficult networking and security problem.",
-    built: "I separated the system into session state machines, a versioned protocol, admission capabilities, coordination services, reliable transport contracts, and a Fabric-facing bridge that preserves normal Minecraft authentication.",
-    result: "The local bridge and invite-code flow work as a documented development system. Internet transport and a two-account authenticated join remain honest release blockers, so Nexus is presented as an experiment rather than a finished product.",
+    releaseNote: "Published the development build for invite-code hosting, local coordination, authenticated bridging, and explicit release gates.",
+    intro: [
+      "i wanted to send someone a code and have them join my minecraft world.",
+      "turns out that is not a small problem.",
+    ],
+    description: "Nexus is an experimental Fabric mod for sharing a Minecraft Java single-player world through a short invite code.",
+    problem: "Open to LAN works on a local network. The moment the other player is somewhere else, the simple idea turns into session discovery, admission, transport, authentication, expiry, abuse controls, and a lot of ways to get it wrong.",
+    built: "The code is split into session state machines, a versioned protocol, short-lived admission capabilities, coordination services, transport contracts, and a Fabric bridge that keeps normal Minecraft authentication in the loop.",
+    result: "The local bridge and invite-code flow work as a development system. Internet transport and a verified two-account join are still blockers. It is a real experiment, not a finished product wearing a launch badge.",
     highlights: [
-      "Host and join interfaces built directly into a Fabric mod",
-      "Short-lived, single-use admission capabilities with replay protections",
-      "Local coordination for session creation, joining, heartbeats, and expiry",
-      "Reliable ordered transport contracts with explicit backpressure and lifecycle handling",
-      "Seven-module architecture with protocol, client, backend, transport, and Minecraft boundaries",
-      "Clean-room engineering rules, threat model, evidence ledger, and public release gates",
+      "Host and join screens inside a Fabric mod",
+      "Short-lived, single-use admission capabilities with replay protection",
+      "Session creation, joining, heartbeats, expiry, and cleanup",
+      "Reliable ordered transport contracts with backpressure and lifecycle handling",
+      "Seven modules separating protocol, client, backend, transport, and Minecraft code",
+      "Threat model, evidence ledger, and public release gates",
     ],
     metrics: [
-      { value: "07", label: "SYSTEM MODULES" },
+      { value: "07", label: "MODULES" },
       { value: "1×", label: "SINGLE-USE ACCESS" },
-      { value: "LAB", label: "HONEST STATUS" },
+      { value: "LAB", label: "ACTUAL STATUS" },
     ],
-    stack: ["Java", "Fabric", "Gradle", "TCP", "Protocol design", "Security"],
+    stack: ["Java", "Fabric", "Gradle", "TCP", "protocol design", "security"],
     source: "https://github.com/hamshamb/nexus",
-    note: "Nexus is under active development. Internet transport is not implemented and the full two-account join still needs manual verification.",
+    note: "Internet transport is not implemented yet. The full two-account join still needs manual verification.",
   },
   {
     slug: "chc-review-studio",
     name: "CHC Review Studio",
     sigil: "CR",
-    eyebrow: "WINDOWS · EDITORIAL SYSTEM · C#",
+    eyebrow: "WINDOWS · EDITORIAL TOOL · C#",
     availability: "OPEN SOURCE",
     phase: "open",
     role: "Desktop UX + evidence system design",
     releasedOn: "2026-08-30",
     releaseLabel: "AUG 30, 2026",
-    releaseNote: "Released a local-first Windows workbench that keeps source text, rubric evidence, findings, canon decisions, and final grading in one review trail.",
+    releaseNote: "Released a local-first workbench that keeps source text, rubric evidence, findings, canon decisions, and grading in one trail.",
+    intro: [
+      "i wanted one place where a reviewer could prove why a comment or grade exists.",
+      "so the source, evidence, rubric and decision all stay connected.",
+    ],
     description: "A local-first Windows workbench for evidence-led editorial review, source-anchored findings, canon checks, and transparent S–F grading.",
-    problem: "Serious review work becomes unreliable when the source, rubric, comments, evidence, and final decision live in separate tools. Scores can drift away from evidence and feedback can quietly become ghostwriting.",
-    built: "I designed one keyboard-friendly workflow around a read-only source viewer, weighted rubrics, exact evidence anchors, structured findings, canon classifications, tier caps, recovery files, and editorial exports.",
-    result: "Reviewers can trace a final tier back to specific criteria and source evidence while leaving authorship with the writer. The application runs locally without telemetry or a network dependency.",
+    problem: "Review work gets unreliable when the source, rubric, evidence, comments, and final decision live in separate tools. Scores drift away from proof, and useful feedback can quietly turn into ghostwriting.",
+    built: "One keyboard-friendly workflow combines a read-only source viewer, weighted rubrics, exact evidence anchors, structured findings, canon classifications, tier caps, recovery files, and editorial exports.",
+    result: "A reviewer can trace a final tier back to criteria and source evidence. The app runs locally, sends no telemetry, and does not need a network connection.",
     highlights: [
       "Read-only DOCX and text viewer with outline, selection, and search",
       "Weighted Entry, Story, and Group of Interest rubrics with visible 0–4 ratings",
@@ -104,66 +101,78 @@ const projects: Project[] = [
     name: "AreUHuman",
     sigil: "AH",
     eyebrow: "TOUCHSCREEN · PWA · LIVE",
-    availability: "LIVE EXPERIENCE",
+    availability: "LIVE",
     phase: "live",
     role: "Game systems + interaction engineering",
     releasedOn: "2026-08-15",
     releaseLabel: "AUG 15, 2026",
     releaseNote: "Released the offline-ready touchscreen game with 54 variations, adaptive difficulty, operator tools, and on-device score history.",
-    description: "A fast, strange touchscreen challenge booth that measures how people tap, trace, remember, react, and coordinate.",
-    problem: "A live touchscreen attraction needs more than visual effects. Challenges must stay varied, measurable, fair, and reliable on the real kiosk hardware operators use.",
-    built: "I designed 54 playable variants across 44 mechanics, then added adaptive difficulty, persistent conditions, measured scoring, local records, deterministic prize bands, operator playtesting, touch diagnostics, and procedural audio.",
-    result: "The experience is local-first and works offline after its first load. It needs no account, API, database, analytics service, paid service, or essential network connection to keep a crowd moving.",
+    intro: [
+      "a touchscreen game built mostly around making people do increasingly stupid things with their fingers.",
+      "under the stupidity is a fairly serious input measurement system.",
+    ],
+    description: "A fast touchscreen challenge booth that measures how people tap, trace, remember, react, and coordinate.",
+    problem: "A live kiosk game has to stay varied, measurable, fair, and reliable on the actual touchscreen while a queue of people is waiting behind it.",
+    built: "I made 54 variants across 44 mechanics, then added adaptive difficulty, persistent conditions, measured scoring, local records, deterministic prize bands, operator controls, touch diagnostics, and procedural audio.",
+    result: "It works offline after the first load and needs no account, API, database, analytics service, paid service, or essential network connection.",
     highlights: [
-      "54 playable variants across 44 mechanics and 12 compatible persistent conditions",
-      "Measured reaction time, timing error, path drift, precision, contact delta, and velocity",
+      "54 playable variants across 44 mechanics and 12 compatible conditions",
+      "Reaction time, timing error, path drift, precision, contact delta, and velocity measurements",
       "Adaptive difficulty, lives, response chains, and deterministic prize thresholds",
       "Local leaderboards, personal bests, aggregate statistics, and JSON/CSV exports",
       "Operator playtesting controls and an application-level multi-touch diagnostic",
       "Procedural Web Audio with an offline-capable PWA shell",
     ],
     metrics: [
-      { value: "54", label: "PLAYABLE VARIANTS" },
-      { value: "44", label: "CORE MECHANICS" },
+      { value: "54", label: "VARIANTS" },
+      { value: "44", label: "MECHANICS" },
       { value: "12", label: "CONDITIONS" },
     ],
     stack: ["TypeScript", "React", "Pointer Events", "Web Audio", "PWA", "Vitest"],
     source: "https://github.com/hamshamb/AreUHuman",
     live: "https://areuhuman.netlify.app",
-    note: "Settings and optional leaderboard names remain on the device; the core experience is local-first.",
+    image: "https://raw.githubusercontent.com/hamshamb/AreUHuman/main/public/og.png",
+    imageAlt: "AreUHuman game preview",
+    note: "Settings and optional leaderboard names stay on the device.",
   },
   {
     slug: "studyfilter",
     name: "StudyFilter",
     sigil: "SF",
-    eyebrow: "EDTECH · FULL STACK · LIVE",
-    availability: "LIVE PRODUCT",
+    eyebrow: "SCHOOL · FULL STACK · LIVE",
+    availability: "LIVE",
     phase: "live",
     role: "Product design + full-stack development",
     releasedOn: "2026-06-25",
     releaseLabel: "JUN 25, 2026",
-    releaseNote: "Launched the CBSE learning workspace, bringing syllabus-aware help, verified resources, practice, planning, and progress into one place.",
-    description: "A calmer CBSE learning workspace for asking questions, revising chapters, practising papers, planning work, and checking progress.",
-    problem: "Studying often means bouncing between notes, videos, PDFs, quizzes, timers, and progress apps. Every switch breaks context, and inaccurate resource labels can make the problem worse.",
-    built: "I brought that journey into one focused workspace with syllabus-aware explanations, subject and chapter hubs, verified learning resources, previous-year questions, mock exams, study tools, sign-in, and progress that follows the learner.",
-    result: "A student can move from a doubt to an explanation, then into practice and review, without rebuilding the study session across several apps.",
+    releaseNote: "Launched the CBSE study workspace with syllabus-aware help, checked resources, practice, planning, and progress.",
+    intro: [
+      "school websites have an incredible ability to make studying involve everything except studying.",
+      "i started StudyFilter because my own stuff was scattered everywhere.",
+    ],
+    description: "One CBSE workspace for questions, chapter revision, papers, quizzes, planning, focus sessions, and progress.",
+    problem: "Studying meant bouncing between notes, videos, PDFs, quizzes, timers, and progress apps. Every switch lost context, and bad labels sometimes sent students to the wrong material.",
+    built: "The app combines syllabus-aware explanations, subject and chapter hubs, checked resources, previous-year questions, mock exams, study tools, sign-in, and progress that follows the learner.",
+    result: "A student can move from a doubt to an explanation, then into practice and review, without rebuilding the session across several apps.",
     highlights: [
       "Syllabus-aware answers with structured explanations and mathematical notation",
       "Subject and chapter hubs with summaries, solutions, quizzes, and revision notes",
       "NCERT resources, previous-year papers, mock exams, and marking schemes",
-      "Focused tools for revision, flashcards, comparisons, maps, and problem solving",
+      "Tools for revision, flashcards, comparisons, maps, and problem solving",
       "Goals, streaks, mastery, daily plans, focus timer, and recent activity",
       "Public content-integrity, support, security, and reporting documentation",
     ],
     metrics: [
-      { value: "10", label: "CBSE FOCUS" },
-      { value: "1", label: "CONNECTED WORKSPACE" },
-      { value: "LIVE", label: "STUDY PLATFORM" },
+      { value: "10", label: "CBSE CLASS" },
+      { value: "1", label: "WORKSPACE" },
+      { value: "LIVE", label: "STATUS" },
     ],
     stack: ["TypeScript", "React", "Node.js", "PostgreSQL", "Drizzle", "PWA"],
     source: "https://github.com/hamshamb/StudyFilter",
     live: "https://studyfilter.online",
-    note: "The public repository contains product documentation and reporting workflows. Production source remains private. StudyFilter is not affiliated with CBSE or NCERT.",
+    image: "https://raw.githubusercontent.com/hamshamb/StudyFilter/main/docs/media/logo.png",
+    imageAlt: "StudyFilter logo",
+    note: "The public repository contains product documentation and reporting routes. Production source is private. StudyFilter is not affiliated with CBSE or NCERT.",
   },
   {
     slug: "pyforge",
@@ -175,75 +184,33 @@ const projects: Project[] = [
     role: "Desktop UX + Python tooling",
     releasedOn: "2025-10-15",
     releaseLabel: "OCT 15, 2025",
-    releaseNote: "Published the Windows tool that turns Python scripts into shareable executables through a guided drag-and-drop workflow.",
-    description: "A Windows desktop app that turns the intimidating Python-to-EXE process into a calm, guided workflow.",
-    problem: "Sharing a Python tool should not require memorising PyInstaller flags, chasing hidden imports, or debugging an environment before the real work can begin.",
-    built: "I wrapped packaging in a drag-and-drop interface with sensible detection, plain-language choices, static project checks, guided environment repair, advanced controls, and a live log that never hides what the tool is doing.",
-    result: "A developer can drop in a script, review sensible defaults, press Forge, and still understand everything happening underneath.",
+    releaseNote: "Published the Windows tool that turns Python scripts into shareable executables through a guided workflow.",
+    intro: [
+      "i got tired of explaining how to turn a python script into an exe.",
+      "so i put the annoying parts behind a GUI without hiding what PyInstaller is doing.",
+    ],
+    description: "A Windows desktop app that makes Python-to-EXE packaging understandable instead of mysterious.",
+    problem: "Sharing a Python tool should not require memorising PyInstaller flags, chasing hidden imports, or debugging an environment before the actual work begins.",
+    built: "A drag-and-drop interface handles sensible detection, plain-language choices, static project checks, guided environment repair, advanced controls, and a live log that shows the exact process.",
+    result: "A developer can drop in a script, review the defaults, press Forge, and still understand what is happening underneath.",
     highlights: [
-      "Drag-and-drop input with automatic name, output path, entry-point, and mode detection",
+      "Drag-and-drop input with automatic name, path, entry-point, and mode detection",
       "Static project analysis that never executes the selected source",
       "Pre-build checks for paths, permissions, disk space, icons, data, and accidental secrets",
-      "Build history, reusable configurations, duration tracking, and build comparison",
+      "Build history, reusable configurations, duration tracking, and comparison",
       "Hidden imports, data files, exclusions, splash screens, UPX, and version metadata",
       "Environment checks, guided repair, exact command preview, and a complete build log",
     ],
     metrics: [
-      { value: "96", label: "AUTOMATED TESTS" },
-      { value: "STATIC", label: "CODE ANALYSIS" },
+      { value: "96", label: "TESTS" },
+      { value: "STATIC", label: "ANALYSIS" },
       { value: "VISIBLE", label: "BUILD PROCESS" },
     ],
     stack: ["Python", "Tkinter", "PyInstaller", "Windows", "UPX", "Pillow"],
     source: "https://github.com/hamshamb/PyForge",
+    image: "https://raw.githubusercontent.com/hamshamb/PyForge/main/assets/docs/pyforge-interface.png",
+    imageAlt: "PyForge desktop interface",
     note: "PyForge is portable; creating a new executable still requires Python on the build machine.",
-  },
-];
-
-const blog: BlogPost[] = [
-  {
-    slug: "osint-starts-with-restraint",
-    category: "OSINT / ETHICS",
-    title: "OSINT starts with restraint",
-    publishedOn: "2026-09-14",
-    dateLabel: "SEP 14, 2026",
-    readTime: "3 MIN",
-    excerpt: "Finding information is the easy part. Knowing what is verified, relevant, and responsible to use is the real skill.",
-    thesis: "Open-source intelligence is not a licence to collect everything. It is a discipline of asking precise questions, preserving context, and stopping when the evidence stops.",
-    sections: [
-      { heading: "Collection is not understanding", body: "A search result, username match, old photo, or map pin is only an observation. It becomes useful after provenance, time, context, and alternative explanations are checked. I want my investigations to show the chain from source to conclusion instead of hiding uncertainty behind confidence." },
-      { heading: "Public does not mean harmless", body: "Information can be technically public and still become dangerous when it is aggregated. Before sharing a finding, I ask whether it is necessary, whether it affects a real public-interest question, and whether it could expose someone who never chose to become the subject." },
-      { heading: "The best result may be a limit", body: "A responsible investigation can end with not enough evidence. That is not failure. Clear limits make later work stronger, protect people from false claims, and keep curiosity from turning into certainty without proof." },
-    ],
-  },
-  {
-    slug: "why-i-kept-the-terminal",
-    category: "DESIGN / SYSTEMS",
-    title: "Why I kept the terminal",
-    publishedOn: "2026-09-08",
-    dateLabel: "SEP 08, 2026",
-    readTime: "3 MIN",
-    excerpt: "A terminal can be more than an aesthetic. Used carefully, it turns navigation into a system you can see, learn, and control.",
-    thesis: "I kept the terminal in this portfolio because it matches how I think: explicit state, small commands, visible feedback, and no mystery about what happened.",
-    sections: [
-      { heading: "The interface has two speeds", body: "Every screen is clickable for someone who wants to browse. The command line is there for someone who wants to move directly. Neither path is treated as the advanced one; they are simply two ways to operate the same system." },
-      { heading: "Atmosphere should not block access", body: "Scanlines, boot text, phosphor themes, and motion build the feeling, but they must remain optional. Keyboard focus, reduced motion, readable contrast, responsive layouts, and semantic structure are part of the design rather than cleanup after it." },
-      { heading: "A portfolio should reveal judgement", body: "Technology lists are useful, but decisions are more interesting. The project records explain the problem, what I built, what changed, and where the limits remain. A believable system says what is experimental as clearly as it says what is live." },
-    ],
-  },
-  {
-    slug: "geopolitics-is-a-systems-problem",
-    category: "GEOPOLITICS / NOTES",
-    title: "Geopolitics is a systems problem",
-    publishedOn: "2026-09-01",
-    dateLabel: "SEP 01, 2026",
-    readTime: "4 MIN",
-    excerpt: "Borders matter, but so do cables, chips, ports, standards, platforms, energy routes, and the incentives connecting them.",
-    thesis: "My interest in geopolitics comes from the same place as my interest in software: complicated outcomes emerge from connected systems, constraints, and people making decisions with incomplete information.",
-    sections: [
-      { heading: "Follow the dependencies", body: "A country can be powerful in one layer and dependent in another. Energy, semiconductor supply chains, shipping routes, payment rails, satellite coverage, and undersea cables reveal relationships that a political map alone cannot show." },
-      { heading: "Technology changes the terrain", body: "Open-source software, export controls, cloud regions, encryption, platform rules, and technical standards can shape who has access and who sets the terms. Code is not separate from geopolitics once infrastructure becomes strategic." },
-      { heading: "Models need humility", body: "Systems thinking helps organise evidence, but people and history do not behave like clean software. I use maps and models to generate better questions, then look for primary sources, competing explanations, and facts that would prove my first idea wrong." },
-    ],
   },
 ];
 
@@ -251,49 +218,55 @@ export const portfolio = {
   owner: {
     name: "hamshamb",
     handle: "@hamshamb",
-    role: "Developer · investigator · student",
-    statement: "I build useful systems, investigate open information, and study how technology, people, and power connect.",
-    location: "India · IST (UTC+5:30)",
-    status: "LEARNING IN PUBLIC",
+    role: "student who makes stuff.",
+    statement: "mostly software. occasionally questionable decisions.",
+    location: "India · IST",
+    status: "probably building something",
     github: "https://github.com/hamshamb",
     email: "hamshambdev@gmail.com",
     bio: [
-      "I am a student developer from India. I like building tools that remove friction, expose how a system works, and stay honest about their limits.",
-      "My work moves between full-stack products, Windows utilities, touchscreen interaction, Minecraft networking, and local-first software. I care about open-source development because useful ideas improve when their reasoning can be inspected.",
-      "Beyond code, I am deeply curious about OSINT, digital investigations, geopolitics, security, maps, infrastructure, and the hidden dependencies that shape everyday life.",
-      "I am still learning, deliberately. This portfolio is a record of what I can build now, the questions I am following, and the quality bar I am trying to raise with every release.",
+      "hi, i'm hamshamb.",
+      "i'm a student in india and i spend a lot of my free time making things on computers.",
+      "websites, windows apps, minecraft stuff, random tools — basically whatever seems interesting enough to ruin my weekend.",
+      "i don't really have a neat “i specialise in ___” answer yet.",
+      "i like programming. i've been getting more interested in security and osint. i read a lot about geopolitics. i like maps for some reason. recently i've also been speedcubing.",
+      "that's about it.",
+      "this website is mostly where i keep the things i've made before i forget they exist.",
     ],
-    interests: [
-      { code: "01", title: "OSINT", detail: "Verification, provenance, maps, timelines, and responsible public-source research." },
-      { code: "02", title: "OPEN SOURCE", detail: "Inspectable tools, useful documentation, clean contribution paths, and shared learning." },
-      { code: "03", title: "GEOPOLITICS", detail: "Technology, infrastructure, borders, incentives, supply chains, and power." },
-      { code: "04", title: "SYSTEMS", detail: "Protocols, local-first software, product design, accessibility, and honest interfaces." },
-    ],
-    principles: [
-      { title: "VERIFY BEFORE CLAIMING", detail: "Separate observations, inferences, and unknowns. Confidence should come from a visible evidence trail." },
-      { title: "BUILD IN THE OPEN", detail: "Document decisions, invite inspection, and make it easier for the next person to understand the system." },
-      { title: "STATE THE LIMITS", detail: "A lab build should look like a lab build. Trust grows when unfinished work is described precisely." },
-    ],
+    now: {
+      month: "september 2026",
+      items: [
+        "building Nexus",
+        "messing with this portfolio",
+        "trying to get faster at 3x3",
+        "reading about OSINT and security",
+        "school, unfortunately",
+      ],
+    },
   },
   projects,
-  blog,
   skills: [
     { group: "LANGUAGES", items: ["Python", "Java", "JavaScript", "TypeScript", "C#", "C++", "Rust"] },
     { group: "WEB", items: ["React", "Node.js", "HTML / CSS", "PWAs", "Web APIs", "PostgreSQL"] },
-    { group: "ENGINEERING", items: ["Git / GitHub", "automated testing", "protocol design", "Windows desktop", "local-first systems", "accessible UX"] },
-    { group: "RESEARCH", items: ["OSINT", "source verification", "digital investigations", "geopolitics", "security research", "systems thinking"] },
+    { group: "OTHER THINGS I USE", items: ["Git / GitHub", "automated tests", "protocol design", "Windows desktop", "local-first apps", "accessible UX"] },
+    { group: "CURRENT RABBIT HOLES", items: ["OSINT", "security", "Minecraft networking", "geopolitics", "maps", "speedcubing"] },
   ],
 };
 
 export const releaseLog = [...projects].sort((a, b) => b.releasedOn.localeCompare(a.releasedOn));
 export const latestProject = releaseLog[0];
-export const latestPost = blog[0];
+
+export const futureWriting = [
+  "I tried making Minecraft's Open to LAN work over the internet",
+  "54 ways to poke a touchscreen",
+  "I accidentally wrote 96 tests for a PyInstaller GUI",
+  "Why StudyFilter became much bigger than I planned",
+  "I tried analysing a Rubik's Cube solve without a smart cube",
+];
 
 export const commandNames = [
-  "help", "whoami", "about", "projects", "latest", "log", "blog", "notes",
-  "read osint-starts-with-restraint", "read why-i-kept-the-terminal",
-  "read geopolitics-is-a-systems-problem", "open nexus", "open chc-review-studio",
-  "open areuhuman", "open studyfilter", "open pyforge", "skills", "interests",
-  "contact", "status", "theme green", "theme amber", "theme cyan",
-  "fx on", "fx off", "clear",
+  "help", "whoami", "about", "projects", "latest", "open nexus",
+  "open chc-review-studio", "open areuhuman", "open studyfilter", "open pyforge",
+  "log", "stuff", "ls ~/stuff", "writing", "now", "stack", "contact",
+  "status", "theme green", "theme amber", "theme cyan", "fx on", "fx off", "clear",
 ];
