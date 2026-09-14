@@ -3,7 +3,7 @@ import { readFileSync } from "node:fs";
 import test from "node:test";
 
 const html = readFileSync(new URL("../dist/client/index.html", import.meta.url), "utf8");
-const nowHtml = readFileSync(new URL("../dist/client/now/index.html", import.meta.url), "utf8");
+const nowEntry = readFileSync(new URL("../dist/client/now/index.html", import.meta.url), "utf8");
 const portfolioData = readFileSync(new URL("../app/portfolio-data.ts", import.meta.url), "utf8");
 const terminalSource = readFileSync(new URL("../app/TerminalOS.tsx", import.meta.url), "utf8");
 
@@ -53,9 +53,10 @@ test("fake essays are gone and writing is intentionally empty", () => {
 test("stuff and now are real sections", () => {
   assert.match(terminalSource, /this page has no professional purpose/);
   assert.match(terminalSource, /making this website stop sounding like chatgpt/);
-  assert.match(nowHtml, /september 2026/);
-  assert.match(nowHtml, /building Nexus/);
-  assert.match(nowHtml, /school, unfortunately/);
+  assert.match(portfolioData, /september 2026/);
+  assert.match(portfolioData, /building Nexus/);
+  assert.match(portfolioData, /school, unfortunately/);
+  assert.match(nowEntry, /\/#now/);
 });
 
 test("release log remains newest-first", () => {
