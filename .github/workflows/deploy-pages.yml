@@ -48,11 +48,6 @@ jobs:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
-      # This repository is still configured for branch-based Pages, which starts
-      # GitHub's generated Jekyll deployment on every push. Let that finish first
-      # so this real application artifact remains the final live deployment.
-      - name: Wait for generated Pages deployment
-        run: sleep 90
       - name: Deploy interactive portfolio
         id: deployment
         uses: actions/deploy-pages@v5
