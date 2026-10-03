@@ -1,10 +1,26 @@
+import { owner as siteOwner, type Phase } from "./site";
+
+export { phaseLabel, sections, siteUrl, type Phase } from "./site";
+
+export type ProjectMedia = {
+  src: string;
+  width: number;
+  height: number;
+  alt: string;
+  /** Smaller rendition for thumbnails and narrow screens. */
+  small?: { src: string; width: number };
+  /** `contain` keeps logos and square art from being cropped. */
+  fit?: "cover" | "contain";
+  background?: string;
+};
+
 export type Project = {
   slug: string;
   name: string;
   sigil: string;
   eyebrow: string;
   availability: string;
-  phase: "live" | "open" | "lab";
+  phase: Phase;
   role: string;
   releasedOn: string;
   releaseLabel: string;
@@ -15,13 +31,22 @@ export type Project = {
   built: string;
   result: string;
   highlights: string[];
-  metrics: { value: string; label: string }[];
+  /** Only real, countable facts. No decorative numbers. */
+  facts: { value: string; label: string }[];
   stack: string[];
   source: string;
   live?: string;
-  image?: string;
-  imageAlt?: string;
+  media?: ProjectMedia;
   note?: string;
+};
+
+export type SmallThing = {
+  name: string;
+  summary: string;
+  stack: string[];
+  source: string;
+  live?: string;
+  startedOn: string;
 };
 
 const projects: Project[] = [
@@ -30,7 +55,7 @@ const projects: Project[] = [
     name: "Nexus",
     sigil: "NX",
     eyebrow: "MINECRAFT · NETWORKING · JAVA",
-    availability: "NOT FINISHED",
+    availability: "not finished",
     phase: "lab",
     role: "Protocol design + Fabric development",
     releasedOn: "2026-08-31",
@@ -52,10 +77,9 @@ const projects: Project[] = [
       "Seven modules separating protocol, client, backend, transport, and Minecraft code",
       "Threat model, evidence ledger, and public release gates",
     ],
-    metrics: [
-      { value: "07", label: "MODULES" },
-      { value: "1×", label: "SINGLE-USE ACCESS" },
-      { value: "LAB", label: "ACTUAL STATUS" },
+    facts: [
+      { value: "7", label: "gradle modules" },
+      { value: "1", label: "use per invite" },
     ],
     stack: ["Java", "Fabric", "Gradle", "TCP", "protocol design", "security"],
     source: "https://github.com/hamshamb/nexus",
@@ -66,7 +90,7 @@ const projects: Project[] = [
     name: "CHC Review Studio",
     sigil: "CR",
     eyebrow: "WINDOWS · EDITORIAL TOOL · C#",
-    availability: "OPEN SOURCE",
+    availability: "open source",
     phase: "open",
     role: "Desktop UX + evidence system design",
     releasedOn: "2026-08-30",
@@ -88,10 +112,10 @@ const projects: Project[] = [
       "Atomic saves, rotating backups, recovery, and source-change detection",
       "Editorial HTML reports and detailed CSV comment logs",
     ],
-    metrics: [
-      { value: "0–4", label: "EVIDENCE SCALE" },
-      { value: "S–F", label: "VISIBLE OUTCOME" },
-      { value: "LOCAL", label: "NO TELEMETRY" },
+    facts: [
+      { value: "3", label: "weighted rubrics" },
+      { value: "0–4", label: "rating scale" },
+      { value: "0", label: "telemetry" },
     ],
     stack: ["C#", "WPF", ".NET", "PowerShell", "JSON", "HTML export"],
     source: "https://github.com/hamshamb/chc-review-studio",
@@ -101,7 +125,7 @@ const projects: Project[] = [
     name: "AreUHuman",
     sigil: "AH",
     eyebrow: "TOUCHSCREEN · PWA · LIVE",
-    availability: "LIVE",
+    availability: "live",
     phase: "live",
     role: "Game systems + interaction engineering",
     releasedOn: "2026-08-15",
@@ -123,16 +147,22 @@ const projects: Project[] = [
       "Operator playtesting controls and an application-level multi-touch diagnostic",
       "Procedural Web Audio with an offline-capable PWA shell",
     ],
-    metrics: [
-      { value: "54", label: "VARIANTS" },
-      { value: "44", label: "MECHANICS" },
-      { value: "12", label: "CONDITIONS" },
+    facts: [
+      { value: "54", label: "variants" },
+      { value: "44", label: "mechanics" },
+      { value: "12", label: "conditions" },
     ],
     stack: ["TypeScript", "React", "Pointer Events", "Web Audio", "PWA", "Vitest"],
     source: "https://github.com/hamshamb/AreUHuman",
     live: "https://areuhuman.netlify.app",
-    image: "https://raw.githubusercontent.com/hamshamb/AreUHuman/main/public/og.png",
-    imageAlt: "AreUHuman game preview",
+    media: {
+      src: "/work/areuhuman.webp",
+      width: 1600,
+      height: 841,
+      small: { src: "/work/areuhuman-800.webp", width: 800 },
+      alt: "AreUHuman title card: the game name in large condensed type beside a calibration-document style layout.",
+      background: "#0d0d0c",
+    },
     note: "Settings and optional leaderboard names stay on the device.",
   },
   {
@@ -140,7 +170,7 @@ const projects: Project[] = [
     name: "StudyFilter",
     sigil: "SF",
     eyebrow: "SCHOOL · FULL STACK · LIVE",
-    availability: "LIVE",
+    availability: "live",
     phase: "live",
     role: "Product design + full-stack development",
     releasedOn: "2026-06-25",
@@ -162,16 +192,18 @@ const projects: Project[] = [
       "Goals, streaks, mastery, daily plans, focus timer, and recent activity",
       "Public content-integrity, support, security, and reporting documentation",
     ],
-    metrics: [
-      { value: "10", label: "CBSE CLASS" },
-      { value: "1", label: "WORKSPACE" },
-      { value: "LIVE", label: "STATUS" },
-    ],
+    facts: [],
     stack: ["TypeScript", "React", "Node.js", "PostgreSQL", "Drizzle", "PWA"],
     source: "https://github.com/hamshamb/StudyFilter",
     live: "https://studyfilter.online",
-    image: "https://raw.githubusercontent.com/hamshamb/StudyFilter/main/docs/media/logo.png",
-    imageAlt: "StudyFilter logo",
+    media: {
+      src: "/work/studyfilter.webp",
+      width: 800,
+      height: 800,
+      alt: "StudyFilter logo: an open book sitting inside a funnel.",
+      fit: "contain",
+      background: "#fff4ed",
+    },
     note: "The public repository contains product documentation and reporting routes. Production source is private. StudyFilter is not affiliated with CBSE or NCERT.",
   },
   {
@@ -179,7 +211,7 @@ const projects: Project[] = [
     name: "PyForge",
     sigil: "PF",
     eyebrow: "WINDOWS · OPEN SOURCE · PYTHON",
-    availability: "OPEN SOURCE",
+    availability: "open source",
     phase: "open",
     role: "Desktop UX + Python tooling",
     releasedOn: "2025-10-15",
@@ -201,40 +233,68 @@ const projects: Project[] = [
       "Hidden imports, data files, exclusions, splash screens, UPX, and version metadata",
       "Environment checks, guided repair, exact command preview, and a complete build log",
     ],
-    metrics: [
-      { value: "96", label: "TESTS" },
-      { value: "STATIC", label: "ANALYSIS" },
-      { value: "VISIBLE", label: "BUILD PROCESS" },
+    facts: [
+      { value: "96", label: "tests" },
     ],
     stack: ["Python", "Tkinter", "PyInstaller", "Windows", "UPX", "Pillow"],
     source: "https://github.com/hamshamb/PyForge",
-    image: "https://raw.githubusercontent.com/hamshamb/PyForge/main/assets/docs/pyforge-interface.png",
-    imageAlt: "PyForge desktop interface",
+    media: {
+      src: "/work/pyforge.webp",
+      width: 1366,
+      height: 720,
+      small: { src: "/work/pyforge-800.webp", width: 800 },
+
+      alt: "PyForge build screen: a drop zone for a Python file, app name and icon fields, and a choice between auto-detect, windowed, and console modes.",
+      background: "#1e2230",
+    },
     note: "PyForge is portable; creating a new executable still requires Python on the build machine.",
+  },
+];
+
+/** Newer, smaller repositories. Real, public, and mine, but not written up as full case studies yet. */
+const smallThings: SmallThing[] = [
+  {
+    name: "Inkline",
+    summary: "a local-first writing editor for rich text, markdown and plain text. everything saves on your device, as a PWA or a Tauri windows app.",
+    stack: ["TypeScript", "React", "Tiptap", "CodeMirror", "Tauri"],
+    source: "https://github.com/hamshamb/inkline",
+    startedOn: "2026-09-17",
+  },
+  {
+    name: "TinyPaste",
+    summary: "a privacy-minded pastebin with expiring links, passwords, burn-after-reading, and optional encryption in the browser before upload.",
+    stack: ["TypeScript", "Next.js", "Supabase"],
+    source: "https://github.com/hamshamb/TinyPaste",
+    live: "https://tinypastedev.vercel.app",
+    startedOn: "2026-09-15",
   },
 ];
 
 export const portfolio = {
   owner: {
-    name: "hamshamb",
+    ...siteOwner,
     handle: "@hamshamb",
     role: "student who makes stuff.",
     statement: "mostly software. occasionally questionable decisions.",
-    location: "India · IST",
     status: "probably building something",
-    github: "https://github.com/hamshamb",
-    email: "hamshambdev@gmail.com",
     bio: [
       "hi, i'm hamshamb.",
       "i'm a student in india and i spend a lot of my free time making things on computers.",
-      "websites, windows apps, minecraft stuff, random tools — basically whatever seems interesting enough to ruin my weekend.",
+      "websites, windows apps, minecraft stuff, random tools. basically whatever seems interesting enough to ruin my weekend.",
       "i don't really have a neat “i specialise in ___” answer yet.",
       "i like programming. i've been getting more interested in security and osint. i read a lot about geopolitics. i like maps for some reason. recently i've also been speedcubing.",
       "that's about it.",
       "this website is mostly where i keep the things i've made before i forget they exist.",
     ],
+    currently: [
+      { label: "working on", value: "Nexus", href: "/work/nexus" },
+      { label: "learning", value: "security / osint" },
+      { label: "wasting time on", value: "3x3" },
+    ],
     now: {
       month: "september 2026",
+      updated: "2026-09-14",
+      updatedLabel: "14 sep 2026",
       items: [
         "building Nexus",
         "messing with this portfolio",
@@ -245,11 +305,12 @@ export const portfolio = {
     },
   },
   projects,
+  smallThings,
   skills: [
-    { group: "LANGUAGES", items: ["Python", "Java", "JavaScript", "TypeScript", "C#", "C++", "Rust"] },
-    { group: "WEB", items: ["React", "Node.js", "HTML / CSS", "PWAs", "Web APIs", "PostgreSQL"] },
-    { group: "OTHER THINGS I USE", items: ["Git / GitHub", "automated tests", "protocol design", "Windows desktop", "local-first apps", "accessible UX"] },
-    { group: "CURRENT RABBIT HOLES", items: ["OSINT", "security", "Minecraft networking", "geopolitics", "maps", "speedcubing"] },
+    { group: "languages", note: "the ones i've actually written things in", items: ["Python", "Java", "JavaScript", "TypeScript", "C#", "C++", "Rust"] },
+    { group: "web", note: "what the live stuff runs on", items: ["React", "Node.js", "HTML / CSS", "PWAs", "Web APIs", "PostgreSQL"] },
+    { group: "other things i use", note: "the boring parts that make things work", items: ["Git / GitHub", "automated tests", "protocol design", "Windows desktop", "local-first apps", "accessible UX"] },
+    { group: "current rabbit holes", note: "not skills. just where my evenings go", items: ["OSINT", "security", "Minecraft networking", "geopolitics", "maps", "speedcubing"] },
   ],
 };
 
@@ -264,9 +325,14 @@ export const futureWriting = [
   "I tried analysing a Rubik's Cube solve without a smart cube",
 ];
 
-export const commandNames = [
-  "help", "whoami", "about", "projects", "latest", "open nexus",
-  "open chc-review-studio", "open areuhuman", "open studyfilter", "open pyforge",
-  "log", "stuff", "ls ~/stuff", "writing", "now", "stack", "contact",
-  "status", "theme green", "theme amber", "theme cyan", "fx on", "fx off", "clear",
-];
+export function getProject(slug: string) {
+  return projects.find((project) => project.slug === slug);
+}
+
+export function getNeighbours(slug: string) {
+  const index = projects.findIndex((project) => project.slug === slug);
+  return {
+    previous: projects[(index - 1 + projects.length) % projects.length],
+    next: projects[(index + 1) % projects.length],
+  };
+}
