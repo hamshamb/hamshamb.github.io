@@ -1,0 +1,10 @@
+{
+  "name": "hamshamb",
+  "short_name": "hamshamb",
+  "description": "Software, Minecraft experiments, random tools, and whatever else hamshamb is working on.",
+  "start_url": "/",
+  "display": "browser",
+  "background_color": "#f5f4ef",
+  "theme_color": "#f5f4ef",
+  "icons": [{ "src": "/favicon.svg", "sizes": "any", "type": "image/svg+xml" }]
+}
