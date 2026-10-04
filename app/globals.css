@@ -488,11 +488,15 @@ kbd {
 
 /* --------------------------------------------------------------- hero --- */
 
-.hero {
-  position: relative;
-  padding-top: clamp(2.5rem, 1rem + 6vw, 6.5rem);
-  padding-bottom: clamp(3rem, 2rem + 4vw, 5rem);
-}
+/*
+ * The hero is one scene: copy on the left, the build engine drawing behind and to the right,
+ * the 2021 to 2026 rail along the bottom. On large screens with motion welcome, the scene is
+ * sticky inside a taller sequence so scrolling drives the drawing; scrolling itself is native and
+ * never intercepted. Everywhere else it is an ordinary block with the drawing below the copy.
+ */
+.hero { position: relative; }
+.hero-scene { position: relative; display: flex; flex-direction: column; padding-top: clamp(2.5rem, 1rem + 6vw, 6.5rem); }
+.hero-head { position: relative; z-index: 1; width: 100%; }
 .hero-kicker {
   display: flex;
   flex-wrap: wrap;
@@ -553,12 +557,64 @@ kbd {
 .hero-range { color: var(--fg-3); font-size: var(--text-base); line-height: 1.55; }
 .hero-actions { display: flex; flex-wrap: wrap; gap: var(--space-3); margin-top: var(--space-6); }
 
+/* the drawing, below the copy on narrow and short screens */
+.hero-machine {
+  position: relative;
+  width: min(100%, 760px);
+  margin: var(--space-6) auto 0;
+  aspect-ratio: 810 / 760;
+  pointer-events: none;
+}
+.hero-rail-row { margin-top: var(--space-3); }
+
+/* 2021 |....●| 2026: shares its marker shapes with the journey */
+.hero-rail {
+  --progress: 1;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: var(--space-3);
+  width: min(100%, 24rem);
+  margin-left: auto;
+  color: var(--fg-3);
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.04em;
+}
+.rail-track { position: relative; height: 2.25rem; container-type: inline-size; }
+.rail-line, .rail-fill { position: absolute; top: calc(50% + 0.4rem); left: 0; right: 0; height: 1px; }
+.rail-line { background: var(--line-strong); }
+.rail-fill { background: var(--accent); transform-origin: 0 50%; transform: scaleX(var(--progress)); }
+.rail-tick.ms { position: absolute; top: calc(50% + 0.4rem); left: calc(var(--at) * 100%); transform: translate(-50%, -50%) scale(0.8); background-color: var(--bg); }
+.rail-dot {
+  position: absolute;
+  top: calc(50% + 0.4rem);
+  left: 0;
+  width: 11px;
+  height: 11px;
+  border-radius: 50%;
+  background: var(--accent);
+  box-shadow: 0 0 0 4px var(--accent-soft);
+  transform: translate(calc(var(--progress) * 100cqw - 50%), -50%);
+}
+.rail-dot::after {
+  content: attr(data-year);
+  position: absolute;
+  bottom: calc(100% + 0.3rem);
+  left: 50%;
+  transform: translateX(-50%);
+  color: var(--accent);
+  font-size: 0.68rem;
+}
+
 .hero-foot {
   display: grid;
   grid-template-columns: 1fr;
   gap: var(--space-6);
-  margin-top: clamp(3rem, 2rem + 4vw, 5.5rem);
+  margin-top: clamp(2.5rem, 2rem + 3vw, 4.5rem);
   padding-top: var(--space-5);
+  padding-bottom: clamp(3rem, 2rem + 4vw, 5rem);
   border-top: 1px solid var(--line);
 }
 .hero-foot h2 { margin-bottom: var(--space-3); color: var(--fg-3); }
@@ -585,6 +641,45 @@ kbd {
   .hero-foot > :last-child { grid-column: auto; }
   .hero-foot .elsewhere { display: grid; gap: var(--space-2); }
 }
+@media (max-width: 767px) {
+  .hero-machine { width: 100%; margin-top: var(--space-5); }
+  .hero-rail { width: 100%; }
+}
+
+/* large screens: one composed scene, sticky while the engine is built */
+@media (min-width: 1000px) and (min-height: 640px) {
+  .hero-scene {
+    /* the text column's real width, so the drawing can start where the words end */
+    --hero-fs: clamp(2.6rem, min(1rem + 5vw, 10.5svh), 7.25rem);
+    --hero-text: max(calc(var(--hero-fs) * 6.4), 30rem);
+    display: grid;
+    grid-template-rows: minmax(0, 1fr) auto;
+    min-height: calc(100svh - var(--header-h));
+    padding-top: clamp(1.5rem, 0.5rem + 3.5svh, 4rem);
+    overflow: hidden;
+  }
+  .motion-ok .hero-sequence { height: 250svh; }
+  .motion-ok .hero-scene { position: sticky; top: var(--header-h); height: calc(100svh - var(--header-h)); }
+  .hero-title { font-size: var(--hero-fs); }
+  .hero-copy { max-width: 30rem; }
+  .hero-machine {
+    position: absolute;
+    z-index: 0;
+    top: 4%;
+    bottom: 4%;
+    left: calc(max(0px, (100vw - var(--content-max)) / 2) + var(--gutter) + var(--hero-text));
+    right: calc(var(--gutter) / 2);
+    width: auto;
+    margin: 0;
+    aspect-ratio: auto;
+  }
+  .hero-rail-row { position: relative; z-index: 1; margin-top: 0; padding-bottom: clamp(1rem, 2.5svh, 2rem); }
+  .hero-rail { margin-left: 0; }
+}
+@media (min-width: 1000px) and (max-width: 1279px) and (min-height: 640px) {
+  /* keep the actions inside the measured text column so the drawing never sits under them */
+  .hero-actions { flex-direction: column; align-items: flex-start; }
+}
 
 /* the habit: a quiet editorial break before the work */
 .habit { border-top: 1px solid var(--line); }
@@ -597,14 +692,77 @@ kbd {
 }
 
 /*
- * Opening sequence holding state. Only applies once the boot script has confirmed JS and motion
- * are welcome (.motion-ok); without JS the hero renders complete. The headline itself never goes
- * transparent: its words wait below their masks, and masks only clip while the intro runs.
+ * Opening holding state. Only applies once the boot script has confirmed JS and motion are
+ * welcome (.motion-ok); without JS the hero renders complete, drawing included. The headline
+ * itself never goes transparent: its words wait below their masks, which only clip during the
+ * ignition. A 2.5s failsafe in the boot script releases all of this if the bundle never runs.
  */
 .motion-ok:not(.hero-ready) [data-hero]:not([data-hero="title"]) { opacity: 0; }
 .motion-ok:not(.hero-ready) .hero-title .word-inner { transform: translateY(110%); }
 .motion-ok:not(.hero-ready) .hero-underline { opacity: 0; }
 .motion-ok:not(.intro-done) .hero-title .word { overflow: clip; }
+
+/* -------------------------------------------------------- build engine --- */
+
+/*
+ * An isometric exploded assembly in thin graphite lines. Accent colour only marks what is
+ * active: the routed path, the core's chip, a few details. The finished drawing is the default;
+ * HeroEngine.tsx sets the in-between states inline.
+ */
+.eng {
+  --eng-ink: color-mix(in srgb, var(--fg) 62%, transparent);
+  --eng-soft: color-mix(in srgb, var(--fg) 32%, transparent);
+  display: block;
+  width: 100%;
+  height: 100%;
+  max-width: none;
+  overflow: visible;
+}
+.eng path, .eng circle { vector-effect: non-scaling-stroke; }
+.eng-body, .eng-layer, .eng-plate, .eng-tag { transform-box: view-box; }
+.eng-face { fill: var(--bg); stroke: none; }
+.eng-face-open { fill: none; }
+.eng-line { fill: none; stroke: var(--eng-ink); stroke-width: 1.2; stroke-linejoin: round; stroke-linecap: round; }
+.eng-detail { fill: none; stroke: var(--eng-soft); stroke-width: 1; stroke-linejoin: round; stroke-linecap: round; }
+.eng-dashed { stroke-dasharray: 4 5; }
+.eng-accent { stroke: var(--accent); }
+.eng-hot { fill: none; stroke: var(--accent); stroke-width: 2; stroke-linejoin: round; opacity: 0; }
+.eng-hot-node { fill: var(--accent); }
+.eng-guide { fill: none; stroke: var(--eng-soft); stroke-width: 1; }
+.eng-guide[data-dashed] { stroke-dasharray: 2 7; }
+.eng-axis { stroke-dasharray: 16 6 2 6; }
+.eng-guides { opacity: 0.3; }
+.eng-leader { fill: none; stroke: var(--eng-soft); stroke-width: 1; }
+.eng-pin { fill: var(--accent); }
+.eng-label { fill: var(--fg-2); font-family: var(--font-mono); font-size: 13px; letter-spacing: 0.08em; }
+.eng-index { fill: var(--accent); }
+.eng-note { fill: var(--fg-3); font-family: var(--font-sans); font-size: 13px; opacity: 0; }
+.eng-projects { fill: var(--accent); font-family: var(--font-mono); font-size: 11.5px; letter-spacing: 0.06em; opacity: 0; }
+.eng-short { display: none; }
+
+/* how much the drawing says depends on how much room it has */
+.eng-tag[data-p="2"] .eng-note, .eng-tag[data-p="3"] .eng-note { display: none; }
+@media (max-width: 1279px) {
+  .eng-full { display: none; }
+  .eng-short { display: inline; }
+}
+@media (min-width: 1280px) { .eng-tag[data-p="2"] .eng-note { display: inline; } }
+@media (min-width: 1440px) { .eng-tag[data-p="3"] .eng-note { display: inline; } }
+@media (min-width: 1000px) and (max-width: 1279px) {
+  .eng-label { font-size: 17px; }
+  .eng-projects { font-size: 15px; }
+  .eng-note { display: none; }
+}
+@media (min-width: 768px) and (max-width: 999px) {
+  .eng-label { font-size: 15px; }
+  .eng-note { font-size: 14px; }
+  .eng-projects { font-size: 13px; }
+}
+@media (max-width: 767px) {
+  .eng-label { font-size: 24px; }
+  .eng-projects { font-size: 22px; }
+  .eng-index, .eng-note, .eng-fine, .eng-tag:not([data-p="1"]) { display: none; }
+}
 
 /* --------------------------------------------------------------- work --- */
 

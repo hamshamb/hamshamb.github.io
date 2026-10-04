@@ -207,3 +207,70 @@ test("development years never pretend to be releases, and real dates stay exact"
     assert.doesNotMatch(milestone, />MX</, "MX is never shown as released");
   }
 });
+
+test("hero build engine is server rendered in its finished state", () => {
+  const start = html.indexOf('<svg class="eng"');
+  assert.ok(start > 0, "the drawing is in the static HTML");
+  const svg = html.slice(start, html.indexOf("</svg>", start));
+  assert.match(svg, /aria-hidden="true"/);
+  assert.doesNotMatch(svg, /stroke-dasharray=|opacity:\s*0|pathLength/, "nothing in the drawing is hidden before JS");
+  for (const label of ["INTERFACE", "PRIVACY", "NETWORK", "PROTOCOL", "LOCAL FIRST", "SYSTEM CORE"]) assert.match(svg, new RegExp(label));
+  assert.ok((svg.match(/<path/g) ?? []).length < 220, "the drawing stays a modest number of paths");
+  assert.ok(svg.length < 40_000, "the drawing stays small");
+  // One semantic headline, actions reachable, the rail is decoration and not a fake control.
+  assert.equal((html.match(/<h1[\s>]/g) ?? []).length, 1);
+  assert.match(html, /<div class="hero-rail" data-hero="rail" aria-hidden="true">/);
+  assert.doesNotMatch(html, /role="slider"|role="progressbar"/);
+  assert.match(html, /<a class="button button-primary" href="#work">/);
+});
+
+test("hero start state covers every visit", async () => {
+  const { heroStart } = await import("../lib/hero-state.ts");
+  assert.equal(heroStart({ motionOk: true, heroReady: false, hidden: false }), "ignite", "first visit");
+  assert.equal(heroStart({ motionOk: true, heroReady: true, hidden: false }), "scroll", "repeat visit keeps the scroll engine");
+  assert.equal(heroStart({ motionOk: true, heroReady: false, hidden: true }), "scroll", "background tab skips the timed opening");
+  assert.equal(heroStart({ motionOk: false, heroReady: false, hidden: false }), "static", "reduced motion");
+  assert.equal(heroStart({ motionOk: false, heroReady: false, hidden: true }), "static");
+});
+
+test("boot script never leaves the hero hidden", () => {
+  const boot = html.match(/<script>(\(function\(\)\{var d=document\.documentElement[\s\S]*?)<\/script>/)[1];
+  const run = ({ reduced, seen }) => {
+    const classes = new Set();
+    const timers = [];
+    const document = { documentElement: { dataset: {}, classList: { add: (...names) => names.forEach((n) => classes.add(n)) } } };
+    const env = {
+      document,
+      localStorage: { getItem: () => null },
+      sessionStorage: { getItem: () => (seen ? "1" : null) },
+      matchMedia: () => ({ matches: reduced }),
+      setTimeout: (fn, ms) => timers.push([fn, ms]),
+    };
+    new Function(...Object.keys(env), boot)(...Object.values(env));
+    return { classes, timers };
+  };
+  assert.deepEqual([...run({ reduced: true, seen: false }).classes], [], "reduced motion: nothing is held back");
+  const first = run({ reduced: false, seen: false });
+  assert.deepEqual([...first.classes], ["motion-ok"]);
+  assert.equal(first.timers.length, 1);
+  assert.ok(first.timers[0][1] <= 3000, "the failsafe reveals the hero within a few seconds");
+  first.timers[0][0]();
+  assert.ok(first.classes.has("hero-ready"), "the failsafe releases the holding state");
+  const repeat = run({ reduced: false, seen: true });
+  assert.deepEqual([...repeat.classes].sort(), ["hero-ready", "intro-done", "motion-ok"]);
+});
+
+test("hero choreography initialises and cleans up", () => {
+  const engine = read("components/home/HeroEngine.tsx");
+  assert.match(engine, /heroStart\(/);
+  assert.match(engine, /onScroll\(/, "the engine is driven by scroll position");
+  assert.match(engine, /engine\.revert\(\)/);
+  assert.match(engine, /ignition\?\.revert\(\)/);
+  assert.match(engine, /removeAttribute\("pathLength"\)/, "drawn paths are restored on cleanup");
+  assert.match(engine, /finish\(\)/);
+  assert.doesNotMatch(engine, /loop:\s*true|preventDefault|wheel/, "no loops and no scroll hijacking");
+  const tokens = read("lib/anime.ts");
+  assert.match(tokens, /export const heroEngineMotion/);
+  const css = read("app/globals.css");
+  assert.match(css, /\.motion-ok \.hero-sequence \{ height: \d+svh; \}/, "the tall scroll scene only exists when motion is welcome");
+});

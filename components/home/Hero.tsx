@@ -1,8 +1,10 @@
+import type { CSSProperties } from "react";
 import { latestProject, phaseLabel, portfolio } from "@/content/portfolio";
 import { AppLink as Link } from "../ui/AppLink";
 import { CopyEmail } from "../ui/CopyEmail";
 import { LocalTime } from "../ui/LocalTime";
-import { HeroIntro } from "./HeroIntro";
+import { BuildEngine } from "./BuildEngine";
+import { HeroEngine } from "./HeroEngine";
 
 function Words({ text }: { text: string }) {
   return (
@@ -16,6 +18,35 @@ function Words({ text }: { text: string }) {
   );
 }
 
+const railYears = [2021, 2022, 2023, 2024, 2025, 2026];
+
+/**
+ * 2021 to 2026, moving with the hero's scroll. It uses the journey's marker shapes: hollow for
+ * the years spent developing, solid for the year things shipped. Decorative, not a control.
+ */
+function HeroRail() {
+  const last = railYears.length - 1;
+  return (
+    <div className="hero-rail" data-hero="rail" aria-hidden="true">
+      <span className="rail-end">{railYears[0]}</span>
+      <span className="rail-track">
+        <span className="rail-line" />
+        <span className="rail-fill" />
+        {railYears.map((year, index) => (
+          <span
+            key={year}
+            className="rail-tick ms"
+            data-kind={index === last ? "released" : "begins"}
+            style={{ "--at": index / last } as CSSProperties}
+          />
+        ))}
+        <span className="rail-dot" data-year={railYears[last]} />
+      </span>
+      <span className="rail-end">{railYears[last]}</span>
+    </div>
+  );
+}
+
 export function Hero() {
   const { owner } = portfolio;
   const [firstLine, secondLine] = owner.headline;
@@ -25,48 +56,64 @@ export function Hero() {
 
   return (
     <section className="hero" id="intro" aria-labelledby="hero-title">
+      <div className="hero-sequence">
+        <div className="hero-scene">
+          <div className="container hero-head">
+            <div className="hero-kicker mono" data-hero="meta">
+              <p className="hero-id">
+                <b>{owner.name}</b>
+                <span>{owner.role} / {owner.location.toLowerCase()} / coding since {owner.since}</span>
+              </p>
+              <p className="hero-kicker-side">
+                <span className="pulse-status">
+                  <span className="pulse-dot" aria-hidden="true" />
+                  {owner.status}
+                </span>
+                <LocalTime />
+              </p>
+            </div>
+
+            <div className="hero-main">
+              <h1 id="hero-title" className="hero-title" data-hero="title">
+                <span className="sr-only">{owner.name}: </span>
+                <span className="hero-line"><Words text={firstLine} /></span>
+                <span className="hero-line">
+                  <Words text={lead} />
+                  <span className="hero-accent">
+                    <span className="word"><span className="word-inner">{accent}</span></span>
+                    <svg className="hero-underline" viewBox="0 0 300 24" preserveAspectRatio="none" aria-hidden="true" focusable="false">
+                      <path d="M4 15.5C48 9 92 6.5 140 8.5c38 1.6 70 5.4 98 6.6 22 1 42-1.6 58-6.1" />
+                    </svg>
+                  </span>
+                </span>
+              </h1>
+
+              <div className="hero-copy" data-hero="lede">
+                <p className="hero-lede">{owner.statement}</p>
+                <p className="hero-range">{owner.range}</p>
+              </div>
+
+              <div className="hero-actions" data-hero="actions">
+                <a className="button button-primary" href="#work">
+                  explore the work <span className="arrow" aria-hidden="true">↓</span>
+                </a>
+                <CopyEmail email={owner.email} />
+              </div>
+            </div>
+          </div>
+
+          <div className="hero-machine" data-hero="machine">
+            <BuildEngine />
+          </div>
+
+          <div className="container hero-rail-row">
+            <HeroRail />
+          </div>
+        </div>
+      </div>
+
       <div className="container">
-        <div className="hero-kicker mono" data-hero="meta">
-          <p className="hero-id">
-            <b>{owner.name}</b>
-            <span>{owner.role} / {owner.location.toLowerCase()} / coding since {owner.since}</span>
-          </p>
-          <p className="hero-kicker-side">
-            <span className="pulse-status">
-              <span className="pulse-dot" aria-hidden="true" />
-              {owner.status}
-            </span>
-            <LocalTime />
-          </p>
-        </div>
-
-        <h1 id="hero-title" className="hero-title" data-hero="title">
-          <span className="sr-only">{owner.name}: </span>
-          <span className="hero-line"><Words text={firstLine} /></span>
-          <span className="hero-line">
-            <Words text={lead} />
-            <span className="hero-accent">
-              <span className="word"><span className="word-inner">{accent}</span></span>
-              <svg className="hero-underline" viewBox="0 0 300 24" preserveAspectRatio="none" aria-hidden="true" focusable="false">
-                <path d="M4 15.5C48 9 92 6.5 140 8.5c38 1.6 70 5.4 98 6.6 22 1 42-1.6 58-6.1" />
-              </svg>
-            </span>
-          </span>
-        </h1>
-
-        <div className="hero-copy" data-hero="lede">
-          <p className="hero-lede">{owner.statement}</p>
-          <p className="hero-range">{owner.range}</p>
-        </div>
-
-        <div className="hero-actions" data-hero="actions">
-          <a className="button button-primary" href="#work">
-            explore the work <span className="arrow" aria-hidden="true">↓</span>
-          </a>
-          <CopyEmail email={owner.email} />
-        </div>
-
-        <div className="hero-foot" data-hero="foot">
+        <div className="hero-foot">
           <div>
             <h2 className="mono">currently</h2>
             <dl className="currently">
@@ -101,7 +148,7 @@ export function Hero() {
           </div>
         </div>
       </div>
-      <HeroIntro rootId="intro" />
+      <HeroEngine rootId="intro" />
     </section>
   );
 }
