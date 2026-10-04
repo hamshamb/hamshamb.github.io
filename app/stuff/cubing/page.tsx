@@ -14,7 +14,13 @@ export const metadata: Metadata = {
 
 export default function CubingPage() {
   const { cubing } = personal;
-  const facts = ([["pb", cubing.pb], ["average", cubing.average], ["cube", cubing.cube]] as const).filter(([, value]) => value);
+  const facts = (
+    [
+      ["pb", cubing.pb && `${cubing.pb}s`],
+      ["avg", cubing.average && `${cubing.average}s`],
+      ["cubes", cubing.cubes?.join(" · ")],
+    ] as const
+  ).filter(([, value]) => value);
   return (
     <main id="main" tabIndex={-1} className="lab-page">
       <div className="container">

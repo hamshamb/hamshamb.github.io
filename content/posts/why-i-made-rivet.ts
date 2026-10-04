@@ -12,7 +12,7 @@ export const rivetPost: BlogPost = {
   eyebrow: "build log / networking / privacy",
   description:
     "why i started building Rivet, a private messenger where nearby phones carry encrypted messages for each other, and what that one question turned into.",
-  publishedOn: "2026-10-04",
+  publishedOn: "2026-09-12",
   tags: ["privacy", "networking", "bluetooth", "protocols", "build log"],
   project: "rivet",
   blocks: [

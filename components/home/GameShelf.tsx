@@ -57,7 +57,7 @@ export function GameShelf({ games }: { games: Game[] }) {
             <li key={game.title} className="game" style={{ "--hue": hue(game.title) } as CSSProperties}>
               <span className="game-mark mono" aria-hidden="true">{initials(game.title)}</span>
               <span className="game-title">{game.title}</span>
-              {played && <span className="game-hours mono">{Math.round(played).toLocaleString("en-US")}h</span>}
+              {played && <span className="game-hours mono">{`${Math.round(played).toLocaleString("en-US")}h`}</span>}
               {game.favorite && <span className="game-fav mono">fav</span>}
               {game.note && <span className="game-note">{game.note}</span>}
             </li>

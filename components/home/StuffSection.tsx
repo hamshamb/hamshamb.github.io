@@ -2,6 +2,7 @@ import { formatHours, liveSocials, personal } from "@/content/personal";
 import { ScrambleCard } from "../cube/ScrambleCard";
 import { Reveal } from "../motion/Reveal";
 import { AppLink as Link } from "../ui/AppLink";
+import { CopyHandle } from "../ui/CopyHandle";
 import { GameShelf } from "./GameShelf";
 import { SectionHead } from "./SectionHead";
 
@@ -42,15 +43,15 @@ function MapArt() {
 }
 
 /** Facts only appear when they exist. Nothing here ever shows a placeholder number. */
-function Facts({ items }: { items: [string, string | undefined][] }) {
-  const known = items.filter((item): item is [string, string] => Boolean(item[1]));
+function Facts({ items }: { items: [string, string | string[] | undefined][] }) {
+  const known = items.filter((item): item is [string, string | string[]] => Boolean(item[1] && item[1].length));
   if (!known.length) return null;
   return (
     <dl className="stuff-facts">
       {known.map(([label, value]) => (
         <div key={label}>
           <dt className="mono">{label}</dt>
-          <dd>{value}</dd>
+          <dd>{Array.isArray(value) ? value.map((line) => <span key={line}>{line}</span>) : value}</dd>
         </div>
       ))}
     </dl>
@@ -75,23 +76,40 @@ export function StuffSection() {
         <ul className="stuff-grid">
           <li className="stuff-wide">
             <Reveal className="stuff-card stuff-wide">
-              <div className="stuff-art">
-                <PixelScene />
-                {minecraftHours && <span className="stuff-stat mono">{minecraftHours}</span>}
+              <div className="stuff-art stuff-shot">
+                {minecraft.screenshot ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={minecraft.screenshot}
+                    width={1200}
+                    height={631}
+                    loading="lazy"
+                    decoding="async"
+                    alt="My Minecraft storage hall: a wooden corridor lined with chests, a cake on an emerald block, a framed sword, my wolf, and a friend in armour at the far end."
+                  />
+                ) : (
+                  <PixelScene />
+                )}
               </div>
               <div>
                 <span className="stuff-path">~/stuff/minecraft</span>
                 <h3>minecraft</h3>
+                {minecraftHours && (
+                  <p className="stuff-flex">
+                    <b className="mono">{minecraftHours}</b>
+                    <span>and somehow this eventually became a networking project.</span>
+                  </p>
+                )}
+                <p className="stuff-meta mono">
+                  {[
+                    minecraft.since && `playing since ${minecraft.since}`,
+                    minecraft.edition?.join(", "),
+                    minecraft.favoriteStyle?.length && `mostly ${minecraft.favoriteStyle.join(", ")}`,
+                  ].filter(Boolean).map((line) => <span key={String(line)}>{line}</span>)}
+                </p>
                 <p>been playing this for long enough that &ldquo;playing minecraft&rdquo; became &ldquo;installing mods&rdquo; became &ldquo;making mods&rdquo; became &ldquo;why am i reading networking documentation for minecraft&rdquo;.</p>
                 <p><Link className="text-link" href="/work/nexus">Nexus</Link> is partly the result.</p>
-                <Facts
-                  items={[
-                    ["playing since", minecraft.since ? String(minecraft.since) : undefined],
-                    ["edition", minecraft.edition?.join(", ")],
-                    ["usually", minecraft.favoriteStyle?.join(", ")],
-                  ]}
-                />
-                <small>{minecraftHours ? "somehow this became networking research." : "probably not the intended educational outcome of the game."}</small>
+                <small>probably not the intended educational outcome of the game.</small>
               </div>
             </Reveal>
           </li>
@@ -102,9 +120,9 @@ export function StuffSection() {
               <div>
                 <span className="stuff-path">~/stuff/cubing</span>
                 <h3>cubing</h3>
-                <p>newer obsession. a 3x3 is a remarkably efficient way to turn twenty seconds into several hours of trying to save half a second.</p>
+                <p>newer obsession. a 3x3 is a remarkably efficient way to turn half a minute into several hours of trying to save another second.</p>
                 <p>i don&rsquo;t have a smart cube, which immediately made me wonder if i could analyse solves without one. for now it has a scrambler and a cube you can spin.</p>
-                <Facts items={[["pb", cubing.pb], ["average", cubing.average], ["cube", cubing.cube]]} />
+                <Facts items={[["pb", cubing.pb && `${cubing.pb}s`], ["avg", cubing.average && `${cubing.average}s`], ["cubes", cubing.cubes]]} />
                 <Link className="stuff-link" href="/stuff/cubing">open the cube lab <span className="arrow" aria-hidden="true">→</span></Link>
               </div>
             </Reveal>
@@ -176,9 +194,14 @@ export function StuffSection() {
           <ul>
             {liveSocials().map((social) => (
               <li key={social.id}>
-                <a href={social.href} {...(social.href?.startsWith("http") ? { target: "_blank", rel: "noopener noreferrer" } : {})}>
-                  {social.label} <span className="mono">{social.handle}</span>
-                </a>
+                {social.href ? (
+                  <a href={social.href} {...(social.href.startsWith("http") ? { target: "_blank", rel: "noopener noreferrer" } : {})}>
+                    {social.label} {social.handle && <span className="mono">{social.handle}</span>}
+                    {social.href.startsWith("http") && <span aria-hidden="true">↗</span>}
+                  </a>
+                ) : (
+                  <CopyHandle label={social.label} handle={social.handle ?? ""} />
+                )}
               </li>
             ))}
           </ul>

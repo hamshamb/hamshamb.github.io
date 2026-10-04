@@ -46,15 +46,38 @@ test("logos are local data with attribution, never hotlinked", () => {
   assert.match(doc, /trademark/);
 });
 
-test("unknown personal stats are absent, never zero", () => {
+test("personal data is exactly what was given, and nothing else", () => {
   assert.equal(formatHours(undefined), undefined);
   assert.equal(formatHours(0), undefined);
-  assert.equal(formatHours(1842), "1,842h");
-  assert.ok(personal.games.length >= 10);
-  for (const game of personal.games) assert.equal(game.playtimeHours, undefined, `${game.title} has an invented playtime`);
-  assert.deepEqual(personal.cubing, {});
-  assert.equal(personal.minecraft.playtimeHours, undefined);
-  assert.deepEqual(liveSocials().map((social) => social.id), ["github", "email"], "only socials with real URLs render");
+  assert.equal(formatHours(15974), "15,974h");
+  const hours = Object.fromEntries(personal.games.map((game) => [game.title, game.playtimeHours]));
+  assert.deepEqual(hours, {
+    Undertale: 125,
+    "BeamNG.drive": 850,
+    "Geometry Dash": 1100,
+    "Buckshot Roulette": 65,
+    "Sky: Children of the Light": 375,
+    Hydroneer: 260,
+    "Counter-Strike 2": 1250,
+    "Call of Duty: Modern Warfare III": 210,
+    "Call of Duty: Black Ops Cold War": 320,
+    "Garry's Mod": 900,
+    "My Summer Car": 600,
+    "My Winter Car": 120,
+    "Kerbal Space Program": 575,
+    Sandboxels: 300,
+    "Meccha Chameleon": 30,
+  });
+  assert.ok(personal.games.every((game) => !game.favorite), "favourites are never guessed");
+  assert.deepEqual(personal.minecraft, { playtimeHours: 15974, since: "June 2019", edition: ["Java Edition"], favoriteStyle: ["vanilla"], screenshot: "/stuff/minecraft.webp" });
+  assert.deepEqual(personal.cubing, { pb: "23.89", average: "26.23", cubes: ["GAN 15", "MoYu WeiLong V10"] });
+  const socials = Object.fromEntries(liveSocials().map((social) => [social.id, social]));
+  assert.deepEqual(Object.keys(socials).sort(), ["discord", "email", "github", "steam", "x", "youtube"]);
+  assert.equal(socials.steam.href, "https://steamcommunity.com/profiles/76561199245583759/");
+  assert.equal(socials.x.href, "https://x.com/hamshamb_");
+  assert.equal(socials.youtube.href, "https://www.youtube.com/@hamshamb");
+  assert.equal(socials.discord.href, undefined, "no invented Discord profile link");
+  assert.equal(socials.discord.handle, "@hamshamb");
 });
 
 test("the relay simulation spreads copies, waits, delivers and expires", () => {
@@ -91,7 +114,10 @@ test("the Rivet post is honest, linked both ways, and has article metadata", () 
   assert.match(post, /rel="canonical" href="https:\/\/hamshamb\.github\.io\/blog\/why-i-made-rivet"/);
   assert.match(post, /"@type":"BlogPosting"/);
   assert.match(post, /property="article:published_time"/);
-  assert.match(post, /<time dateTime="2026-10-04"/);
+  assert.match(post, /<time dateTime="2026-09-12"/);
+  assert.match(post, /"datePublished":"2026-09-12"/);
+  assert.match(post, /12 september 2026/);
+  assert.match(built("blog.html"), /12 sept? 2026/);
   assert.match(post, /href="\/work\/rivet"/);
   assert.match(caseStudy, /href="\/blog\/why-i-made-rivet"/);
   for (const honest of [/at most six hours/, /no independent security review/, /field testing has not been done/, /conceptual simulation/, /does not solve/]) {
@@ -105,17 +131,33 @@ test("the Rivet post is honest, linked both ways, and has article metadata", () 
 
 const chunksOf = (html) => [...html.matchAll(/chunks\/([A-Za-z0-9]+)-[\w-]+\.js/g)].map((match) => match[1]);
 
-test("stuff shows real interests and hides every unknown stat", () => {
+test("stuff renders the real stats, and nothing invented", () => {
   const home = built("index.html");
   const stuff = home.slice(home.indexOf('id="stuff"'), home.indexOf('id="contact"'));
-  for (const title of ["Undertale", "BeamNG.drive", "Kerbal Space Program", "Garry&#x27;s Mod"]) assert.match(stuff, new RegExp(title.replace(".", "\\.")));
-  assert.doesNotMatch(stuff, /class="game-hours|class="stuff-stat|class="game-filters/, "no hours, stats or empty filters without data");
-  assert.doesNotMatch(stuff, />\s*0h\s*<|>\s*0 hours/);
-  assert.doesNotMatch(stuff, /<dt class="mono">pb<\/dt>/);
+  assert.match(stuff, /15,974h/);
+  assert.match(stuff, /playing since June 2019/);
+  assert.match(stuff, /Java Edition/);
+  assert.match(stuff, /mostly vanilla/);
+  assert.match(stuff, /src="\/stuff\/minecraft\.webp"/);
+  assert.ok(existsSync(new URL("public/stuff/minecraft.webp", root)));
+  assert.match(stuff, /23\.89s/);
+  assert.match(stuff, /26\.23s/);
+  assert.match(stuff, /GAN 15/);
+  assert.match(stuff, /MoYu WeiLong V10/);
+  assert.doesNotMatch(stuff, /twenty seconds|ao5|ao12|official average/i);
+  for (const shown of ["1,250h", "1,100h", "900h", "30h"]) assert.match(stuff, new RegExp(`>${shown}<`));
+  assert.match(stuff, /Meccha Chameleon/);
+  assert.doesNotMatch(stuff, /MECHA CAMELEON|Mecha\/Mecha/);
+  assert.doesNotMatch(stuff, /class="game-fav/, "no favourite is invented");
+  assert.doesNotMatch(stuff, /expert|veteran|\bpro\b|competitive/i);
+  assert.match(stuff, /href="https:\/\/steamcommunity\.com\/profiles\/76561199245583759\/"/);
+  assert.match(stuff, /href="https:\/\/x\.com\/hamshamb_"/);
+  assert.match(stuff, /href="https:\/\/www\.youtube\.com\/@hamshamb"/);
+  assert.doesNotMatch(stuff, /discord\.com|discordapp/i, "Discord is a copyable handle, not a guessed link");
+  assert.doesNotMatch(stuff, /reddit|linkedin/i);
   assert.match(stuff, /href="\/work\/nexus"/);
   assert.match(stuff, /href="\/stuff\/cubing"/);
-  assert.match(stuff, /href="https:\/\/github\.com\/hamshamb"/);
-  assert.doesNotMatch(stuff, /steam|discord|reddit|youtube|linkedin/i, "socials without a real URL never render");
+  assert.doesNotMatch(stuff, />\s*0h\s*</);
   assert.doesNotMatch(stuff, /TODO|unconfirmed/i);
 });
 

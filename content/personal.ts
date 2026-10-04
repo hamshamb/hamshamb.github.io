@@ -7,7 +7,8 @@
 
 export type SocialId = "github" | "email" | "steam" | "discord" | "x" | "reddit" | "youtube" | "linkedin";
 
-export type Social = { id: SocialId; label: string; href?: string; handle?: string };
+/** A social only renders with a real URL, or with a handle that can be copied (no invented profile links). */
+export type Social = { id: SocialId; label: string; href?: string; handle?: string; copyHandle?: boolean };
 
 export type Game = {
   title: string;
@@ -17,55 +18,59 @@ export type Game = {
   favorite?: boolean;
   /** A user-provided screenshot or cover, self-hosted under /public. */
   cover?: string;
-  /** The title as given, not yet confirmed. Never shown in the UI. */
-  unconfirmedTitle?: true;
 };
 
 export type Minecraft = {
   playtimeHours?: number;
-  since?: number;
+  /** As given, e.g. "June 2019". */
+  since?: string;
   edition?: string[];
   favoriteStyle?: string[];
   screenshot?: string;
 };
 
-export type Cubing = { pb?: string; average?: string; cube?: string };
+/** Times in seconds as given. `average` is just the current average, not a specific WCA format. */
+export type Cubing = { pb?: string; average?: string; cubes?: string[] };
 
 export const personal = {
   socials: [
     { id: "github", label: "github", href: "https://github.com/hamshamb", handle: "hamshamb" },
     { id: "email", label: "email", href: "mailto:hamshambdev@gmail.com", handle: "hamshambdev@gmail.com" },
-    { id: "steam", label: "steam" },
-    { id: "discord", label: "discord" },
-    { id: "x", label: "x" },
-    { id: "reddit", label: "reddit" },
-    { id: "youtube", label: "youtube" },
-    { id: "linkedin", label: "linkedin" },
+    { id: "steam", label: "Steam", href: "https://steamcommunity.com/profiles/76561199245583759/" },
+    { id: "x", label: "X", href: "https://x.com/hamshamb_", handle: "@hamshamb_" },
+    { id: "youtube", label: "YouTube", href: "https://www.youtube.com/@hamshamb", handle: "@hamshamb" },
+    // no public profile URL: the handle is shown and copyable, never linked
+    { id: "discord", label: "Discord", handle: "@hamshamb", copyHandle: true },
   ] satisfies Social[] as Social[],
-  minecraft: {} as Minecraft,
-  cubing: {} as Cubing,
+  minecraft: {
+    playtimeHours: 15974,
+    since: "June 2019",
+    edition: ["Java Edition"],
+    favoriteStyle: ["vanilla"],
+    screenshot: "/stuff/minecraft.webp",
+  } as Minecraft,
+  cubing: { pb: "23.89", average: "26.23", cubes: ["GAN 15", "MoYu WeiLong V10"] } as Cubing,
   games: [
-    { title: "Undertale" },
-    { title: "BeamNG.drive" },
-    { title: "Geometry Dash" },
-    { title: "Buckshot Roulette" },
-    { title: "Sky: Children of the Light" },
-    { title: "Hydroneer" },
-    { title: "Counter-Strike 2" },
-    { title: "Call of Duty: Modern Warfare III" },
-    { title: "Call of Duty: Black Ops Cold War" },
-    { title: "Garry's Mod" },
-    { title: "My Summer Car" },
-    { title: "My Winter Car" },
-    { title: "Kerbal Space Program" },
-    { title: "Sandboxels" },
-    // Given as "Mecha/Mecha Chameleon": kept exactly as written until the title is confirmed.
-    { title: "Mecha/Mecha Chameleon", unconfirmedTitle: true },
+    { title: "Undertale", playtimeHours: 125 },
+    { title: "BeamNG.drive", playtimeHours: 850 },
+    { title: "Geometry Dash", playtimeHours: 1100 },
+    { title: "Buckshot Roulette", playtimeHours: 65 },
+    { title: "Sky: Children of the Light", playtimeHours: 375 },
+    { title: "Hydroneer", playtimeHours: 260 },
+    { title: "Counter-Strike 2", playtimeHours: 1250 },
+    { title: "Call of Duty: Modern Warfare III", playtimeHours: 210 },
+    { title: "Call of Duty: Black Ops Cold War", playtimeHours: 320 },
+    { title: "Garry's Mod", playtimeHours: 900 },
+    { title: "My Summer Car", playtimeHours: 600 },
+    { title: "My Winter Car", playtimeHours: 120 },
+    { title: "Kerbal Space Program", playtimeHours: 575 },
+    { title: "Sandboxels", playtimeHours: 300 },
+    { title: "Meccha Chameleon", playtimeHours: 30 },
   ] as Game[],
 };
 
-/** Socials that actually have somewhere to go. Empty fields never render. */
-export const liveSocials = () => personal.socials.filter((social) => Boolean(social.href));
+/** Socials with somewhere to go or something real to copy. Empty fields never render. */
+export const liveSocials = () => personal.socials.filter((social) => Boolean(social.href || (social.copyHandle && social.handle)));
 
 /** "1,842h". Undefined when there is no real number, so callers render nothing. */
 export function formatHours(hours?: number) {
