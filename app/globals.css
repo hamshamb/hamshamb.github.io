@@ -1215,7 +1215,7 @@ kbd {
 .game-filters { display: flex; flex-wrap: wrap; gap: var(--space-2); margin-bottom: var(--space-3); }
 .game-filters button { min-height: 32px; padding: 0 var(--space-3); border: 1px solid var(--line); border-radius: 999px; background: transparent; color: var(--fg-2); font-size: var(--text-sm); }
 .game-filters button[aria-pressed="true"] { border-color: var(--accent); color: var(--fg); }
-.game-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 12.5rem), 1fr)); gap: var(--space-2); margin: 0; padding: 0; list-style: none; }
+.game-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 9.5rem), 1fr)); gap: var(--space-2); margin: 0; padding: 0; list-style: none; }
 .game { display: grid; grid-template-columns: 2rem minmax(0, 1fr) auto; align-items: center; gap: var(--space-1) var(--space-3); padding: var(--space-2); border: 1px solid var(--line); border-radius: var(--radius-sm); background: var(--bg); }
 .game-mark { display: grid; place-items: center; width: 2rem; height: 2rem; border-radius: 6px; background: hsl(var(--hue) 45% 42% / 0.22); color: hsl(var(--hue) 60% 70%); font-size: 0.66rem; font-weight: 600; }
 :root[data-theme="light"] .game-mark { color: hsl(var(--hue) 55% 32%); }

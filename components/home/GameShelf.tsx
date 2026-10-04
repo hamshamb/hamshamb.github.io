@@ -5,9 +5,12 @@ import type { Game } from "@/content/personal";
 
 type Filter = "all" | "favorites" | "most played";
 
+const minor = new Set(["of", "the", "a", "an", "and"]);
+
+/** First and last meaningful word, so two Call of Duty games still get different marks. */
 function initials(title: string) {
-  const words = title.replace(/[^\w\s]/g, " ").split(/\s+/).filter(Boolean);
-  return (words.length > 1 ? words[0][0] + words[1][0] : words[0].slice(0, 2)).toUpperCase();
+  const words = title.replace(/[^\w\s]/g, " ").split(/\s+/).filter((word) => word && !minor.has(word.toLowerCase()));
+  return (words.length > 1 ? words[0][0] + words[words.length - 1][0] : words[0].slice(0, 2)).toUpperCase();
 }
 
 /** A stable hue per title, so each game gets its own small mark without borrowing any artwork. */
