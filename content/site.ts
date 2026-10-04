@@ -13,7 +13,7 @@ export const owner = {
   timeZoneLabel: "IST",
 } as const;
 
-/** Public sections, in page order. Writing is intentionally absent while it is hidden. */
+/** Home-page sections, in page order. Writing is not a section: it is the /blog route below. */
 export const sections = [
   { id: "work", label: "work" },
   { id: "lab", label: "lab" },
@@ -22,6 +22,9 @@ export const sections = [
   { id: "stuff", label: "stuff" },
   { id: "contact", label: "contact" },
 ] as const;
+
+/** Top-level pages that sit beside the sections in the navigation. */
+export const pages = [{ href: "/blog", label: "blog" }] as const;
 
 export type Phase = "live" | "open" | "lab" | "wip";
 
@@ -34,3 +37,6 @@ export const phaseLabel: Record<Phase, string> = {
 
 /** What the command palette needs to know about a project. */
 export type PaletteProject = { slug: string; name: string; hint: string; keywords: string };
+
+/** Any other page the command palette can open: posts, skill playgrounds, the cube lab. */
+export type PaletteLink = { href: string; group: string; label: string; hint?: string; keywords?: string };

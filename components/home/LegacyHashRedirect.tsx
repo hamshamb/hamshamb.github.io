@@ -6,10 +6,13 @@ import { useEffect } from "react";
 const sectionAliases: Record<string, string> = {
   home: "intro",
   projects: "work",
-  stack: "about",
+  stack: "skills",
   log: "journey",
-  // Writing is hidden for now; old links land at the top instead of a missing section.
-  writing: "intro",
+};
+
+/** Old hashes whose content now has its own page. */
+const pageAliases: Record<string, string> = {
+  writing: "/blog",
 };
 
 export function LegacyHashRedirect({ slugs }: { slugs: string[] }) {
@@ -20,6 +23,10 @@ export function LegacyHashRedirect({ slugs }: { slugs: string[] }) {
       if (slugs.includes(slug)) {
         window.location.replace(`/work/${slug}`);
       }
+      return;
+    }
+    if (pageAliases[hash]) {
+      window.location.replace(pageAliases[hash]);
       return;
     }
     const alias = sectionAliases[hash];

@@ -3,12 +3,16 @@ import "@fontsource-variable/jetbrains-mono";
 import "./globals.css";
 import "./blog.css";
 import "./lab.css";
+import "./demo-card.css";
 import type { Metadata, Viewport } from "next";
 import { SiteFooter } from "@/components/layout/SiteFooter";
 import { SiteHeader } from "@/components/layout/SiteHeader";
 import { MotionProvider } from "@/components/motion/MotionProvider";
 import { CommandPalette } from "@/components/ui/CommandPalette";
+import { posts } from "@/content/blog";
 import { portfolio, siteUrl } from "@/content/portfolio";
+import type { PaletteLink } from "@/content/site";
+import { skillPages } from "@/content/skills";
 
 const title = "hamshamb · i build things i wish existed";
 const description = "hamshamb is a student developer in India, coding since 2021. Software, tools and experiments built from curiosity, irritation, or both.";
@@ -64,6 +68,15 @@ export const viewport: Viewport = {
  */
 const bootScript = `(function(){var d=document.documentElement;try{var t=localStorage.getItem("theme");if(t==="light"||t==="dark")d.dataset.theme=t}catch(e){}if(!matchMedia("(prefers-reduced-motion: reduce)").matches){d.classList.add("motion-ok");var s=null;try{s=sessionStorage.getItem("portfolio-intro-seen")}catch(e){}if(s){d.classList.add("hero-ready","intro-done")}else{setTimeout(function(){d.classList.add("hero-ready")},2500)}}})();`;
 
+/** Everything the command palette can open besides home sections and projects. */
+const paletteLinks: PaletteLink[] = [
+  ...posts.map((post) => ({ href: `/blog/${post.slug}`, group: "read", label: post.title, hint: "blog", keywords: `blog post writing ${post.tags.join(" ")} ${post.dek}` })),
+  { href: "/blog", group: "read", label: "all writing", hint: "/blog", keywords: "blog posts writing" },
+  ...skillPages.map((skill) => ({ href: `/skills/${skill.slug}`, group: "skills", label: skill.name, hint: skill.demo.title, keywords: `skill playground ${skill.slug} ${skill.demo.title}` })),
+  { href: "/skills", group: "skills", label: "all skills", hint: "/skills", keywords: "stack tools languages things i use" },
+  { href: "/stuff/cubing", group: "play", label: "cube lab", hint: "scramble + 3d cube", keywords: "rubik cube cubing scramble wca 3x3" },
+];
+
 const profileSchema = {
   "@context": "https://schema.org",
   "@type": "Person",
@@ -90,6 +103,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
           {children}
           <SiteFooter />
           <CommandPalette
+            links={paletteLinks}
             projects={portfolio.projects.map((project) => ({
               slug: project.slug,
               name: project.name,

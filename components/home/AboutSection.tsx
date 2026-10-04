@@ -1,5 +1,7 @@
 import { portfolio } from "@/content/portfolio";
 import { Reveal } from "../motion/Reveal";
+import { AppLink as Link } from "../ui/AppLink";
+import { TechChip } from "../ui/TechChip";
 import { SectionHead } from "./SectionHead";
 
 export function AboutSection() {
@@ -44,11 +46,12 @@ export function AboutSection() {
           </ol>
         </Reveal>
 
-        <Reveal className="stack">
+        <Reveal className="stack" id="skills">
           <div className="stack-head">
             <h3>stuff i use.</h3>
             <p>tools change. the kinds of problems i keep choosing are more consistent.</p>
             <p className="stack-since mono">coding since {owner.since}</p>
+            <Link className="stuff-link" href="/skills">playgrounds for six of these <span className="arrow" aria-hidden="true">→</span></Link>
           </div>
           <dl className="stack-grid">
             {skills.map((set) => (
@@ -56,7 +59,9 @@ export function AboutSection() {
                 <dt>{set.group}</dt>
                 <dd>
                   <p className="note">{set.note}</p>
-                  <ul>{set.items.map((item) => <li key={item}>{item}</li>)}</ul>
+                  <ul className="tech-list">
+                    {set.items.map((item) => <li key={item}>{"interest" in set ? <span className="tech-chip">{item}</span> : <TechChip label={item} />}</li>)}
+                  </ul>
                 </dd>
               </div>
             ))}

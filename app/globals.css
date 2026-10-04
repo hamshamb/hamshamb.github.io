@@ -1131,6 +1131,8 @@ kbd {
 .stack-group ul { display: grid; gap: 0.3rem; margin: 0; padding: 0; list-style: none; color: var(--fg-2); }
 .stack-group[data-interest] { border-top-style: dashed; }
 .stack-group[data-interest] ul { color: var(--fg-3); font-style: italic; }
+.stack-group ul.tech-list { display: flex; flex-wrap: wrap; gap: var(--space-2); }
+.stack-group[data-interest] .tech-chip { border-style: dashed; }
 
 /* -------------------------------------------------------------- stuff --- */
 
