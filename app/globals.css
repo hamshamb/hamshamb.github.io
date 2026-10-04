@@ -275,6 +275,27 @@ a, button { -webkit-tap-highlight-color: transparent; }
   letter-spacing: 0.02em;
 }
 
+/* technology chips: the name is always text; the logo is decoration */
+.tech-list { display: flex; flex-wrap: wrap; gap: var(--space-2); margin: 0; padding: 0; list-style: none; }
+.tech-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  min-height: 32px;
+  padding: 0.25rem 0.6rem;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  color: var(--fg-2);
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  letter-spacing: 0.02em;
+}
+.tech-icon { flex: none; fill: var(--brand, currentColor); }
+.tech-chip-link { color: var(--fg); transition: border-color var(--dur-fast), color var(--dur-fast); }
+.tech-chip-link .arrow { color: var(--fg-3); }
+.tech-chip-link:hover { border-color: var(--line-strong); color: var(--accent); }
+.tech-chip-link:hover .arrow { transform: translateX(2px); color: var(--accent); }
+
 /* section heading: index, label, title, optional aside */
 .section { padding-block: var(--section-pad); border-top: 1px solid var(--line); }
 .section-head {
@@ -1298,6 +1319,10 @@ kbd {
 .case-intro p:first-child { color: var(--fg); }
 .case-intro p + p { color: var(--fg-2); font-size: var(--text-lg); }
 .case-aside { max-width: 52ch; }
+.case-story { display: inline-flex; align-items: center; gap: var(--space-3); min-height: 44px; margin-top: var(--space-4); color: var(--fg); font-weight: 550; }
+.case-story .mono { color: var(--accent); }
+.case-story:hover { color: var(--accent); }
+.case-story:hover .arrow { transform: translateX(3px); }
 
 /* the hero visual settles in on load; CSS-only so it never flickers before hydration */
 @media (prefers-reduced-motion: no-preference) {

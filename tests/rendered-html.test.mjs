@@ -139,11 +139,11 @@ test("dedicated developer contact is used", () => {
 
 test("authored copy and docs never use em dashes", () => {
   const emDash = new RegExp(String.fromCharCode(0x2014));
-  const files = ["README.md", "content/portfolio.ts", "content/site.ts", "app/layout.tsx", "app/globals.css"];
+  const files = ["README.md"];
   const walk = (dir) => readdirSync(new URL(dir, root), { withFileTypes: true }).flatMap((entry) =>
     entry.isDirectory() ? walk(join(dir, entry.name)) : [join(dir, entry.name)],
   );
-  files.push(...walk("components"), ...walk("lib"), ...walk("app/work"));
+  files.push(...walk("components"), ...walk("lib"), ...walk("app"), ...walk("content"), ...walk("docs"), ...walk("tests"));
   for (const file of files) {
     assert.doesNotMatch(read(file.replaceAll("\\", "/")), emDash, `${file} contains an em dash`);
   }
@@ -152,14 +152,18 @@ test("authored copy and docs never use em dashes", () => {
 
 test("stylesheet blocks are balanced", () => {
   // An unclosed block silently nests every later rule inside it (for example inside a media query).
-  const css = read("app/globals.css").replace(/\/\*[\s\S]*?\*\//g, "").replace(/"[^"]*"/g, "");
-  let depth = 0;
-  for (const char of css) {
-    if (char === "{") depth += 1;
-    if (char === "}") depth -= 1;
-    assert.ok(depth >= 0, "closing brace without an opening one");
+  const sheets = readdirSync(new URL("app", root)).filter((name) => name.endsWith(".css"));
+  assert.ok(sheets.includes("globals.css"));
+  for (const sheet of sheets) {
+    const css = read(`app/${sheet}`).replace(/\/\*[\s\S]*?\*\//g, "").replace(/"[^"]*"/g, "");
+    let depth = 0;
+    for (const char of css) {
+      if (char === "{") depth += 1;
+      if (char === "}") depth -= 1;
+      assert.ok(depth >= 0, `closing brace without an opening one in ${sheet}`);
+    }
+    assert.equal(depth, 0, `unclosed block in app/${sheet}`);
   }
-  assert.equal(depth, 0, "unclosed block in app/globals.css");
 });
 
 
