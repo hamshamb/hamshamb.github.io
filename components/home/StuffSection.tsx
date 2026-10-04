@@ -44,7 +44,7 @@ export function StuffSection() {
     <section className="section" id="stuff" aria-labelledby="stuff-title">
       <div className="container">
         <SectionHead
-          index="04"
+          index="06"
           label="ls ~/stuff"
           titleId="stuff-title"
           title="stuff."

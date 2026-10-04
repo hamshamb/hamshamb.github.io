@@ -8,8 +8,8 @@ import { MotionProvider } from "@/components/motion/MotionProvider";
 import { CommandPalette } from "@/components/ui/CommandPalette";
 import { portfolio, siteUrl } from "@/content/portfolio";
 
-const title = "hamshamb · student who makes stuff";
-const description = "Software, Minecraft experiments, random tools, and whatever else hamshamb is working on.";
+const title = "hamshamb · i build things i wish existed";
+const description = "hamshamb is a student developer in India, coding since 2021. Software, tools and experiments built from curiosity, irritation, or both.";
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
@@ -18,27 +18,31 @@ export const metadata: Metadata = {
   authors: [{ name: "hamshamb", url: portfolio.owner.github }],
   creator: "hamshamb",
   keywords: [
-    "hamshamb", "student developer", "open source", "Minecraft", "Fabric mod",
-    "Python", "Java", "TypeScript", "React", "C#", "developer portfolio",
+    "hamshamb", "student developer", "open source", "privacy", "Bluetooth mesh", "local-first",
+    "Minecraft", "Python", "Java", "TypeScript", "React", "C#", "developer portfolio",
   ],
   alternates: { canonical: "/" },
   openGraph: {
     title,
-    description: "mostly software. occasionally questionable decisions.",
+    description: "software, tools and experiments built from curiosity, irritation, or both. coding since 2021.",
     type: "website",
     url: "/",
     siteName: "hamshamb",
     locale: "en_IN",
-    images: [{ url: "/og.png", width: 1200, height: 630, alt: "hamshamb: student who makes stuff" }],
+    images: [{ url: "/og.png", width: 1200, height: 630, alt: "hamshamb: i build things i wish existed." }],
   },
   twitter: {
     card: "summary_large_image",
     title,
-    description: "mostly software. occasionally questionable decisions.",
+    description: "software, tools and experiments built from curiosity, irritation, or both. coding since 2021.",
     images: ["/og.png"],
   },
   robots: { index: true, follow: true },
-  icons: { icon: "/favicon.svg", shortcut: "/favicon.svg" },
+  icons: {
+    icon: [{ url: "/favicon-32.png", sizes: "32x32", type: "image/png" }],
+    shortcut: "/favicon-32.png",
+    apple: "/apple-touch-icon.png",
+  },
   manifest: "/manifest.webmanifest",
 };
 
@@ -52,20 +56,22 @@ export const viewport: Viewport = {
 
 /**
  * Runs before first paint: applies a saved theme (no flash), and marks whether motion is welcome.
- * `motion-ok` lets the hero hide its words until Anime.js takes over; the timeout is a safety net
- * so the hero always becomes visible even if the script bundle never arrives.
+ * `motion-ok` lets the hero hold its opening state until Anime.js takes over; the timeout is a
+ * safety net so the hero always appears even if the script bundle never arrives. If the opening
+ * already played this session, the hero renders at rest straight away.
  */
-const bootScript = `(function(){var d=document.documentElement;try{var t=localStorage.getItem("theme");if(t==="light"||t==="dark")d.dataset.theme=t}catch(e){}if(!matchMedia("(prefers-reduced-motion: reduce)").matches){d.classList.add("motion-ok");setTimeout(function(){d.classList.add("hero-ready")},2500)}})();`;
+const bootScript = `(function(){var d=document.documentElement;try{var t=localStorage.getItem("theme");if(t==="light"||t==="dark")d.dataset.theme=t}catch(e){}if(!matchMedia("(prefers-reduced-motion: reduce)").matches){d.classList.add("motion-ok");var s=null;try{s=sessionStorage.getItem("portfolio-intro-seen")}catch(e){}if(s){d.classList.add("hero-ready","intro-done")}else{setTimeout(function(){d.classList.add("hero-ready")},2500)}}})();`;
 
 const profileSchema = {
   "@context": "https://schema.org",
   "@type": "Person",
   name: "hamshamb",
   url: siteUrl,
+  image: `${siteUrl}/icon-512.png`,
   email: `mailto:${portfolio.owner.email}`,
   sameAs: [portfolio.owner.github],
   jobTitle: "Student developer",
-  knowsAbout: ["Open-source software", "Minecraft modding", "Python", "Java", "TypeScript", "React", "C#", "Desktop applications"],
+  knowsAbout: ["Open-source software", "Privacy", "Local-first software", "Networking", "Python", "Java", "TypeScript", "React", "C#"],
 };
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {

@@ -7,6 +7,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { owner, sections } from "@/content/site";
 import { openPalette } from "@/lib/client-stores";
 import { duration, easeOut, spring } from "@/lib/motion";
+import { BrandMark } from "../ui/BrandMark";
 import { CloseIcon, MenuIcon } from "../ui/icons";
 import { ThemeToggle } from "../ui/ThemeToggle";
 
@@ -75,7 +76,7 @@ export function SiteHeader() {
       <header className="site-header" data-scrolled={scrolled || !isHome}>
         <div className="container header-inner">
           <Link href="/" className="brand" aria-label="hamshamb, home">
-            <span className="brand-mark" aria-hidden="true">h/</span>
+            <BrandMark />
             <span>{owner.name}</span>
           </Link>
 
@@ -194,7 +195,7 @@ function MobileMenu({
     >
       <div className="mobile-menu-top">
         <Link href="/" className="brand" onClick={close}>
-          <span className="brand-mark" aria-hidden="true">h/</span>
+          <BrandMark />
           <span>{owner.name}</span>
         </Link>
         <button type="button" className="icon-button" aria-label="Close menu" onClick={close}>

@@ -13,20 +13,23 @@ export const owner = {
   timeZoneLabel: "IST",
 } as const;
 
+/** Public sections, in page order. Writing is intentionally absent while it is hidden. */
 export const sections = [
   { id: "work", label: "work" },
-  { id: "log", label: "log" },
+  { id: "lab", label: "lab" },
+  { id: "journey", label: "journey" },
   { id: "about", label: "about" },
   { id: "stuff", label: "stuff" },
   { id: "contact", label: "contact" },
 ] as const;
 
-export type Phase = "live" | "open" | "lab";
+export type Phase = "live" | "open" | "lab" | "wip";
 
 export const phaseLabel: Record<Phase, string> = {
   live: "live",
   open: "open source",
-  lab: "not finished",
+  lab: "lab",
+  wip: "in progress",
 };
 
 /** What the command palette needs to know about a project. */

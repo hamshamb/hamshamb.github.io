@@ -3,13 +3,13 @@ import { Reveal } from "../motion/Reveal";
 import { SectionHead } from "./SectionHead";
 
 export function AboutSection() {
-  const { owner, skills } = portfolio;
+  const { owner, skills, themes } = portfolio;
   const [hello, ...bio] = owner.bio;
 
   return (
     <section className="section" id="about" aria-labelledby="about-title">
       <div className="container">
-        <SectionHead index="03" label="about" titleId="about-title" title={hello} />
+        <SectionHead index="05" label="about" titleId="about-title" title={hello} />
 
         <div className="about-grid">
           <div className="about-copy">
@@ -31,12 +31,28 @@ export function AboutSection() {
           </Reveal>
         </div>
 
+        <Reveal className="themes">
+          <h3 className="themes-title">things i keep falling into.</h3>
+          <ol className="themes-list">
+            {themes.map((theme, index) => (
+              <li key={theme.name}>
+                <span className="theme-index mono" aria-hidden="true">{String(index + 1).padStart(2, "0")}</span>
+                <h4>{theme.name}</h4>
+                <p>{theme.copy}</p>
+              </li>
+            ))}
+          </ol>
+        </Reveal>
+
         <Reveal className="stack">
-          <h3>stuff i use.</h3>
-          <p>not claiming mastery. these have appeared in things i&rsquo;ve actually tried to make.</p>
+          <div className="stack-head">
+            <h3>stuff i use.</h3>
+            <p>tools change. the kinds of problems i keep choosing are more consistent.</p>
+            <p className="stack-since mono">coding since {owner.since}</p>
+          </div>
           <dl className="stack-grid">
             {skills.map((set) => (
-              <div className="stack-group" key={set.group}>
+              <div className="stack-group" key={set.group} data-interest={"interest" in set ? true : undefined}>
                 <dt>{set.group}</dt>
                 <dd>
                   <p className="note">{set.note}</p>

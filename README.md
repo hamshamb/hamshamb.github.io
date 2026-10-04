@@ -1,8 +1,8 @@
 # hamshamb.github.io
 
-The personal site of **hamshamb**: a student who makes stuff. Live at [hamshamb.github.io](https://hamshamb.github.io).
+The personal site of **hamshamb**, a student developer in India, coding since 2021. Live at [hamshamb.github.io](https://hamshamb.github.io).
 
-One scrolling home page (work, build log, about, stuff, writing, contact) plus a prerendered case study for each project at `/work/<slug>`.
+One scrolling home page (selected work, in the lab, more things, the 2021 to 2026 journey, about, stuff, contact) plus a prerendered case study for each flagship project at `/work/<slug>`.
 
 ## Stack
 
@@ -29,7 +29,7 @@ Checks:
 
 ## Where things live
 
-    content/portfolio.ts   projects, bio, now, skills, writing ideas (server only)
+    content/portfolio.ts   projects, lab work, forks, journey, bio, now, skills (server only)
     content/site.ts        small client-safe facts: owner, nav sections, phase labels
     app/                   layout, home page, /work/[slug] case studies, 404
     components/home/       home page sections
@@ -38,16 +38,24 @@ Checks:
     components/motion/     Motion provider and scroll reveal
     lib/motion.ts          shared motion tokens (durations, easing, springs)
     lib/anime.ts           the same tokens for Anime.js
-    public/work/           optimised project media (WebP)
+    public/work/           project logos and optimised media
 
-To add or edit a project, change `content/portfolio.ts` and add its URL to `public/sitemap.xml` (the tests fail if one is missing). The build log and chart are derived from project dates. Forks are not listed as projects.
+To add or edit a project, change `content/portfolio.ts` and add its URL to `public/sitemap.xml` (the tests fail if one is missing).
+
+Content rules the tests enforce:
+
+- `releasedOn` and `startedOn` are real dates. Unreleased work (Rivet, MX) has no date at all.
+- Journey stages (2021 to 2026) carry a year only, never a date, so they can't be read as releases.
+- Forks live in their own list, labelled FORK, with credit to the upstream author. They are never projects.
+- The Writing section is hidden. Its ideas stay in `futureWriting` so it can come back later.
 
 ## Motion
 
 The two libraries never animate the same element.
 
-- **Anime.js** owns choreography: the hero intro (masked headline words, then the hand-drawn underline) and the release chart bars growing in.
-- **Motion** owns interface state: the active nav indicator, work list highlight and preview, command palette, mobile menu, copy feedback, theme icon, cube shuffle, and scroll reveals.
+- **Anime.js** owns choreography: the hero intro (masked headline words, then the hand-drawn underline) and the journey trace (the 2021 to 2026 rail, year nodes and numerals).
+- **Motion** owns interface state: the active nav indicator, the work highlight and identity preview, the journey events, the Rivet mesh diagram, command palette, mobile menu, copy feedback, theme icon, cube shuffle, and scroll reveals.
+- **CSS** handles the case-study visual reveal, so it runs from the first paint without a flash.
 
 With `prefers-reduced-motion`, the hero, chart and reveals render static and Motion drops transform animations. Without JavaScript, every section is still fully rendered.
 
