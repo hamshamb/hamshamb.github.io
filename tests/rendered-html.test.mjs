@@ -87,13 +87,13 @@ test("portfolio contains six flagship projects and no forks presented as mine", 
   assert.equal((html.match(/class="fork-badge mono"/g) ?? []).length, forkNames.length);
 });
 
-test("real dates are preserved and journey stages carry no dates", () => {
+test("real dates are preserved and development milestones carry no dates", () => {
   for (const [slug, date] of [["studyfilter", "2026-06-25"], ["nexus", "2026-08-31"], ["areuhuman", "2026-08-15"], ["chc-review-studio", "2026-08-30"], ["pyforge", "2025-10-15"]]) {
     assert.match(portfolioData, new RegExp(`slug: "${slug}"[\\s\\S]*?releasedOn: "${date}"`));
   }
   assert.match(portfolioData, /name: "TinyPaste"[\s\S]*?startedOn: "2026-09-15"/);
   assert.match(portfolioData, /name: "Inkline"[\s\S]*?startedOn: "2026-09-17"/);
-  const stages = portfolioData.slice(portfolioData.indexOf("export const journey:"), portfolioData.indexOf("export type JourneyEvent"));
+  const stages = portfolioData.slice(portfolioData.indexOf("export const journey:"), portfolioData.indexOf("export const portfolio"));
   assert.doesNotMatch(stages, /\d{4}-\d{2}-\d{2}/);
   for (const year of [2021, 2022, 2023, 2024, 2025, 2026]) assert.match(text, new RegExp(String(year)));
   assert.match(text, /in development/);
@@ -160,4 +160,117 @@ test("stylesheet blocks are balanced", () => {
     assert.ok(depth >= 0, "closing brace without an opening one");
   }
   assert.equal(depth, 0, "unclosed block in app/globals.css");
+});
+
+
+/** The journey section, split into its six years. */
+const journeyYears = () => {
+  const section = html.slice(html.indexOf('id="journey"'), html.indexOf('id="about"'));
+  return section.split('<li class="journey-year"').slice(1);
+};
+
+test("journey is project development history, not a learning list", () => {
+  const years = journeyYears();
+  assert.equal(years.length, 6);
+  assert.match(text, /five years of learning by building\./);
+  assert.match(text, /some projects followed me through years of rewrites\. Nexus and StudyFilter are much newer and moved far faster\./);
+  assert.match(text, /development history and public release history are shown separately\./);
+  for (const name of ["PyForge", "Rivet", "Inkline", "AreUHuman", "CHC Review Studio", "TinyPaste", "MX"]) {
+    assert.ok(years.slice(0, 5).some((year) => year.includes(name)), `${name} has no development history before 2026`);
+  }
+  // Density grows toward the years things shipped.
+  const counts = years.map((year) => (year.match(/class="milestone"/g) ?? []).length);
+  for (let i = 1; i < counts.length; i += 1) assert.ok(counts[i] >= counts[i - 1], `milestones thin out in ${2021 + i}`);
+  assert.ok(counts.every((count) => count >= 1));
+  const legend = html.slice(html.indexOf('class="journey-legend'), html.indexOf('id="journey-track"'));
+  assert.equal((legend.match(/class="ms"/g) ?? []).length, 8);
+});
+
+test("development years never pretend to be releases, and real dates stay exact", () => {
+  const years = journeyYears();
+  for (const year of years.slice(0, 4)) assert.doesNotMatch(year, /<time/, "2021 to 2024 must be year-only");
+  for (const year of years.slice(0, 5)) {
+    assert.doesNotMatch(year, />StudyFilter</, "StudyFilter is a 2026 project");
+    assert.doesNotMatch(year, />Nexus</, "Nexus is a 2026 project");
+  }
+  assert.deepEqual([...years[4].matchAll(/<time dateTime="([^"]+)"/g)].map((m) => m[1]), ["2025-10-15"]);
+  assert.deepEqual(
+    [...years[5].matchAll(/<time dateTime="([^"]+)"/g)].map((m) => m[1]),
+    ["2026-06-25", "2026-08-15", "2026-08-30", "2026-08-31", "2026-09-15", "2026-09-17"],
+  );
+  assert.equal((years[5].match(/data-recent="true"/g) ?? []).length, 2);
+  // Rivet is long-running and pre-release, never "released".
+  assert.match(years[5], /data-kind="prerelease"[\s\S]*?Rivet/);
+  const milestones = years.join("").split('<li class="milestone"').slice(1);
+  for (const milestone of milestones.filter((item) => item.startsWith(' data-kind="released"'))) {
+    assert.doesNotMatch(milestone, />Rivet</, "Rivet is never shown as released");
+    assert.doesNotMatch(milestone, />MX</, "MX is never shown as released");
+  }
+});
+
+test("hero build engine is server rendered in its finished state", () => {
+  const start = html.indexOf('<svg class="eng"');
+  assert.ok(start > 0, "the drawing is in the static HTML");
+  const svg = html.slice(start, html.indexOf("</svg>", start));
+  assert.match(svg, /aria-hidden="true"/);
+  assert.doesNotMatch(svg, /stroke-dasharray=|opacity:\s*0|pathLength/, "nothing in the drawing is hidden before JS");
+  for (const label of ["INTERFACE", "PRIVACY", "NETWORK", "PROTOCOL", "LOCAL FIRST", "SYSTEM CORE"]) assert.match(svg, new RegExp(label));
+  assert.ok((svg.match(/<path/g) ?? []).length < 220, "the drawing stays a modest number of paths");
+  assert.ok(svg.length < 40_000, "the drawing stays small");
+  // One semantic headline, actions reachable, the rail is decoration and not a fake control.
+  assert.equal((html.match(/<h1[\s>]/g) ?? []).length, 1);
+  assert.match(html, /<div class="hero-rail" data-hero="rail" aria-hidden="true">/);
+  assert.doesNotMatch(html, /role="slider"|role="progressbar"/);
+  assert.match(html, /<a class="button button-primary" href="#work">/);
+});
+
+test("hero start state covers every visit", async () => {
+  const { heroStart } = await import("../lib/hero-state.ts");
+  assert.equal(heroStart({ motionOk: true, heroReady: false, hidden: false }), "ignite", "first visit");
+  assert.equal(heroStart({ motionOk: true, heroReady: true, hidden: false }), "scroll", "repeat visit keeps the scroll engine");
+  assert.equal(heroStart({ motionOk: true, heroReady: false, hidden: true }), "scroll", "background tab skips the timed opening");
+  assert.equal(heroStart({ motionOk: false, heroReady: false, hidden: false }), "static", "reduced motion");
+  assert.equal(heroStart({ motionOk: false, heroReady: false, hidden: true }), "static");
+});
+
+test("boot script never leaves the hero hidden", () => {
+  const boot = html.match(/<script>(\(function\(\)\{var d=document\.documentElement[\s\S]*?)<\/script>/)[1];
+  const run = ({ reduced, seen }) => {
+    const classes = new Set();
+    const timers = [];
+    const document = { documentElement: { dataset: {}, classList: { add: (...names) => names.forEach((n) => classes.add(n)) } } };
+    const env = {
+      document,
+      localStorage: { getItem: () => null },
+      sessionStorage: { getItem: () => (seen ? "1" : null) },
+      matchMedia: () => ({ matches: reduced }),
+      setTimeout: (fn, ms) => timers.push([fn, ms]),
+    };
+    new Function(...Object.keys(env), boot)(...Object.values(env));
+    return { classes, timers };
+  };
+  assert.deepEqual([...run({ reduced: true, seen: false }).classes], [], "reduced motion: nothing is held back");
+  const first = run({ reduced: false, seen: false });
+  assert.deepEqual([...first.classes], ["motion-ok"]);
+  assert.equal(first.timers.length, 1);
+  assert.ok(first.timers[0][1] <= 3000, "the failsafe reveals the hero within a few seconds");
+  first.timers[0][0]();
+  assert.ok(first.classes.has("hero-ready"), "the failsafe releases the holding state");
+  const repeat = run({ reduced: false, seen: true });
+  assert.deepEqual([...repeat.classes].sort(), ["hero-ready", "intro-done", "motion-ok"]);
+});
+
+test("hero choreography initialises and cleans up", () => {
+  const engine = read("components/home/HeroEngine.tsx");
+  assert.match(engine, /heroStart\(/);
+  assert.match(engine, /onScroll\(/, "the engine is driven by scroll position");
+  assert.match(engine, /engine\.revert\(\)/);
+  assert.match(engine, /ignition\?\.revert\(\)/);
+  assert.match(engine, /removeAttribute\("pathLength"\)/, "drawn paths are restored on cleanup");
+  assert.match(engine, /finish\(\)/);
+  assert.doesNotMatch(engine, /loop:\s*true|preventDefault|wheel/, "no loops and no scroll hijacking");
+  const tokens = read("lib/anime.ts");
+  assert.match(tokens, /export const heroEngineMotion/);
+  const css = read("app/globals.css");
+  assert.match(css, /\.motion-ok \.hero-sequence \{ height: \d+svh; \}/, "the tall scroll scene only exists when motion is welcome");
 });

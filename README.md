@@ -2,7 +2,7 @@
 
 The personal site of **hamshamb**, a student developer in India, coding since 2021. Live at [hamshamb.github.io](https://hamshamb.github.io).
 
-One scrolling home page (selected work, in the lab, more things, the 2021 to 2026 journey, about, stuff, contact) plus a prerendered case study for each flagship project at `/work/<slug>`.
+One scrolling home page (a scroll-driven hero, selected work, in the lab, more things, the 2021 to 2026 development history, about, stuff, contact) plus a prerendered case study for each flagship project at `/work/<slug>`.
 
 ## Stack
 
@@ -33,11 +33,13 @@ Checks:
     content/site.ts        small client-safe facts: owner, nav sections, phase labels
     app/                   layout, home page, /work/[slug] case studies, 404
     components/home/       home page sections
+    components/home/engine.ts  geometry and labels of the hero's build engine drawing
     components/layout/     header (nav, mobile menu) and footer
     components/ui/         command palette, copy email, theme toggle, icons
     components/motion/     Motion provider and scroll reveal
     lib/motion.ts          shared motion tokens (durations, easing, springs)
-    lib/anime.ts           the same tokens for Anime.js
+    lib/anime.ts           the same tokens for Anime.js, plus the hero's timings and scroll stages
+    lib/hero-state.ts      how the hero starts (static, scroll only, or with the timed opening)
     public/work/           project logos and optimised media
 
 To add or edit a project, change `content/portfolio.ts` and add its URL to `public/sitemap.xml` (the tests fail if one is missing).
@@ -45,7 +47,7 @@ To add or edit a project, change `content/portfolio.ts` and add its URL to `publ
 Content rules the tests enforce:
 
 - `releasedOn` and `startedOn` are real dates. Unreleased work (Rivet, MX) has no date at all.
-- Journey stages (2021 to 2026) carry a year only, never a date, so they can't be read as releases.
+- The journey is development history. Development milestones (when something began, was prototyped, rewritten or hardened) carry a year only. The only exact dates in it are public releases and repositories, read straight from project data, so a development start can never be mistaken for a release.
 - Forks live in their own list, labelled FORK, with credit to the upstream author. They are never projects.
 - The Writing section is hidden. Its ideas stay in `futureWriting` so it can come back later.
 
@@ -53,11 +55,13 @@ Content rules the tests enforce:
 
 The two libraries never animate the same element.
 
-- **Anime.js** owns choreography: the hero intro (masked headline words, then the hand-drawn underline) and the journey trace (the 2021 to 2026 rail, year nodes and numerals).
-- **Motion** owns interface state: the active nav indicator, the work highlight and identity preview, the journey events, the Rivet mesh diagram, command palette, mobile menu, copy feedback, theme icon, cube shuffle, and scroll reveals.
+- **Anime.js** owns choreography: the hero (a short timed opening on first visit, then the build engine drawing, assembling, exploding and reassembling as you scroll, plus the 2021 to 2026 hero rail), the journey rail drawn in step with the scroll, and the Rivet mesh diagram.
+- **Motion** owns interface state: the active nav indicator, the work highlight and identity preview, the journey milestones arriving, command palette, mobile menu, copy feedback, theme icon, cube shuffle, and scroll reveals.
 - **CSS** handles the case-study visual reveal, so it runs from the first paint without a flash.
 
-With `prefers-reduced-motion`, the hero, chart and reveals render static and Motion drops transform animations. Without JavaScript, every section is still fully rendered.
+The hero never takes over scrolling: on large screens the scene is sticky inside a taller section and the page scrolls natively. The timed opening plays once per session; repeat visits and background tabs skip it but keep the scroll-driven drawing.
+
+With `prefers-reduced-motion`, the hero renders as a finished drawing, reveals are static and Motion drops transform animations. Without JavaScript, every section is still fully rendered, drawing included.
 
 ## Keyboard
 

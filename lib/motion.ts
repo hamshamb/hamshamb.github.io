@@ -2,7 +2,7 @@
  * One motion language for the whole site.
  *
  * Motion (React) owns interface state: mount/unmount, layout, hover, nav, dialogs.
- * Anime.js owns choreography: the hero intro and the release timeline draw.
+ * Anime.js owns choreography: the hero, its build engine drawing and the journey rail.
  * Neither library animates an element the other one touches.
  *
  * CSS mirrors these values as --ease-out, --dur-fast, --dur-base and --dur-slow.

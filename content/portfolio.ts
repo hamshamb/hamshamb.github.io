@@ -501,28 +501,214 @@ const forks: Fork[] = [
 ];
 
 /**
- * The coding journey. Broad stages, not releases: these carry a year only and never a date,
- * so they can never be mistaken for repository history. Real events come from projects.
+ * Development history, 2021 to 2026. Two kinds of fact live here and are never mixed:
+ * development milestones (when something began, was prototyped, rewritten or hardened) carry a
+ * year only, while public dates are read from the project data above and never typed twice.
+ * A public repository or release date is not when development began.
  */
-export type JourneyStage = { year: number; title: string; copy: string };
+export type MilestoneKind = "begins" | "early" | "prototype" | "rewrite" | "hardening" | "released" | "developing" | "prerelease";
 
-export const journey: JourneyStage[] = [
-  { year: 2021, title: "first lines", copy: "started coding. mostly tiny experiments, broken things, copied ideas, rewrites and the occasional moment where the computer finally did what i meant." },
-  { year: 2022, title: "learning by making", copy: "kept building things instead of following a neat curriculum. most of them were disposable. the habit wasn't." },
-  { year: 2023, title: "projects started sticking", copy: "less \"can i make this work?\" and more \"can i make this make sense?\"" },
-  { year: 2024, title: "past the prototype", copy: "started paying more attention to interfaces, edge cases, structure and the unglamorous parts that decide whether software survives contact with somebody else." },
-  { year: 2025, title: "shipping publicly", copy: "some experiments finally survived enough rewrites to become things i was comfortable putting in public." },
-  { year: 2026, title: "bigger systems, stranger problems", copy: "the projects spread into learning software, touchscreen systems, desktop tooling, privacy, bluetooth, cryptography, networking and a lot more protocol diagrams than i expected." },
-];
-
-export type JourneyEvent = {
-  year: number;
-  kind: "released" | "started" | "developing";
-  /** ISO date. Absent for work still in development, which has no release date. */
-  date?: string;
-  name: string;
-  href: string;
+export const milestoneLabel: Record<MilestoneKind, string> = {
+  begins: "development begins",
+  early: "early development",
+  prototype: "prototype",
+  rewrite: "rewrite",
+  hardening: "hardening",
+  released: "public release",
+  developing: "in development",
+  prerelease: "pre-release",
 };
+
+export type Milestone = {
+  kind: MilestoneKind;
+  /** The project, when the milestone belongs to one. */
+  name?: string;
+  /** What this milestone was, in the history's own words. */
+  label: string;
+  copy?: string[];
+  /** Compact detail, e.g. what a hardening year actually involved. */
+  points?: string[];
+  /** Only ever a real public date, taken from project data. */
+  date?: string;
+  href?: string;
+  /** Genuinely recent projects, so they never read as five-year efforts. */
+  recent?: boolean;
+};
+
+export type JourneyYear = {
+  year: number;
+  title: string;
+  intro?: string;
+  milestones: Milestone[];
+  /** Smaller things that happened that year, not tied to one project. */
+  notes?: { lead?: string; items: string[] };
+  closing?: string;
+};
+
+function publicRelease(slug: string): Required<Pick<Milestone, "name" | "date" | "href">> {
+  const project = projects.find((item) => item.slug === slug);
+  if (!project?.releasedOn) throw new Error(`${slug} has no public release date`);
+  return { name: project.name, date: project.releasedOn, href: `/work/${slug}` };
+}
+
+function publicRepository(name: string): Required<Pick<Milestone, "name" | "date" | "href">> {
+  const thing = smallThings.find((item) => item.name === name);
+  if (!thing) throw new Error(`${name} is not in smallThings`);
+  return { name: thing.name, date: thing.startedOn, href: thing.source };
+}
+
+export const journey: JourneyYear[] = [
+  {
+    year: 2021,
+    title: "first real builds",
+    milestones: [
+      {
+        kind: "begins",
+        name: "PyForge",
+        label: "development begins",
+        copy: [
+          "PyForge begins as a small Python packaging experiment.",
+          "what started as scripts for turning Python programs into something easier to share slowly became a proper desktop tool.",
+        ],
+      },
+    ],
+    notes: { items: ["Python utilities", "early desktop UI", "packaging experiments", "first projects that lasted longer than a weekend"] },
+  },
+  {
+    year: 2022,
+    title: "projects stopped being weekend files",
+    milestones: [
+      {
+        kind: "early",
+        name: "Rivet",
+        label: "early development",
+        copy: [
+          "the original question was simple: can two nearby phones communicate privately without relying on normal infrastructure?",
+          "that question eventually became Bluetooth discovery, encrypted envelopes, store-and-forward delivery and mesh networking.",
+        ],
+      },
+      {
+        kind: "early",
+        name: "Inkline",
+        label: "early development",
+        copy: [
+          "i wanted a writing tool that did not need an account, backend or cloud just to save a document.",
+          "the early versions were much smaller, but the local-first idea stayed.",
+        ],
+      },
+    ],
+    notes: { items: ["more JavaScript", "more interfaces", "more things i did not finish"] },
+  },
+  {
+    year: 2023,
+    title: "more systems, less one-off code",
+    milestones: [
+      {
+        kind: "prototype",
+        name: "AreUHuman",
+        label: "prototype",
+        copy: ["started as a touchscreen interaction experiment and gradually turned into a measurable challenge system with dozens of mechanics."],
+      },
+      {
+        kind: "early",
+        name: "CHC Review Studio",
+        label: "early build",
+        copy: [
+          "the first idea was much smaller: keep comments tied to the evidence that caused them.",
+          "it eventually expanded into rubrics, findings, source anchors, grading and recovery.",
+        ],
+      },
+    ],
+    notes: {
+      lead: "this was also when i started caring much more about",
+      items: ["state", "persistence", "testing", "failure cases", "interfaces other people could understand"],
+    },
+  },
+  {
+    year: 2024,
+    title: "the projects get deeper",
+    milestones: [
+      {
+        kind: "begins",
+        name: "TinyPaste",
+        label: "development",
+        copy: [
+          "the question was: how little does a paste-sharing service actually need to know?",
+          "that led into expiry, burn-after-reading, browser encryption and ownership without accounts.",
+        ],
+      },
+      {
+        kind: "prototype",
+        name: "MX",
+        label: "experiment",
+        copy: [
+          "started as a messaging and cryptography experiment.",
+          "the interesting part became less about chat UI and more about how the crypto engine is built, isolated and verified.",
+        ],
+      },
+      {
+        kind: "rewrite",
+        label: "rewrite",
+        copy: ["older projects kept getting rewritten instead of abandoned."],
+      },
+    ],
+  },
+  {
+    year: 2025,
+    title: "rewrites, hardening and getting ready to ship",
+    milestones: [
+      { kind: "hardening", name: "PyForge", label: "hardening", points: ["validation", "packaging workflow", "tests", "Windows polish"] },
+      { kind: "hardening", name: "Rivet", label: "hardening", points: ["protocol design", "relay behaviour", "threat modelling", "native radio work"] },
+      { kind: "hardening", name: "Inkline", label: "hardening", points: ["rich text", "markdown", "local storage", "PWA", "Windows desktop"] },
+      { kind: "hardening", name: "AreUHuman", label: "hardening", points: ["more mechanics", "measured scoring", "operator tooling"] },
+      { kind: "hardening", name: "CHC Review Studio", label: "hardening", points: ["evidence trails", "grading safeguards", "recovery", "exports"] },
+      { kind: "released", label: "public release", ...publicRelease("pyforge") },
+    ],
+    closing: "the question changed from \"can i build this?\" to \"would i trust somebody else to use this?\"",
+  },
+  {
+    year: 2026,
+    title: "the year they shipped",
+    intro: "years of half-finished folders, rewrites and prototypes finally turned into public releases.",
+    milestones: [
+      {
+        kind: "released",
+        label: "new project · 2026",
+        recent: true,
+        copy: [
+          "one of the newest projects in the portfolio.",
+          "it moved much faster than the older builds, but grew into one of the largest products here.",
+        ],
+        ...publicRelease("studyfilter"),
+      },
+      { kind: "released", label: "public release", ...publicRelease("areuhuman") },
+      { kind: "released", label: "public release", ...publicRelease("chc-review-studio") },
+      {
+        kind: "released",
+        label: "new project · 2026",
+        recent: true,
+        copy: [
+          "another recent project.",
+          "\"send someone a code and let them join my world\" very quickly became sessions, authentication, transport and protocol design.",
+        ],
+        ...publicRelease("nexus"),
+      },
+      { kind: "released", label: "public repository", ...publicRepository("TinyPaste") },
+      { kind: "developing", label: "public repository · in development", ...publicRepository("Inkline") },
+      {
+        kind: "prerelease",
+        name: "Rivet",
+        label: "long-running development · v1 pre-release",
+        href: "/work/rivet",
+        copy: [
+          "years after the original idea, the protocol is frozen for version 1 and the automated suite is green.",
+          "physical-device field testing and an independent security review still remain.",
+        ],
+      },
+      { kind: "developing", name: "MX", label: "experimental · in development", href: "/#lab" },
+    ],
+  },
+];
 
 export const portfolio = {
   owner: {
@@ -586,26 +772,6 @@ const released = projects.filter((project): project is Project & { releasedOn: s
 
 export const releaseLog = [...released].sort((a, b) => b.releasedOn.localeCompare(a.releasedOn));
 export const latestProject = releaseLog[0];
-
-/** Real, dated events plus undated in-development work, merged for the journey view. */
-export const journeyEvents: JourneyEvent[] = ([
-  ...released.map((project) => ({
-    year: Number(project.releasedOn.slice(0, 4)),
-    kind: "released" as const,
-    date: project.releasedOn,
-    name: project.name,
-    href: `/work/${project.slug}`,
-  })),
-  ...smallThings.map((thing) => ({
-    year: Number(thing.startedOn.slice(0, 4)),
-    kind: "started" as const,
-    date: thing.startedOn,
-    name: thing.name,
-    href: thing.source,
-  })),
-  { year: 2026, kind: "developing" as const, name: "Rivet", href: "/work/rivet" },
-  { year: 2026, kind: "developing" as const, name: "MX", href: "/#lab" },
-] as JourneyEvent[]).sort((a, b) => (a.date ?? "9999").localeCompare(b.date ?? "9999"));
 
 /**
  * Writing is intentionally hidden for now: nothing renders this list and the section is out of
