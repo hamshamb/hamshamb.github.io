@@ -323,20 +323,16 @@ a, button { -webkit-tap-highlight-color: transparent; }
 
 .brand { display: inline-flex; align-items: center; gap: var(--space-3); min-height: 44px; font-weight: 600; letter-spacing: -0.01em; }
 .brand-mark {
-  display: grid;
+  display: block;
   width: 28px;
   height: 28px;
-  place-items: center;
+  flex: none;
   border-radius: var(--radius-sm);
-  background: var(--fg);
-  color: var(--bg);
-  font-family: var(--font-mono);
-  font-size: 0.8rem;
-  font-weight: 700;
-  letter-spacing: -0.08em;
-  transition: background-color var(--dur-fast);
+  object-fit: cover;
+  box-shadow: 0 0 0 1px var(--line);
+  transition: box-shadow var(--dur-fast);
 }
-.brand:hover .brand-mark { background: var(--accent); color: var(--accent-ink); }
+.brand:hover .brand-mark { box-shadow: 0 0 0 2px var(--accent); }
 
 .site-nav { display: none; }
 .site-nav ul { display: flex; gap: var(--space-1); margin: 0; padding: 0; list-style: none; }

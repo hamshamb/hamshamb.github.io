@@ -1,5 +1,6 @@
 import { AppLink as Link } from "../ui/AppLink";
 import { portfolio, sections } from "@/content/portfolio";
+import { BrandMark } from "../ui/BrandMark";
 import { LocalTime } from "../ui/LocalTime";
 
 export function SiteFooter() {
@@ -11,7 +12,7 @@ export function SiteFooter() {
         <div className="footer-grid">
           <div className="footer-brand">
             <Link href="/" className="brand">
-              <span className="brand-mark" aria-hidden="true">h/</span>
+              <BrandMark />
               <span>{owner.name}</span>
             </Link>
             <p className="footer-since mono">coding since 2021</p>

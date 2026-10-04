@@ -38,7 +38,11 @@ export const metadata: Metadata = {
     images: ["/og.png"],
   },
   robots: { index: true, follow: true },
-  icons: { icon: "/favicon.svg", shortcut: "/favicon.svg" },
+  icons: {
+    icon: [{ url: "/favicon-32.png", sizes: "32x32", type: "image/png" }],
+    shortcut: "/favicon-32.png",
+    apple: "/apple-touch-icon.png",
+  },
   manifest: "/manifest.webmanifest",
 };
 
@@ -62,6 +66,7 @@ const profileSchema = {
   "@type": "Person",
   name: "hamshamb",
   url: siteUrl,
+  image: `${siteUrl}/icon-512.png`,
   email: `mailto:${portfolio.owner.email}`,
   sameAs: [portfolio.owner.github],
   jobTitle: "Student developer",
