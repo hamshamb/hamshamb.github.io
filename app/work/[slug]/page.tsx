@@ -2,8 +2,10 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { Reveal } from "@/components/motion/Reveal";
 import { AppLink as Link } from "@/components/ui/AppLink";
+import { TechChip } from "@/components/ui/TechChip";
 import { CopyLink } from "@/components/work/CopyLink";
 import { IdentityArt, MediaFrame } from "@/components/work/ProjectMedia";
+import { postForProject } from "@/content/blog";
 import { getNeighbours, getProject, portfolio } from "@/content/portfolio";
 
 type Params = { slug: string };
@@ -41,6 +43,7 @@ export default async function ProjectPage({ params }: { params: Promise<Params> 
   const project = getProject(slug);
   if (!project) notFound();
   const { previous, next } = getNeighbours(project.slug);
+  const buildLog = postForProject(project.slug);
 
   const schema = {
     "@context": "https://schema.org",
@@ -79,6 +82,11 @@ export default async function ProjectPage({ params }: { params: Promise<Params> 
             <p>{project.summary}</p>
           </div>
           {project.aside && <p className="annotation case-aside">{project.aside}</p>}
+          {buildLog && (
+            <Link className="case-story" href={`/blog/${buildLog.slug}`}>
+              <span className="mono">build log</span> read the build story <span className="arrow" aria-hidden="true">→</span>
+            </Link>
+          )}
         </header>
 
         <div className="case-visual">
@@ -198,8 +206,8 @@ export default async function ProjectPage({ params }: { params: Promise<Params> 
 
           <Reveal className="case-split">
             <h2><span className="mono">stack</span>built with.</h2>
-            <ul className="chip-list">
-              {project.stack.map((item) => <li key={item}>{item}</li>)}
+            <ul className="tech-list">
+              {project.stack.map((item) => <li key={item}><TechChip label={item} /></li>)}
             </ul>
           </Reveal>
 

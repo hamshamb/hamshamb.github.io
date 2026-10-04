@@ -3,7 +3,7 @@
 import { AnimatePresence, m } from "motion/react";
 import { usePathname } from "next/navigation";
 import { type KeyboardEvent, useEffect, useId, useMemo, useRef, useState } from "react";
-import { owner, type PaletteProject, sections } from "@/content/site";
+import { owner, type PaletteLink, type PaletteProject, sections } from "@/content/site";
 import { PALETTE_EVENT, setTheme } from "@/lib/client-stores";
 import { duration, easeOut, spring } from "@/lib/motion";
 
@@ -26,7 +26,7 @@ function isTypingTarget(target: EventTarget | null) {
  * Pattern adapted from Kokonut UI's action search bar (MIT): a combobox input that drives a
  * listbox through aria-activedescendant, so focus never leaves the input.
  */
-export function CommandPalette({ projects }: { projects: PaletteProject[] }) {
+export function CommandPalette({ projects, links = [] }: { projects: PaletteProject[]; links?: PaletteLink[] }) {
   const [open, setOpen] = useState(false);
 
   useEffect(() => {
@@ -48,10 +48,10 @@ export function CommandPalette({ projects }: { projects: PaletteProject[] }) {
     };
   }, []);
 
-  return <AnimatePresence>{open && <Palette projects={projects} onClose={() => setOpen(false)} />}</AnimatePresence>;
+  return <AnimatePresence>{open && <Palette projects={projects} links={links} onClose={() => setOpen(false)} />}</AnimatePresence>;
 }
 
-function Palette({ projects, onClose }: { projects: PaletteProject[]; onClose: () => void }) {
+function Palette({ projects, links, onClose }: { projects: PaletteProject[]; links: PaletteLink[]; onClose: () => void }) {
   const pathname = usePathname();
   const isHome = pathname === "/" || pathname === "";
   const [query, setQuery] = useState("");
@@ -89,6 +89,14 @@ function Palette({ projects, onClose }: { projects: PaletteProject[]; onClose: (
         keywords: project.keywords,
         run: go(`/work/${project.slug}`),
       })),
+      ...links.map((link) => ({
+        id: `link-${link.href}`,
+        group: link.group,
+        label: link.label,
+        hint: link.hint,
+        keywords: link.keywords,
+        run: go(link.href),
+      })),
       {
         id: "copy-email",
         group: "do",
@@ -116,7 +124,7 @@ function Palette({ projects, onClose }: { projects: PaletteProject[]; onClose: (
         },
       },
     ];
-  }, [isHome, onClose, projects]);
+  }, [isHome, links, onClose, projects]);
 
   const results = useMemo(() => {
     const terms = query.trim().toLowerCase().replace(/^(open|cd|go|goto)\s+/, "").split(/\s+/).filter(Boolean);

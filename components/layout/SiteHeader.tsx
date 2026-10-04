@@ -4,7 +4,7 @@ import { AnimatePresence, m, useMotionValueEvent, useScroll } from "motion/react
 import { AppLink as Link } from "../ui/AppLink";
 import { usePathname } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { owner, sections } from "@/content/site";
+import { owner, pages, sections } from "@/content/site";
 import { openPalette } from "@/lib/client-stores";
 import { duration, easeOut, spring } from "@/lib/motion";
 import { BrandMark } from "../ui/BrandMark";
@@ -91,6 +91,17 @@ export function SiteHeader() {
                         <m.span layoutId="nav-indicator" className="nav-indicator" transition={spring.snappy} />
                       )}
                       {section.label}
+                    </a>
+                  </li>
+                );
+              })}
+              {pages.map((page) => {
+                const current = pathname.startsWith(page.href);
+                return (
+                  <li key={page.href}>
+                    <a href={page.href} aria-current={current ? "page" : undefined}>
+                      {current && <m.span layoutId="nav-indicator" className="nav-indicator" transition={spring.snappy} />}
+                      {page.label}
                     </a>
                   </li>
                 );
@@ -220,6 +231,19 @@ function MobileMenu({
               >
                 <span>{String(index + 1).padStart(2, "0")}</span>
                 {section.label}
+              </a>
+            </m.li>
+          ))}
+          {pages.map((page, index) => (
+            <m.li
+              key={page.href}
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: duration.slow, ease: easeOut, delay: 0.04 + (sections.length + index) * 0.04 }}
+            >
+              <a href={page.href} onClick={close}>
+                <span>{String(sections.length + index + 1).padStart(2, "0")}</span>
+                {page.label}
               </a>
             </m.li>
           ))}
