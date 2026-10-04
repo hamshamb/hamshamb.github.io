@@ -118,7 +118,7 @@ test("project media is local, optimised, and present", () => {
 });
 
 test("stuff and now are real sections", () => {
-  assert.match(stuffSource, /this page has no professional purpose/);
+  assert.match(stuffSource, /this part has no professional purpose/);
   assert.match(portfolioData, /september 2026/);
   assert.match(portfolioData, /building Nexus/);
   assert.match(portfolioData, /school, unfortunately/);
