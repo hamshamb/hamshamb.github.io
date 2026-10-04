@@ -1,0 +1,71 @@
+/* --------------------------------------------------- playground pages --- */
+
+/* shared by the cube lab and the skill pages */
+.lab-page { padding-block: clamp(2rem, 1rem + 4vw, 5rem) var(--section-pad); }
+.lab-page-head { display: grid; gap: var(--space-3); max-width: 46rem; margin: var(--space-5) 0 var(--space-7); }
+.lab-page-title { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-4); font-size: clamp(2.6rem, 1.2rem + 5vw, 5.5rem); font-weight: 650; line-height: var(--leading-tight); letter-spacing: var(--tracking-display); }
+.lab-page-intro { max-width: 46ch; color: var(--fg-2); font-size: var(--text-lg); line-height: 1.5; }
+
+/* ----------------------------------------------------------- cube lab --- */
+
+.cube-lab { display: grid; gap: var(--space-6); }
+@media (min-width: 1000px) { .cube-lab { grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr); align-items: start; } }
+.cube-lab-stage { display: grid; justify-items: center; gap: var(--space-5); padding: var(--space-5); border: 1px solid var(--line); border-radius: var(--radius-lg); background: var(--bg-raised); }
+.cube-lab-panel { display: grid; gap: var(--space-4); }
+.cube-lab-kicker { color: var(--accent); }
+.cube-moves { display: flex; flex-wrap: wrap; gap: 0.35rem; margin: 0; padding: 0; list-style: none; font-family: var(--font-mono); font-size: var(--text-lg); }
+.cube-moves li { min-width: 2.6ch; padding: 0.1rem 0.35rem; border-radius: 5px; color: var(--fg-3); text-align: center; transition: color var(--dur-fast), background-color var(--dur-fast); }
+.cube-moves li[data-state="done"] { color: var(--fg); }
+.cube-moves li[data-state="next"] { background: var(--accent-soft); color: var(--accent); box-shadow: inset 0 0 0 1px var(--accent); }
+.cube-lab-status { color: var(--fg-3); text-transform: none; letter-spacing: 0.02em; }
+.cube-controls { display: flex; flex-wrap: wrap; gap: var(--space-2); }
+.cube-controls .button:disabled { opacity: 0.45; cursor: not-allowed; }
+.cube-speed { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2) var(--space-4); margin: 0; padding: 0; border: 0; }
+.cube-speed legend { float: left; margin-right: var(--space-3); color: var(--fg-3); }
+.cube-speed label { display: inline-flex; align-items: center; gap: var(--space-2); min-height: 36px; color: var(--fg-2); font-size: var(--text-sm); cursor: pointer; }
+.cube-speed input { accent-color: var(--accent); }
+.cube-lab-note { max-width: 52ch; color: var(--fg-3); font-size: var(--text-sm); }
+
+/* the 3D cube: 54 stickers around a dark core, plain CSS transforms */
+.cube3d {
+  display: grid;
+  place-items: center;
+  width: min(100%, 320px);
+  aspect-ratio: 1;
+  perspective: 900px;
+  border-radius: var(--radius-md);
+  cursor: grab;
+  touch-action: none;
+  user-select: none;
+}
+.cube3d:active { cursor: grabbing; }
+.cube3d:focus-visible { outline: 2px solid var(--accent); outline-offset: 4px; }
+.cube3d-view { position: relative; width: 0; height: 0; transform-style: preserve-3d; transition: transform 120ms linear; }
+.cube3d-core { position: absolute; left: -68px; top: -68px; width: 136px; height: 136px; transform-style: preserve-3d; }
+.cube3d-core::before, .cube3d-core::after { content: ""; position: absolute; inset: 0; background: #111311; }
+.cube3d-core::before { transform: rotateY(90deg); }
+.cube3d-core::after { transform: rotateX(90deg); }
+.cube3d-sticker {
+  position: absolute;
+  left: -22px;
+  top: -22px;
+  width: 44px;
+  height: 44px;
+  border: 3px solid #111311;
+  border-radius: 7px;
+  background: var(--sticker);
+  backface-visibility: hidden;
+  transition-property: transform;
+  transition-timing-function: var(--ease-in-out);
+}
+@media (max-width: 420px) {
+  .cube3d { width: 100%; }
+  .cube3d-view { transform-origin: 0 0; scale: 0.82; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .cube3d-view, .cube3d-sticker { transition: none !important; }
+}
+.cube3d-wrap { display: grid; justify-items: center; gap: var(--space-2); width: 100%; }
+.cube3d-turn { display: flex; gap: var(--space-2); }
+.cube3d-turn button { width: 40px; height: 40px; border: 1px solid var(--line); border-radius: var(--radius-sm); background: var(--bg); color: var(--fg-2); }
+.cube3d-turn button:hover { border-color: var(--line-strong); color: var(--fg); }

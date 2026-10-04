@@ -102,3 +102,37 @@ test("the Rivet post is honest, linked both ways, and has article metadata", () 
   const text = post.replace(/<script[\s\S]*?<\/script>/g, "");
   for (const heading of ["the annoying question.", "why there is no routing table.", "where it is right now."]) assert.match(text, new RegExp(heading.replace(".", "\\.")));
 });
+
+const chunksOf = (html) => [...html.matchAll(/chunks\/([A-Za-z0-9]+)-[\w-]+\.js/g)].map((match) => match[1]);
+
+test("stuff shows real interests and hides every unknown stat", () => {
+  const home = built("index.html");
+  const stuff = home.slice(home.indexOf('id="stuff"'), home.indexOf('id="contact"'));
+  for (const title of ["Undertale", "BeamNG.drive", "Kerbal Space Program", "Garry&#x27;s Mod"]) assert.match(stuff, new RegExp(title.replace(".", "\\.")));
+  assert.doesNotMatch(stuff, /class="game-hours|class="stuff-stat|class="game-filters/, "no hours, stats or empty filters without data");
+  assert.doesNotMatch(stuff, />\s*0h\s*<|>\s*0 hours/);
+  assert.doesNotMatch(stuff, /<dt class="mono">pb<\/dt>/);
+  assert.match(stuff, /href="\/work\/nexus"/);
+  assert.match(stuff, /href="\/stuff\/cubing"/);
+  assert.match(stuff, /href="https:\/\/github\.com\/hamshamb"/);
+  assert.doesNotMatch(stuff, /steam|discord|reddit|youtube|linkedin/i, "socials without a real URL never render");
+  assert.doesNotMatch(stuff, /TODO|unconfirmed/i);
+});
+
+test("the cube lab is honest about what its scrambles are", () => {
+  const lab = built("stuff/cubing.html");
+  assert.match(lab, /WCA-style 3x3 scramble/);
+  assert.match(lab, /not the official WCA random-state scrambler/);
+  assert.match(lab, /undo scramble/);
+  assert.doesNotMatch(lab, /optimal solve|official WCA scramble/i);
+  assert.match(lab, /class="cube-net"/, "the net is server rendered");
+});
+
+test("heavy islands stay off the home page", () => {
+  const home = chunksOf(built("index.html"));
+  for (const heavy of ["CubeLab", "RelayPlayground", "RouteFigure", "EnvelopeExplorer", "ThreatModel"]) {
+    assert.ok(!home.includes(heavy), `${heavy} is loaded on the home page`);
+  }
+  assert.ok(chunksOf(built("stuff/cubing.html")).includes("CubeLab"));
+  assert.ok(chunksOf(built("blog/why-i-made-rivet.html")).includes("RelayPlayground"));
+});

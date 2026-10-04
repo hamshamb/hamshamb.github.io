@@ -2,6 +2,7 @@ import "@fontsource-variable/schibsted-grotesk";
 import "@fontsource-variable/jetbrains-mono";
 import "./globals.css";
 import "./blog.css";
+import "./lab.css";
 import type { Metadata, Viewport } from "next";
 import { SiteFooter } from "@/components/layout/SiteFooter";
 import { SiteHeader } from "@/components/layout/SiteHeader";
