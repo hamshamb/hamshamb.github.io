@@ -56,10 +56,11 @@ export const viewport: Viewport = {
 
 /**
  * Runs before first paint: applies a saved theme (no flash), and marks whether motion is welcome.
- * `motion-ok` lets the hero hide its words until Anime.js takes over; the timeout is a safety net
- * so the hero always becomes visible even if the script bundle never arrives.
+ * `motion-ok` lets the hero hold its opening state until Anime.js takes over; the timeout is a
+ * safety net so the hero always appears even if the script bundle never arrives. If the opening
+ * already played this session, the hero renders at rest straight away.
  */
-const bootScript = `(function(){var d=document.documentElement;try{var t=localStorage.getItem("theme");if(t==="light"||t==="dark")d.dataset.theme=t}catch(e){}if(!matchMedia("(prefers-reduced-motion: reduce)").matches){d.classList.add("motion-ok");setTimeout(function(){d.classList.add("hero-ready")},2500)}})();`;
+const bootScript = `(function(){var d=document.documentElement;try{var t=localStorage.getItem("theme");if(t==="light"||t==="dark")d.dataset.theme=t}catch(e){}if(!matchMedia("(prefers-reduced-motion: reduce)").matches){d.classList.add("motion-ok");var s=null;try{s=sessionStorage.getItem("portfolio-intro-seen")}catch(e){}if(s){d.classList.add("hero-ready","intro-done")}else{setTimeout(function(){d.classList.add("hero-ready")},2500)}}})();`;
 
 const profileSchema = {
   "@context": "https://schema.org",
