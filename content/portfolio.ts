@@ -16,6 +16,10 @@ export type ProjectMedia = {
   pixelated?: boolean;
   /** Theme-specific artwork, swapped by CSS. `src` is the light version. */
   darkSrc?: string;
+  /** Artwork exported on an opaque paper field: present it as a deliberate label, colours untouched. */
+  surface?: "label";
+  /** Caption when shown as a figure. */
+  caption?: string;
 };
 
 /** How a project is recognised: its real logo, or a typographic mark when no logo exists. */
@@ -263,14 +267,17 @@ const projects: Project[] = [
       fit: "contain",
       background: "#111210",
     },
-    media: {
-      src: "/work/areuhuman.webp",
-      width: 1600,
-      height: 841,
-      small: { src: "/work/areuhuman-800.webp", width: 800 },
-      alt: "AreUHuman title card: the game name in large condensed type beside a calibration-document style layout.",
-      background: "#0d0d0c",
-    },
+    screenshots: [
+      {
+        src: "/work/areuhuman.webp",
+        width: 1600,
+        height: 841,
+        small: { src: "/work/areuhuman-800.webp", width: 800 },
+        alt: "AreUHuman title card: the game name in large condensed type beside a calibration-document style layout.",
+        background: "#0d0d0c",
+        caption: "title card",
+      },
+    ],
     note: "Settings and optional leaderboard names stay on the device.",
   },
   {
@@ -456,7 +463,7 @@ const smallThings: SmallThing[] = [
       height: 341,
       alt: "TinyPaste logo: a document with a folded corner, a large T and three text lines.",
       fit: "contain",
-      background: "#ffffff",
+      surface: "label",
     },
   },
   {

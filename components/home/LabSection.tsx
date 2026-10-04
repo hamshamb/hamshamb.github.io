@@ -37,12 +37,14 @@ export function LabSection() {
                 </p>
                 <p className="eyebrow mono">{rivet.eyebrow}</p>
                 <h3 id="lab-rivet">{rivet.name}</h3>
-                <p className="lab-hook">{rivet.hook}</p>
                 <p>{rivet.summary}</p>
                 {rivet.architecture && <p className="lab-note">{rivet.architecture}</p>}
-                <ul className="lab-features" aria-label="Rivet highlights">
-                  {rivet.highlights.slice(0, 6).map((item) => <li key={item}>{item}</li>)}
-                </ul>
+                {rivet.note && (
+                  <p className="lab-open">
+                    <span className="mono">still open</span>
+                    {rivet.note}
+                  </p>
+                )}
                 <Link className="button" href="/work/rivet">
                   see how it works <span className="arrow" aria-hidden="true">→</span>
                 </Link>

@@ -85,7 +85,12 @@ export default async function ProjectPage({ params }: { params: Promise<Params> 
           {project.media ? (
             <MediaFrame media={project.media} variant="feature" eager />
           ) : (
-            <IdentityArt identity={project.identity} variant="feature" eager />
+            <IdentityArt
+              identity={project.identity}
+              variant="feature"
+              eager
+              label={`${project.name}: a diagram of a message passing from a sender through relay phones to its recipient.`}
+            />
           )}
         </div>
 
@@ -169,7 +174,7 @@ export default async function ProjectPage({ params }: { params: Promise<Params> 
             <Reveal key={shot.src} className="case-shot">
               <figure>
                 <MediaFrame media={shot} variant="feature" />
-                <figcaption className="mono">inside the app</figcaption>
+                <figcaption className="mono">{shot.caption ?? "inside the app"}</figcaption>
               </figure>
             </Reveal>
           ))}

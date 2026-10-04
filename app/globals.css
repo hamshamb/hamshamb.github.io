@@ -530,7 +530,8 @@ kbd {
   letter-spacing: var(--tracking-display);
 }
 .hero-line { display: block; }
-.hero-title .word { display: inline-block; overflow: clip; overflow-clip-margin: 0.1em; padding-bottom: 0.06em; margin-bottom: -0.06em; vertical-align: top; }
+/* each word sits in a mask; the padding gives ascenders and descenders room without moving layout */
+.hero-title .word { display: inline-block; padding: 0.08em 0 0.24em; margin: -0.08em 0 -0.24em; vertical-align: top; }
 .hero-title .word-inner { display: inline-block; }
 .hero-accent { position: relative; display: inline-block; color: var(--accent); }
 .hero-underline {
@@ -595,8 +596,15 @@ kbd {
   .habit-aside { justify-self: end; max-width: 46ch; }
 }
 
-/* hero intro choreography: hidden only when JS + motion are available */
-.motion-ok:not(.hero-ready) [data-hero] { opacity: 0; }
+/*
+ * Opening sequence holding state. Only applies once the boot script has confirmed JS and motion
+ * are welcome (.motion-ok); without JS the hero renders complete. The headline itself never goes
+ * transparent: its words wait below their masks, and masks only clip while the intro runs.
+ */
+.motion-ok:not(.hero-ready) [data-hero]:not([data-hero="title"]) { opacity: 0; }
+.motion-ok:not(.hero-ready) .hero-title .word-inner { transform: translateY(110%); }
+.motion-ok:not(.hero-ready) .hero-underline { opacity: 0; }
+.motion-ok:not(.intro-done) .hero-title .word { overflow: clip; }
 
 /* --------------------------------------------------------------- work --- */
 
@@ -675,6 +683,18 @@ kbd {
 .media img { width: 100%; height: 100%; object-fit: cover; }
 .media[data-fit="contain"] img { object-fit: contain; padding: 12%; }
 .media img.pixelated { image-rendering: pixelated; }
+.media[data-surface="label"] { display: grid; place-items: center; background: var(--surface); }
+.media[data-surface="label"] img {
+  width: auto;
+  max-width: 78%;
+  height: auto;
+  max-height: 70%;
+  padding: 4% 6%;
+  border-radius: var(--radius-sm);
+  box-shadow: 0 0 0 1px rgba(20, 22, 19, 0.12), 0 6px 18px -10px rgba(0, 0, 0, 0.45);
+  background: #ffffff;
+}
+.more-art .media[data-surface="label"] img { max-width: 86%; max-height: 64%; padding: 4% 5%; }
 .media-lg { border-radius: var(--radius-lg); aspect-ratio: 16 / 9; }
 .identity[data-fit="contain"] img { padding: 14%; }
 .identity.media-lg[data-fit="contain"] img { padding: 6% 22%; }
@@ -688,20 +708,23 @@ kbd {
 
 /* typographic marks for work without a logo */
 .identity-mark { display: grid; place-items: center; background: #0d100d; border-color: rgba(232, 235, 228, 0.1); color: #e8ebe4; }
-.mark { display: grid; justify-items: center; gap: var(--space-3); width: 100%; padding: 8%; }
+.mark { display: grid; grid-template-columns: minmax(0, 1fr); justify-items: center; gap: var(--space-3); width: 100%; padding: 8%; }
 .mark-word { font-size: clamp(2.2rem, 1.6rem + 2.6vw, 3.6rem); font-weight: 700; letter-spacing: 0.32em; line-height: 1; margin-right: -0.32em; }
 .mark-rivet[data-size="lg"] .mark-word { font-size: clamp(2.6rem, 1.4rem + 5vw, 6rem); }
-.mark svg { width: 100%; max-width: 440px; height: auto; overflow: visible; }
+.mark svg { justify-self: stretch; width: 100%; max-width: 480px; height: auto; margin-inline: auto; overflow: visible; }
 .work-thumb .mark { gap: var(--space-2); padding: 5% 8%; }
 .work-thumb .mark-word { font-size: 1.5rem; }
 .work-thumb .mark svg { max-width: 220px; }
-.work-thumb .mark-caption { display: none; }
-.mark-caption { color: #8a9086; font-family: var(--font-mono); font-size: 0.65rem; letter-spacing: var(--tracking-meta); text-transform: uppercase; }
-.mesh-link { stroke: rgba(232, 235, 228, 0.18); stroke-width: 1.25; stroke-dasharray: 3 5; }
+.work-thumb .mesh-link { stroke: rgba(232, 235, 228, 0.18); stroke-width: 1.25; stroke-dasharray: 3 5; }
 .mesh-route { stroke: rgba(132, 217, 160, 0.55); stroke-width: 1.5; }
 .mesh-node { fill: #121512; stroke: rgba(232, 235, 228, 0.45); stroke-width: 1.5; }
 .mesh-end { fill: #121512; stroke: #84d9a0; stroke-width: 2; }
-.mesh-envelope { fill: #e5b766; }
+.mesh-envelope { fill: #e5b766; stroke: #0d100d; stroke-width: 1; }
+.mesh-envelope-flap { fill: none; stroke: #0d100d; stroke-width: 1.4; stroke-linejoin: round; }
+.mesh-phone { transform-box: fill-box; transform-origin: center; }
+.mesh-received { fill: none; stroke: #84d9a0; stroke-width: 1.5; opacity: 0; }
+.mesh-label { fill: #b3b8ad; font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.06em; }
+.mesh-label-quiet { fill: #6f756b; }
 .mark-mx { gap: var(--space-5); }
 .mark-word-mx { font-size: clamp(3.4rem, 2rem + 5vw, 6rem); letter-spacing: -0.06em; margin-right: 0; }
 .mark-pipeline { display: flex; flex-wrap: wrap; justify-content: center; gap: var(--space-2); margin: 0; padding: 0; list-style: none; }
@@ -729,12 +752,16 @@ kbd {
 .lab-body h3 { font-size: var(--text-2xl); line-height: 1; letter-spacing: var(--tracking-title); }
 .lab-body .lab-hook { color: var(--fg); font-size: var(--text-lg); line-height: 1.4; }
 .lab-body .lab-note { padding-left: var(--space-4); border-left: 2px solid var(--line-strong); color: var(--fg-2); font-size: var(--text-sm); }
-.lab-features { display: grid; gap: 0; margin: var(--space-2) 0; padding: 0; list-style: none; border-top: 1px solid var(--line); }
-@media (min-width: 640px) { .lab-features { grid-template-columns: 1fr 1fr; column-gap: var(--space-5); } }
-.lab-features li { padding: var(--space-2) 0; border-bottom: 1px solid var(--line); color: var(--fg-2); font-size: var(--text-sm); }
-.lab-features li::before { content: "+ "; color: var(--accent); font-family: var(--font-mono); }
 .lab-body .button { justify-self: start; }
 .lab-body .lab-private { color: var(--fg-3); }
+.lab-open { display: grid; gap: var(--space-1); padding: var(--space-4); border-left: 2px solid var(--lab); background: var(--bg-raised); color: var(--fg-2); font-size: var(--text-sm); }
+.lab-open .mono { color: var(--lab); }
+.lab-card-side article { border-style: dashed; background: transparent; }
+.lab-card-side .lab-body h3 { font-size: var(--text-xl); letter-spacing: -0.02em; }
+.lab-card-side .lab-body .lab-hook { font-size: var(--text-base); }
+.lab-art-mx { border: 1px dashed var(--line-strong); background: transparent; color: var(--fg); }
+.lab-art-mx .mark-pipeline li { border-color: var(--line-strong); color: var(--fg-2); }
+.lab-art-mx .mark-pipeline li + li::before { color: var(--accent); }
 
 /* --------------------------------------------------------- more things --- */
 
@@ -776,14 +803,15 @@ kbd {
   align-items: baseline;
   padding: var(--space-3) 0;
   border-bottom: 1px solid var(--line);
+  color: var(--fg-3);
   font-size: var(--text-sm);
 }
 .fork-badge { padding: 0.1rem 0.45rem; border: 1px solid var(--lab); border-radius: 4px; color: var(--lab); font-size: 0.66rem; }
-.fork-name { color: var(--fg); font-weight: 600; }
+.fork-name { color: var(--fg-2); font-weight: 500; }
 .fork-about { grid-column: 2; color: var(--fg-3); }
 .fork-by { color: var(--fg-2); }
 .fork-links { grid-column: 2; display: flex; gap: var(--space-4); text-transform: none; letter-spacing: 0.02em; }
-.fork-links a { color: var(--fg-2); }
+.fork-links a { color: var(--fg-3); }
 .fork-links a:hover { color: var(--accent); }
 @media (min-width: 900px) {
   .forks-list li { grid-template-columns: 4rem 10rem minmax(0, 1fr) auto; }
@@ -1085,8 +1113,9 @@ kbd {
   from { opacity: 0; clip-path: inset(6% 4% 10% 4% round var(--radius-lg)); transform: translateY(10px); }
   to { opacity: 1; clip-path: inset(0 0 0 0 round var(--radius-lg)); transform: none; }
 }
-.case-visual .identity-mark,
 .case-visual .identity.media-lg[data-fit="contain"] { aspect-ratio: 16 / 8; }
+/* typographic marks size to their content so the diagram is never clipped on narrow screens */
+.case-visual .identity-mark { aspect-ratio: auto; min-height: clamp(260px, 42vw, 560px); }
 
 .case-meta {
   display: grid;

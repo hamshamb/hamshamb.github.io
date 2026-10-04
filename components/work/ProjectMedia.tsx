@@ -60,7 +60,12 @@ export function MediaFrame({
   const nativeRatio = variant === "feature" && media.fit !== "contain" ? `${media.width} / ${media.height}` : undefined;
   const style = { "--media-bg": media.background, aspectRatio: nativeRatio } as CSSProperties;
   return (
-    <div className={["media", variant === "feature" ? "media-lg" : "", className ?? ""].join(" ").trim()} data-fit={media.fit} style={style}>
+    <div
+      className={["media", variant === "feature" ? "media-lg" : "", className ?? ""].join(" ").trim()}
+      data-fit={media.fit}
+      data-surface={media.surface}
+      style={style}
+    >
       <Picture media={media} variant={variant} decorative={decorative} eager={eager} />
     </div>
   );
@@ -73,16 +78,23 @@ export function IdentityArt({
   decorative = false,
   eager = false,
   animated = true,
+  label,
 }: {
   identity: ProjectIdentity;
   variant: Variant;
   decorative?: boolean;
   eager?: boolean;
   animated?: boolean;
+  /** Accessible name for typographic marks when they are not decorative. */
+  label?: string;
 }) {
   if (identity.kind === "mark") {
     return (
-      <div className={variant === "feature" ? "media media-lg identity identity-mark" : "media identity identity-mark"}>
+      <div
+        className={variant === "feature" ? "media media-lg identity identity-mark" : "media identity identity-mark"}
+        role={decorative ? undefined : "img"}
+        aria-label={decorative ? undefined : label}
+      >
         {identity.mark === "rivet" ? <RivetMark animated={animated} size={variant === "feature" ? "lg" : "md"} /> : null}
       </div>
     );

@@ -149,3 +149,15 @@ test("authored copy and docs never use em dashes", () => {
   }
   assert.doesNotMatch(html, emDash);
 });
+
+test("stylesheet blocks are balanced", () => {
+  // An unclosed block silently nests every later rule inside it (for example inside a media query).
+  const css = read("app/globals.css").replace(/\/\*[\s\S]*?\*\//g, "").replace(/"[^"]*"/g, "");
+  let depth = 0;
+  for (const char of css) {
+    if (char === "{") depth += 1;
+    if (char === "}") depth -= 1;
+    assert.ok(depth >= 0, "closing brace without an opening one");
+  }
+  assert.equal(depth, 0, "unclosed block in app/globals.css");
+});
