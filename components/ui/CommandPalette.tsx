@@ -80,7 +80,6 @@ function Palette({ projects, onClose }: { projects: PaletteProject[]; onClose: (
         hint: `#${section.id}`,
         run: go(`/#${section.id}`),
       })),
-      { id: "go-writing", group: "go to", label: "writing", hint: "#writing", run: go("/#writing") },
       { id: "go-now", group: "go to", label: "now", hint: "#now", keywords: "this month current", run: go("/#now") },
       ...projects.map((project) => ({
         id: `open-${project.slug}`,

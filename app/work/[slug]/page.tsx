@@ -1,10 +1,10 @@
 import type { Metadata } from "next";
-import { AppLink as Link } from "@/components/ui/AppLink";
 import { notFound } from "next/navigation";
 import { Reveal } from "@/components/motion/Reveal";
+import { AppLink as Link } from "@/components/ui/AppLink";
 import { CopyLink } from "@/components/work/CopyLink";
-import { ProjectMedia } from "@/components/work/ProjectMedia";
-import { getNeighbours, getProject, phaseLabel, portfolio } from "@/content/portfolio";
+import { IdentityArt, MediaFrame } from "@/components/work/ProjectMedia";
+import { getNeighbours, getProject, portfolio } from "@/content/portfolio";
 
 type Params = { slug: string };
 
@@ -18,8 +18,9 @@ export async function generateMetadata({ params }: { params: Promise<Params> }):
   const { slug } = await params;
   const project = getProject(slug);
   if (!project) return {};
-  const description = `${project.intro.join(" ")} ${project.description}`;
-  const image = project.media ? project.media.src : "/og.png";
+  const description = `${project.hook} ${project.summary}`;
+  const visual = project.media ?? (project.identity.kind === "image" ? project.identity : undefined);
+  const image = visual && !visual.src.endsWith(".svg") ? visual.src : "/og.png";
   return {
     title: project.name,
     description,
@@ -29,7 +30,7 @@ export async function generateMetadata({ params }: { params: Promise<Params> }):
       description,
       type: "article",
       url: `/work/${project.slug}`,
-      images: [{ url: image, alt: project.media?.alt ?? "hamshamb: student who makes stuff" }],
+      images: [{ url: image, alt: visual?.alt ?? "hamshamb: i build things i wish existed." }],
     },
     twitter: { card: "summary_large_image", title: `${project.name} · hamshamb`, description, images: [image] },
   };
@@ -46,12 +47,18 @@ export default async function ProjectPage({ params }: { params: Promise<Params> 
     "@type": "SoftwareSourceCode",
     name: project.name,
     description: project.description,
-    codeRepository: project.source,
     programmingLanguage: project.stack[0],
     author: { "@type": "Person", name: "hamshamb", url: portfolio.owner.github },
-    dateCreated: project.releasedOn,
+    ...(project.source ? { codeRepository: project.source } : {}),
+    ...(project.releasedOn ? { dateCreated: project.releasedOn } : {}),
     ...(project.live ? { url: project.live } : {}),
   };
+
+  const story = [
+    project.intro && { label: "why i made it", title: "the annoying bit.", body: project.intro },
+    { label: "the problem", title: "what was actually wrong.", body: [project.problem] },
+    { label: "under the hood", title: "what i actually built.", body: [project.built] },
+  ].filter(Boolean) as { label: string; title: string; body: string[] }[];
 
   return (
     <main id="main" tabIndex={-1} className="case">
@@ -61,23 +68,38 @@ export default async function ProjectPage({ params }: { params: Promise<Params> 
         </Link>
 
         <header className="case-head">
-          <p className="eyebrow mono">{project.eyebrow}</p>
+          <p className="case-status mono">
+            <span className="status" data-phase={project.phase}>{project.availability}</span>
+            {project.statusDetail && <span className="status-detail">{project.statusDetail}</span>}
+            <span>{project.eyebrow}</span>
+          </p>
           <h1 id="case-title" className="case-title">{project.name}</h1>
           <div className="case-intro">
-            {project.intro.map((line) => <p key={line}>{line}</p>)}
+            <p>{project.hook}</p>
+            <p>{project.summary}</p>
           </div>
+          {project.aside && <p className="annotation case-aside">{project.aside}</p>}
         </header>
 
-        <ProjectMedia project={project} variant="feature" eager />
+        <div className="case-visual">
+          {project.media ? (
+            <MediaFrame media={project.media} variant="feature" eager />
+          ) : (
+            <IdentityArt identity={project.identity} variant="feature" eager />
+          )}
+        </div>
 
         <dl className="case-meta">
           <div>
             <dt className="mono">released</dt>
-            <dd><time dateTime={project.releasedOn}>{project.releaseLabel.toLowerCase()}</time></dd>
+            <dd>{project.releasedOn ? <time dateTime={project.releasedOn}>{project.releaseLabel?.toLowerCase()}</time> : "not yet"}</dd>
           </div>
           <div>
             <dt className="mono">status</dt>
-            <dd><span className="status" data-phase={project.phase}>{phaseLabel[project.phase]}</span></dd>
+            <dd>
+              <span className="status" data-phase={project.phase}>{project.availability}</span>
+              {project.statusDetail && <span className="case-meta-detail">{project.statusDetail}</span>}
+            </dd>
           </div>
           <div>
             <dt className="mono">what i did</dt>
@@ -87,38 +109,43 @@ export default async function ProjectPage({ params }: { params: Promise<Params> 
             <dt className="mono">links</dt>
             <dd className="links">
               {project.live && (
-                <a className="text-link" href={project.live} target="_blank" rel="noopener noreferrer">try it <span aria-hidden="true">↗</span></a>
+                <a className="text-link" href={project.live} target="_blank" rel="noopener noreferrer">open it <span aria-hidden="true">↗</span></a>
               )}
-              <a className="text-link" href={project.source} target="_blank" rel="noopener noreferrer">code <span aria-hidden="true">↗</span></a>
+              {project.source ? (
+                <a className="text-link" href={project.source} target="_blank" rel="noopener noreferrer">read the code <span aria-hidden="true">↗</span></a>
+              ) : (
+                <span className="case-meta-detail">source not public yet</span>
+              )}
             </dd>
           </div>
         </dl>
 
         <div className="case-body">
-          <Reveal>
+          <Reveal className="case-what">
+            <p className="mono case-label">what it is</p>
             <p className="case-summary">{project.description}</p>
+            {project.releaseNote && <p className="case-release mono">{project.releaseLabel?.toLowerCase()}: {project.releaseNote}</p>}
           </Reveal>
 
           <Reveal className="case-story">
-            <article>
-              <span className="mono">why this exists</span>
-              <h2>the annoying bit.</h2>
-              <p>{project.problem}</p>
-            </article>
-            <article>
-              <span className="mono">under the hood</span>
-              <h2>what i actually built.</h2>
-              <p>{project.built}</p>
-            </article>
-            <article>
-              <span className="mono">where it is now</span>
-              <h2>no fake launch language.</h2>
-              <p>{project.result}</p>
-            </article>
+            {story.map((part) => (
+              <article key={part.label}>
+                <span className="mono">{part.label}</span>
+                <h2>{part.title}</h2>
+                {part.body.map((line) => <p key={line}>{line}</p>)}
+              </article>
+            ))}
           </Reveal>
 
+          {project.architecture && (
+            <Reveal className="case-callout">
+              <p className="mono case-label">how it works</p>
+              <p>{project.architecture}</p>
+            </Reveal>
+          )}
+
           <Reveal className="case-split">
-            <h2><span className="mono">details</span>the technical bits.</h2>
+            <h2><span className="mono">important details</span>the technical bits.</h2>
             <ol className="highlight-list">
               {project.highlights.map((item) => <li key={item}>{item}</li>)}
             </ol>
@@ -138,6 +165,32 @@ export default async function ProjectPage({ params }: { params: Promise<Params> 
             </Reveal>
           )}
 
+          {project.screenshots?.map((shot) => (
+            <Reveal key={shot.src} className="case-shot">
+              <figure>
+                <MediaFrame media={shot} variant="feature" />
+                <figcaption className="mono">inside the app</figcaption>
+              </figure>
+            </Reveal>
+          ))}
+
+          {project.result && (
+            <Reveal className="case-split">
+              <h2><span className="mono">what worked</span>where it is now.</h2>
+              <p className="case-result">{project.result}</p>
+            </Reveal>
+          )}
+
+          {(project.note || project.limits) && (
+            <Reveal className="case-split">
+              <h2><span className="mono">what is still not done</span>{project.limits ? project.limits.title + "." : "the honest bit."}</h2>
+              <div className="honest-stack">
+                {project.note && <p className="honest-note"><span className="mono">status</span>{project.note}</p>}
+                {project.limits?.paragraphs.map((line) => <p key={line} className="limits-line">{line}</p>)}
+              </div>
+            </Reveal>
+          )}
+
           <Reveal className="case-split">
             <h2><span className="mono">stack</span>built with.</h2>
             <ul className="chip-list">
@@ -145,21 +198,17 @@ export default async function ProjectPage({ params }: { params: Promise<Params> 
             </ul>
           </Reveal>
 
-          {project.note && (
-            <Reveal>
-              <p className="honest-note"><span className="mono">honest bit</span>{project.note}</p>
-            </Reveal>
-          )}
-
           <div className="case-actions">
             {project.live && (
               <a className="button button-primary" href={project.live} target="_blank" rel="noopener noreferrer">
-                try {project.name} <span className="arrow" aria-hidden="true">↗</span>
+                open {project.name} <span className="arrow" aria-hidden="true">↗</span>
               </a>
             )}
-            <a className={project.live ? "button" : "button button-primary"} href={project.source} target="_blank" rel="noopener noreferrer">
-              read the code <span className="arrow" aria-hidden="true">↗</span>
-            </a>
+            {project.source && (
+              <a className={project.live ? "button" : "button button-primary"} href={project.source} target="_blank" rel="noopener noreferrer">
+                inspect the source <span className="arrow" aria-hidden="true">↗</span>
+              </a>
+            )}
             <CopyLink />
           </div>
         </div>

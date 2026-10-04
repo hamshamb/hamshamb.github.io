@@ -10,7 +10,7 @@ import { animeEaseOut } from "@/lib/anime";
  *   0ms    headline words rise out of their clip masks, staggered
  *   120ms  meta row settles
  *   300ms  lede and actions follow
- *   440ms  the hand-drawn underline is drawn under "stuff."
+ *   440ms  the hand-drawn underline is drawn under "existed."
  *   520ms  the "currently / latest" strip settles
  *
  * Core movement finishes by roughly 1.1s. Nothing is interactive-blocking: links are

@@ -7,6 +7,9 @@ const sectionAliases: Record<string, string> = {
   home: "intro",
   projects: "work",
   stack: "about",
+  log: "journey",
+  // Writing is hidden for now; old links land at the top instead of a missing section.
+  writing: "intro",
 };
 
 export function LegacyHashRedirect({ slugs }: { slugs: string[] }) {

@@ -1,17 +1,21 @@
 "use client";
 
 import { AnimatePresence, LayoutGroup, m } from "motion/react";
-import { AppLink as Link } from "../ui/AppLink";
 import { useState } from "react";
 import type { Project } from "@/content/portfolio";
 import { phaseLabel } from "@/content/site";
 import { duration, easeOut, spring } from "@/lib/motion";
-import { ProjectMedia } from "../work/ProjectMedia";
+import { AppLink as Link } from "../ui/AppLink";
+import { IdentityArt } from "../work/ProjectMedia";
+
+function yearOf(project: Project) {
+  return project.releasedOn ? project.releasedOn.slice(0, 4) : "unreleased";
+}
 
 /**
- * Editorial project index. On wide screens a sticky preview follows whichever row is hovered or
- * focused, so keyboard users get the same reveal as mouse users. On narrow screens each row carries
- * its own thumbnail instead; nothing depends on hover.
+ * Selected work. Each row leads with the idea, not the stack. On wide screens a sticky poster
+ * shows the project's identity for whichever row is hovered or focused, so keyboard users get the
+ * same reveal. Narrow screens show the identity inside each row instead; nothing needs hover.
  */
 export function WorkIndex({ projects }: { projects: Project[] }) {
   const [active, setActive] = useState<string | null>(null);
@@ -43,17 +47,18 @@ export function WorkIndex({ projects }: { projects: Project[] }) {
                   )}
                   <span className="work-index" aria-hidden="true">{String(index + 1).padStart(2, "0")}</span>
                   <span className="work-main">
-                    <span className="work-name">{project.name}</span>
-                    <span className="work-hook">{project.intro[0]}</span>
                     <span className="work-meta mono">
-                      <span className="status" data-phase={project.phase}>{phaseLabel[project.phase]}</span>
-                      <span>{project.eyebrow.split(" · ").slice(0, 2).join(" · ")}</span>
-                      <time dateTime={project.releasedOn}>{project.releasedOn.slice(0, 4)}</time>
+                      <span className="status" data-phase={project.phase}>{project.availability}</span>
+                      {project.statusDetail && <span className="status-detail">{project.statusDetail}</span>}
+                      {project.releasedOn && <span>{yearOf(project)}</span>}
                     </span>
+                    <span className="work-name">{project.name}</span>
+                    <span className="work-hook">{project.hook}</span>
+                    <span className="work-stack mono">{project.stack.slice(0, 3).join(" · ")}</span>
                   </span>
                   <span className="work-arrow" aria-hidden="true">→</span>
                   <span className="work-thumb">
-                    <ProjectMedia project={project} variant="thumb" decorative />
+                    <IdentityArt identity={project.identity} variant="thumb" decorative animated={false} />
                   </span>
                 </Link>
               </li>
@@ -67,14 +72,22 @@ export function WorkIndex({ projects }: { projects: Project[] }) {
           <m.div
             key={shown.slug}
             className="preview-card"
-            initial={{ opacity: 0, y: 8 }}
+            initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -4 }}
+            exit={{ opacity: 0, y: -6 }}
             transition={{ duration: duration.base, ease: easeOut }}
           >
-            <ProjectMedia project={shown} variant="preview" decorative />
+            <p className="preview-coords mono">
+              <span>{yearOf(shown)}</span>
+              <span>{phaseLabel[shown.phase]}</span>
+              <span>{shown.eyebrow.split(" · ")[0].toLowerCase()}</span>
+            </p>
+            <m.div className="preview-art" animate={{ y: active ? -6 : 0 }} transition={spring.soft}>
+              <IdentityArt identity={shown.identity} variant="preview" decorative />
+            </m.div>
             <div className="preview-body">
-              <p>{shown.description}</p>
+              <p>{shown.summary}</p>
+              {shown.aside && <p className="annotation">{shown.aside}</p>}
               {shown.facts.length > 0 && (
                 <dl className="fact-row">
                   {shown.facts.map((fact) => (
@@ -85,9 +98,6 @@ export function WorkIndex({ projects }: { projects: Project[] }) {
                   ))}
                 </dl>
               )}
-              <ul className="chip-list">
-                {shown.stack.slice(0, 5).map((item) => <li key={item}>{item}</li>)}
-              </ul>
             </div>
           </m.div>
         </AnimatePresence>
