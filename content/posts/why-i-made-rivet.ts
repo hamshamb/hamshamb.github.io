@@ -68,6 +68,11 @@ export const rivetPost: BlogPost = {
       figure: "relay-playground",
       caption: "a conceptual simulation, not real Bluetooth. move phones in and out of range and watch one envelope wait, spread, and either arrive or expire.",
     },
+    {
+      type: "figure",
+      figure: "courier",
+      caption: "a small game about the same idea, also a conceptual simulation and not real Bluetooth behaviour. carry a message to someone out of range before every copy expires.",
+    },
 
     { type: "h2", index: "05", text: "why there is no routing table." },
     { type: "p", text: "the obvious way to make this efficient is routing: keep track of which phones see which other phones, build up a map, and send each message along the best path." },
