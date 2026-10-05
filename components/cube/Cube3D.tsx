@@ -1,84 +1,101 @@
 "use client";
 
-import { type PointerEvent, useRef, useState } from "react";
-import { type CubeState, type Face, faceNormal, inLayer, stickers } from "@/lib/cube";
+import { type Ref, useEffect, useImperativeHandle, useRef, useState } from "react";
+import type { CubeState, Move } from "@/lib/cube";
+import { CssCube, type CssView, type Turn } from "./CssCube";
+import type { ThreeCube } from "./three-cube";
 
-const SIZE = 46; // one cubie, in px
-const all = stickers();
+export type CubeHandle = {
+  /** animate one face turn and resolve when it has landed. The caller commits the new state afterwards. */
+  turn: (move: Move, ms: number) => Promise<void>;
+};
 
-type Vec = [number, number, number];
-const toCss = ([x, y, z]: Vec): Vec => [x, -y, z];
-const cross = (a: Vec, b: Vec): Vec => [a[1] * b[2] - a[2] * b[1], a[2] * b[0] - a[0] * b[2], a[0] * b[1] - a[1] * b[0]];
+type Mode = "loading" | "webgl" | "css";
 
-/** A square facing `normal`, centred on the sticker. CSS space: x right, y down, z toward you. */
-function placement(position: Vec, normal: Vec) {
-  const n = toCss(normal);
-  const centre = toCss(position).map((v, i) => v * SIZE + n[i] * (SIZE / 2 - 0.5)) as Vec;
-  const v: Vec = Math.abs(n[1]) === 1 ? [0, 0, n[1]] : [0, 1, 0];
-  const u = cross(v, n);
-  const m = [...u, 0, ...v, 0, ...n, 0, ...centre, 1].map((x) => (Math.abs(x) < 1e-9 ? 0 : x));
-  return `matrix3d(${m.join(",")})`;
-}
-
-const placed = all.map((sticker) => ({ ...sticker, base: placement(sticker.position, sticker.normal) }));
-
-export type Turn = { face: Face; turns: 1 | 2 | 3; ms: number };
+const HOME_VIEW: CssView = { x: -28, y: -38 };
 
 /**
- * A CSS 3D cube drawn from the facelet state: 54 stickers around a dark core. A face turn rotates
- * the 21 stickers in that layer around the face's axis; the parent then swaps in the new state.
- * Drag to look around, or use the four view buttons under it.
+ * The 3D cube. It tries a three.js cube first (loaded on demand, in its own chunk), and keeps the CSS
+ * cube as the fallback for browsers without webgl or when the chunk fails to load. The server renders
+ * only an empty square, so there is no flash of the wrong cube.
  */
-export function Cube3D({ state, turn, label }: { state: CubeState; turn: Turn | null; label: string }) {
-  const [view, setView] = useState({ x: -28, y: -38 });
-  const drag = useRef<{ x: number; y: number; vx: number; vy: number } | null>(null);
+export function Cube3D({ state, label, ref }: { state: CubeState; label: string; ref?: Ref<CubeHandle> }) {
+  const [mode, setMode] = useState<Mode>("loading");
+  const [cssView, setCssView] = useState<CssView>(HOME_VIEW);
+  const [cssTurn, setCssTurn] = useState<Turn | null>(null);
+  const host = useRef<HTMLDivElement>(null);
+  const cube = useRef<ThreeCube | null>(null);
+  const timers = useRef<number[]>([]);
 
-  const axis = turn ? toCss(faceNormal(turn.face)) : ([0, 1, 0] as Vec);
-  const angle = turn ? (turn.turns === 3 ? -90 : turn.turns * 90) : 0;
+  useEffect(() => {
+    let cancelled = false;
+    const el = host.current;
+    (async () => {
+      try {
+        if (!el) throw new Error("no host");
+        const { createThreeCube } = await import("./three-cube");
+        if (cancelled) return;
+        cube.current = createThreeCube(el);
+        setMode("webgl");
+      } catch {
+        if (!cancelled) setMode("css");
+      }
+    })();
+    const pending = timers.current;
+    return () => {
+      cancelled = true;
+      cube.current?.dispose();
+      cube.current = null;
+      for (const id of pending) window.clearTimeout(id);
+    };
+  }, []);
 
-  const nudge = (dx: number, dy: number) => () =>
-    setView((current) => ({ x: Math.max(-80, Math.min(80, current.x + dx)), y: current.y + dy }));
+  // push the facelet state into the webgl cube whenever it changes (or when it first becomes ready)
+  useEffect(() => {
+    if (mode === "webgl") cube.current?.setState(state);
+  }, [mode, state]);
+
+  useImperativeHandle(
+    ref,
+    () => ({
+      turn(move, ms) {
+        if (ms <= 0 || mode === "loading") return Promise.resolve();
+        if (mode === "webgl" && cube.current) return cube.current.turn(move, ms);
+        return new Promise<void>((resolve) => {
+          setCssTurn({ face: move.face, turns: move.turns, ms });
+          const id = window.setTimeout(() => {
+            setCssTurn(null);
+            resolve();
+          }, ms + 20);
+          timers.current.push(id);
+        });
+      },
+    }),
+    [mode],
+  );
+
+  const nudge = (yaw: number, pitch: number) => {
+    if (mode === "webgl") cube.current?.nudge(yaw, pitch);
+    else setCssView((v) => ({ x: Math.max(-80, Math.min(80, v.x - pitch)), y: v.y + yaw }));
+  };
+  const reset = () => {
+    if (mode === "webgl") cube.current?.resetView();
+    else setCssView(HOME_VIEW);
+  };
 
   return (
     <div className="cube3d-wrap">
-      <div
-        className="cube3d"
-        onPointerDown={(event: PointerEvent<HTMLDivElement>) => {
-          drag.current = { x: event.clientX, y: event.clientY, vx: view.x, vy: view.y };
-          event.currentTarget.setPointerCapture(event.pointerId);
-        }}
-        onPointerMove={(event) => {
-          const start = drag.current;
-          if (!start) return;
-          setView({ x: Math.max(-80, Math.min(80, start.vx - (event.clientY - start.y) * 0.5)), y: start.vy + (event.clientX - start.x) * 0.5 });
-        }}
-        onPointerUp={() => { drag.current = null; }}
-        onPointerCancel={() => { drag.current = null; }}
-      >
-        <div className="cube3d-view" role="img" aria-label={label} style={{ transform: `rotateX(${view.x}deg) rotateY(${view.y}deg)` }}>
-          <div className="cube3d-core" />
-          {placed.map((sticker) => {
-            const moving = turn && inLayer(turn.face, sticker.index);
-            const spin = `rotate3d(${axis.join(",")}, ${moving ? angle : 0}deg)`;
-            return (
-              <i
-                key={sticker.index}
-                className="cube3d-sticker"
-                data-c={state[sticker.index]}
-                style={{
-                  transform: `${spin} ${sticker.base}`,
-                  transitionDuration: moving ? `${turn.ms}ms` : "0ms",
-                }}
-              />
-            );
-          })}
-        </div>
-      </div>
+      {mode === "css" ? (
+        <CssCube state={state} turn={cssTurn} label={label} view={cssView} onView={setCssView} />
+      ) : (
+        <div ref={host} className="cube3d cube3d-gl" data-mode={mode} role="img" aria-label={label} />
+      )}
       <div className="cube3d-turn" role="group" aria-label="Look around the cube">
-        <button type="button" onClick={nudge(0, -20)} aria-label="turn the view left">←</button>
-        <button type="button" onClick={nudge(15, 0)} aria-label="tilt the view up">↑</button>
-        <button type="button" onClick={nudge(-15, 0)} aria-label="tilt the view down">↓</button>
-        <button type="button" onClick={nudge(0, 20)} aria-label="turn the view right">→</button>
+        <button type="button" onClick={() => nudge(-24, 0)} aria-label="turn the view left">←</button>
+        <button type="button" onClick={() => nudge(0, 18)} aria-label="tilt the view up">↑</button>
+        <button type="button" onClick={() => nudge(0, -18)} aria-label="tilt the view down">↓</button>
+        <button type="button" onClick={() => nudge(24, 0)} aria-label="turn the view right">→</button>
+        <button type="button" onClick={reset} aria-label="reset the view" className="cube3d-reset">reset view</button>
       </div>
     </div>
   );
