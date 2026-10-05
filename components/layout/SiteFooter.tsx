@@ -1,6 +1,9 @@
 import { AppLink as Link } from "../ui/AppLink";
 import { portfolio, sections } from "@/content/portfolio";
 import { BrandMark } from "../ui/BrandMark";
+import { Bolt } from "../toys/Bolt";
+import { DoNotClick } from "../toys/DoNotClick";
+import { Toybox } from "../toys/Toybox";
 import { LocalTime } from "../ui/LocalTime";
 
 export function SiteFooter() {
@@ -39,7 +42,9 @@ export function SiteFooter() {
         </div>
 
         <div className="footer-base mono">
-          <span>© 2026 {owner.name}</span>
+          <span>© 2026 {owner.name} <Bolt id="footer" className="bolt-inline" /></span>
+          <Toybox />
+          <DoNotClick />
           <span>{owner.location.toLowerCase()}, <LocalTime /></span>
           <a className="to-top" href="#top">back to top <span className="arrow" aria-hidden="true">↑</span></a>
         </div>

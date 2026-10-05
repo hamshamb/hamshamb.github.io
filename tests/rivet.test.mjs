@@ -169,12 +169,14 @@ test("no em dashes, eval or raw HTML anywhere in the Rivet work", () => {
   }
 });
 
-test("three is only imported by the scene module, and only dynamically", () => {
+test("three is only imported by the two scene modules, and only dynamically", () => {
+  // one 3D stack: the Rivet scenes and the cube lab each have one module that touches three
+  const sceneModules = ["components/rivet/scene3d.ts", "components/cube/three-cube.ts"];
   for (const path of files("components/").concat(files("lib/"), files("app/"))) {
     if (!/\.(ts|tsx)$/.test(path)) continue;
     const text = read(path);
     const importsThree = /from\s+["']three["']|import\(\s*["']three["']\s*\)/.test(text);
-    assert.equal(importsThree, path === "components/rivet/scene3d.ts", `${path} imports three`);
+    assert.equal(importsThree, sceneModules.includes(path), `${path} imports three`);
   }
   const hook = read("components/rivet/useScene.ts");
   assert.match(hook, /await import\("\.\/scene3d"\)/);

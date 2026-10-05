@@ -2,8 +2,10 @@ import { formatHours, liveSocials, personal } from "@/content/personal";
 import { ScrambleCard } from "../cube/ScrambleCard";
 import { Reveal } from "../motion/Reveal";
 import { AppLink as Link } from "../ui/AppLink";
+import { Bolt } from "../toys/Bolt";
 import { CopyHandle } from "../ui/CopyHandle";
 import { GameShelf } from "./GameShelf";
+import { MinecraftInventory } from "./MinecraftInventory";
 import { SectionHead } from "./SectionHead";
 
 function PixelScene() {
@@ -92,7 +94,7 @@ export function StuffSection() {
                 )}
               </div>
               <div>
-                <span className="stuff-path">~/stuff/minecraft</span>
+                <span className="stuff-path">~/stuff/minecraft <MinecraftInventory /></span>
                 <h3>minecraft</h3>
                 {minecraftHours && (
                   <p className="stuff-flex">
@@ -118,7 +120,7 @@ export function StuffSection() {
             <Reveal className="stuff-card stuff-wide stuff-cubing">
               <div className="stuff-art"><ScrambleCard /></div>
               <div>
-                <span className="stuff-path">~/stuff/cubing</span>
+                <span className="stuff-path">~/stuff/cubing <Bolt id="stuff" className="bolt-inline" /></span>
                 <h3>cubing</h3>
                 <p>newer obsession. a 3x3 is a remarkably efficient way to turn half a minute into several hours of trying to save another second.</p>
                 <p>i don&rsquo;t have a smart cube, which immediately made me wonder if i could analyse solves without one. for now it has a scrambler and a cube you can spin.</p>

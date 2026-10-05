@@ -18,6 +18,7 @@ export function TechIcon({ iconId, size = 16 }: { iconId?: string; size?: number
   return (
     <svg
       className="tech-icon"
+      data-icon={iconId}
       viewBox="0 0 24 24"
       width={size}
       height={size}

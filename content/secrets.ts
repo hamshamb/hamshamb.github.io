@@ -33,6 +33,7 @@ export const secrets: Record<string, string> = {
   "cmd-gravity": "found a command.",
   "cmd-map": "found a command.",
   "cmd-snake": "found a command.",
+  "cmd-reaction": "found a command.",
   konami: "up up down down. you know the rest.",
   "dev-panel": "diagnostics, apparently.",
   "do-not-click": "you were asked nicely.",
@@ -46,6 +47,7 @@ export const secrets: Record<string, string> = {
   "scroll-speed": "okay okay.",
   "bug-caught": "caught one.",
   "tech-logo": "logos do things now.",
+  "packet-lost": "packet delivered. the page is still missing.",
 };
 
 /** What the toybox can show, once each has been discovered. Locked toys are never listed. */

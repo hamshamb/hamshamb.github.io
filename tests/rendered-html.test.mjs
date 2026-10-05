@@ -63,7 +63,10 @@ test("every flagship project has its own exported case study", () => {
     assert.match(page, /the technical bits\./);
     assert.match(sitemap, new RegExp(`<loc>https://hamshamb\\.github\\.io/work/${slug}</loc>`));
   }
-  assert.match(notFound, /this page doesn/);
+  assert.match(notFound, /page not found/);
+  assert.match(notFound, /packet lost/);
+  assert.ok(notFound.includes('<a href="/" class="button button-primary">return home'), "the way home is obvious and comes before the game");
+  assert.ok(notFound.indexOf("return home") < notFound.indexOf("packet-game"));
 });
 
 test("rivet stays honestly unreleased", () => {
