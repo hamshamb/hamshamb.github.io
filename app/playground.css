@@ -28,6 +28,7 @@
 .playground-demo:fullscreen { align-content: start; overflow: auto; padding: clamp(1rem, 3vw, 3rem); border: 0; border-radius: 0; background: var(--bg); }
 .playground-demo:fullscreen .playground-stage { width: min(100%, 72rem); justify-self: center; }
 .playground-code { grid-area: code; min-width: 0; }
+@media (max-width: 480px) { .playground-demo { padding: var(--space-3); } }
 
 .playground-head { display: flex; flex-wrap: wrap; align-items: flex-start; justify-content: space-between; gap: var(--space-3); }
 .playground-head h2 { font-size: var(--text-xl); letter-spacing: -0.02em; }

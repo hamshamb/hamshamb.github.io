@@ -335,6 +335,7 @@
   --cl-shared: var(--accent);
   --cl-derived: var(--lab);
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   gap: var(--space-3);
   min-width: 0;
 }
@@ -384,7 +385,7 @@
 }
 .cl-empty { flex: 1 1 100%; margin: 0; padding: var(--space-4) 0; color: var(--fg-3); font-size: var(--text-sm); text-align: center; }
 
-.cl-brick { display: grid; flex: 1 1 8.5rem; min-width: 0; max-width: 100%; border: 1px solid var(--line-strong); border-radius: var(--radius-sm); background: var(--bg-raised); box-shadow: 0 1px 0 var(--line), 0 8px 16px -12px rgba(0, 0, 0, 0.4); align-content: start; }
+.cl-brick { display: grid; grid-template-columns: minmax(0, 1fr); flex: 1 1 8.5rem; min-width: 0; max-width: 100%; border: 1px solid var(--line-strong); border-radius: var(--radius-sm); background: var(--bg-raised); box-shadow: 0 1px 0 var(--line), 0 8px 16px -12px rgba(0, 0, 0, 0.4); align-content: start; }
 .cl-brick[data-kind="panel"] { flex-basis: 100%; }
 .cl-brick[data-nested] { background: var(--bg); box-shadow: none; }
 .cl[data-xray] .cl-brick[data-nested] { border-color: color-mix(in srgb, var(--cl-prop) 55%, var(--line-strong)); }
@@ -405,6 +406,7 @@
 .cl-kids { position: relative; display: flex; flex-wrap: wrap; gap: var(--space-2); padding-left: var(--space-3); border-left: 2px dashed var(--line-strong); }
 .cl[data-xray] .cl-kids { border-left-color: var(--cl-prop); }
 .cl-kids .cl-brick { flex-basis: 7.5rem; }
+@media (max-width: 360px) { .cl-kids .cl-brick { flex-basis: 100%; } }
 
 .cl-flag { margin: 0; padding: 4px 8px; border-top: 1px dashed var(--line); color: var(--fg-3); font-size: 0.58rem; letter-spacing: 0.02em; text-transform: none; overflow-wrap: anywhere; }
 .cl-flag-prop { color: var(--cl-prop); }
