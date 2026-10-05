@@ -15,6 +15,7 @@ import {
   generateScramble,
   mulberry32,
   netLayout,
+  endsWithRepeats,
 } from "../lib/cube.ts";
 
 const rep = (alg, n, state = SOLVED) => {
@@ -181,4 +182,17 @@ test("net layout positions", () => {
   assert.deepEqual(get("R"), { face: "R", col: 2, row: 1 });
   assert.deepEqual(get("B"), { face: "B", col: 3, row: 1 });
   assert.deepEqual(get("D"), { face: "D", col: 1, row: 2 });
+});
+
+test("endsWithRepeats finds a sequence repeated at the tail of a history", () => {
+  const sexy = parseAlg("R U R' U'");
+  const six = parseAlg("R U R' U' ".repeat(6));
+  assert.equal(endsWithRepeats(six, sexy, 6), true);
+  assert.equal(endsWithRepeats([...parseAlg("F B"), ...six], sexy, 6), true, "earlier moves do not matter");
+  assert.equal(endsWithRepeats(parseAlg("R U R' U' ".repeat(5)), sexy, 6), false);
+  assert.equal(endsWithRepeats([...six, ...parseAlg("F")], sexy, 6), false, "it has to be the tail");
+  assert.equal(endsWithRepeats(parseAlg("R U R' U' R U R' U2 ".repeat(3)), sexy, 6), false);
+  assert.equal(endsWithRepeats([], sexy, 1), false);
+  assert.equal(endsWithRepeats(six, [], 6), false);
+  assert.equal(isSolved(applyAlg(SOLVED, six)), true);
 });
