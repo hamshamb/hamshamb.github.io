@@ -116,7 +116,8 @@ export function SolveTimer({ onSolve }: { onSolve: (result: { ms: number; penalt
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.metaKey || event.ctrlKey || event.altKey) return;
       const phase = current.current.phase;
-      if (event.key === "Escape") {
+      // a running solve is never thrown away by a stray key: Escape stops it like any other key
+      if (event.key === "Escape" && phase !== "running") {
         if (phase !== "idle" && phase !== "stopped") dispatch({ type: "cancel" });
         return;
       }

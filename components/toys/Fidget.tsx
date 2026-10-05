@@ -1,6 +1,6 @@
 "use client";
 
-import { type KeyboardEvent, type PointerEvent, useRef, useState } from "react";
+import { type KeyboardEvent, type PointerEvent, useEffect, useRef, useState } from "react";
 
 /** Sound is opt-in and remembered locally; nothing ever plays until the visitor turns it on. */
 function useClick() {
@@ -12,6 +12,7 @@ function useClick() {
     }
   });
   const ctx = useRef<AudioContext | null>(null);
+  useEffect(() => () => void ctx.current?.close(), []);
   const toggle = () => {
     const next = !on;
     setOn(next);

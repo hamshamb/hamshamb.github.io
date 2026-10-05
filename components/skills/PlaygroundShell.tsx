@@ -54,7 +54,15 @@ export function PlaygroundShell({
       id={`${id}-${value}-tab`}
       aria-selected={view === value}
       aria-controls={`${id}-${value}`}
+      tabIndex={view === value ? 0 : -1}
       onClick={() => setView(value)}
+      onKeyDown={(event) => {
+        if (event.key !== "ArrowLeft" && event.key !== "ArrowRight") return;
+        event.preventDefault();
+        const next = view === "demo" ? "code" : "demo";
+        setView(next);
+        document.getElementById(`${id}-${next}-tab`)?.focus();
+      }}
     >
       {label}
     </button>
@@ -67,7 +75,7 @@ export function PlaygroundShell({
         {tab("code", "code")}
       </div>
 
-      <div className="playground-demo" id={`${id}-demo`} ref={frame} data-full={full || undefined}>
+      <div className="playground-demo" id={`${id}-demo`} ref={frame} data-full={full || undefined} role="tabpanel" aria-labelledby={`${id}-demo-tab`}>
         <div className="playground-head">
           <div>
             <p className="playground-kicker mono">{kicker}</p>
@@ -102,7 +110,7 @@ export function PlaygroundShell({
         </div>
       </div>
 
-      <div className="playground-code" id={`${id}-code`}>
+      <div className="playground-code" id={`${id}-code`} role="tabpanel" aria-labelledby={`${id}-code-tab`}>
         {code}
       </div>
     </section>

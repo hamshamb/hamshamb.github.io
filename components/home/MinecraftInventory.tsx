@@ -87,13 +87,13 @@ export function MinecraftInventory() {
               {crafted ? (
                 <Link href="/work/nexus" className="mc-result mono">NEXUS</Link>
               ) : (
-                <span className="mc-slot mc-empty" aria-label="nothing crafted yet" />
+                <span className="mc-slot mc-empty" role="img" aria-label="nothing crafted yet" />
               )}
             </div>
           </div>
           <div className="mc-items" role="group" aria-label="Items">
             {inventory.map((id) => (
-              <button key={id} type="button" className="mc-slot" aria-pressed={held === id} aria-label={`pick up ${items[id].name}`} title={items[id].name} onClick={() => setHeld(held === id ? null : id)}>
+              <button key={id} type="button" className="mc-slot" aria-pressed={held === id} aria-label={items[id].name} title={items[id].name} onClick={() => setHeld(held === id ? null : id)}>
                 <Pixel id={id} />
               </button>
             ))}

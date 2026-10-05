@@ -93,7 +93,8 @@ export function PacketLost() {
             style={{ left: `${(node.x / 480) * 100}%`, top: `${(node.y / 240) * 100}%` }}
             data-here={node.id === at || undefined}
             data-home={node.id === 6 || undefined}
-            disabled={done || expired || !linked(at, node.id)}
+            disabled={node.id !== at && (done || expired || !linked(at, node.id))}
+            aria-current={node.id === at ? "location" : undefined}
             onClick={() => hop(node.id)}
             aria-label={`${node.label ?? `relay ${node.id}`}${node.id === at ? ", the packet is here" : ""}`}
           >

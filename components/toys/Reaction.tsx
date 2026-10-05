@@ -45,10 +45,11 @@ export default function Reaction() {
 
   return (
     <div className="reaction">
-      <button type="button" className="reaction-pad" data-phase={phase.kind} onPointerDown={(event) => { if (event.pointerType !== "mouse" || event.button === 0) press(); }} onKeyDown={(event) => { if (event.key === " " || event.key === "Enter") { event.preventDefault(); press(); } }}>
+      <button type="button" className="reaction-pad" data-phase={phase.kind} onPointerDown={(event) => { if (event.pointerType !== "mouse" || event.button === 0) press(); }} onKeyDown={(event) => { if (event.key === " " || event.key === "Enter") { event.preventDefault(); if (!event.repeat) press(); } }}>
         <span className="reaction-signal" aria-hidden="true" />
-        <span className="reaction-label" aria-live="polite">{label}</span>
+        <span className="reaction-label">{label}</span>
       </button>
+      <p className="sr-only" aria-live="polite">{phase.kind === "waiting" ? "" : label}</p>
       <p className="toy-foot mono">{best !== null ? `best this time: ${best} ms. ` : ""}not a medical or scientific measurement. browsers add their own delay.</p>
     </div>
   );

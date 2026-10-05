@@ -86,7 +86,7 @@ export function SecretLayer({ projectSlugs }: { projectSlugs: string[] }) {
       html().classList.remove("chaos", "chaos-still");
     });
     const onKey = (event: KeyboardEvent) => {
-      if (event.key !== "Escape" || event.defaultPrevented) return;
+      if (event.key !== "Escape" || event.defaultPrevented || isTyping(event.target)) return;
       // dialogs, the palette and form controls handle their own Escape first
       if (document.querySelector('[aria-modal="true"]:not([data-toy])')) return;
       panic();
@@ -256,6 +256,8 @@ export function ToyDialog({ title, note, onClose, children }: { title: string; n
     const previous = document.activeElement as HTMLElement | null;
     box.current?.querySelector<HTMLElement>("button, [href], input, [tabindex]:not([tabindex='-1'])")?.focus();
     const onKey = (event: KeyboardEvent) => {
+      // the palette (or anything else) on top of the toy handles its own Escape first
+      if (event.defaultPrevented) return;
       if (event.key === "Escape") {
         event.preventDefault();
         onClose();
@@ -275,7 +277,9 @@ export function ToyDialog({ title, note, onClose, children }: { title: string; n
     window.addEventListener("keydown", onKey);
     return () => {
       window.removeEventListener("keydown", onKey);
-      previous?.focus?.({ preventScroll: true });
+      // the opener may be gone (the palette closes as a toy opens); fall back to the page
+      if (previous?.isConnected) previous.focus({ preventScroll: true });
+      else document.getElementById("main")?.focus({ preventScroll: true });
     };
   }, [onClose]);
 

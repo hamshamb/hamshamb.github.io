@@ -92,7 +92,7 @@ export function MutationLab() {
                   <li>container queries</li>
                   <li>custom properties</li>
                 </ul>
-                <a className="demo-card-link" href="#demo-card-title">read more</a>
+                <a className="demo-card-link" href="#demo-card-title" onClick={(event) => event.preventDefault()}>read more</a>
               </div>
             </article>
           </div>

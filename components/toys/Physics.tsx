@@ -105,13 +105,25 @@ export default function Physics() {
     (el as HTMLCanvasElement & { wake?: () => void }).wake = wake;
     draw();
     wake();
-    return () => cancelAnimationFrame(frame.current);
+    return () => {
+      cancelAnimationFrame(frame.current);
+      frame.current = 0;
+    };
   }, []);
 
   const wake = () => (canvas.current as (HTMLCanvasElement & { wake?: () => void }) | null)?.wake?.();
   const point = (event: PointerEvent<HTMLCanvasElement>) => {
     const box = event.currentTarget.getBoundingClientRect();
     return { x: ((event.clientX - box.left) / box.width) * W, y: ((event.clientY - box.top) / box.height) * H };
+  };
+
+  /** Drop whatever is held without throwing it (cancelled touches, lost capture). */
+  const release = () => {
+    const held = grab.current;
+    if (!held) return;
+    grab.current = null;
+    world.current = { ...world.current, bodies: world.current.bodies.map((body) => (body.id === held.id ? { ...body, held: false } : body)) };
+    wake();
   };
 
   const add = (kind: Body["kind"]) => {
@@ -146,6 +158,8 @@ export default function Physics() {
           grab.current.trail = [...grab.current.trail.slice(-4), { x, y, t: performance.now() }];
           world.current = { ...world.current, bodies: world.current.bodies.map((body) => (body.id === grab.current!.id ? { ...body, x, y } : body)) };
         }}
+        onPointerCancel={() => release()}
+        onLostPointerCapture={() => release()}
         onPointerUp={() => {
           const held = grab.current;
           if (!held) return;

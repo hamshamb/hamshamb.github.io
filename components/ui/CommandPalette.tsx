@@ -36,6 +36,8 @@ export function CommandPalette({ projects, links = [] }: { projects: PaletteProj
   useEffect(() => {
     const onOpen = () => setOpen(true);
     const onKey = (event: globalThis.KeyboardEvent) => {
+      // a fullscreen demo would hide the palette while it holds focus
+      if (document.fullscreenElement) return;
       if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "k") {
         event.preventDefault();
         setOpen((value) => !value);
@@ -200,7 +202,8 @@ function Palette({ projects, links, onClose }: { projects: PaletteProject[]; lin
     inputRef.current?.focus();
     return () => {
       root.style.overflow = previousOverflow;
-      if (returnFocus.current instanceof HTMLElement) returnFocus.current.focus({ preventScroll: true });
+      // a toy opened from the palette owns focus now; do not pull it back behind the dialog
+      if (returnFocus.current instanceof HTMLElement && !document.querySelector("[data-toy]")) returnFocus.current.focus({ preventScroll: true });
     };
   }, []);
 

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { achievementLabel, BOLTS } from "@/lib/secrets-core";
 import { unlockToy, useSecrets } from "@/lib/secrets";
 import { openToy } from "@/lib/toys";
@@ -12,6 +12,14 @@ import { openToy } from "@/lib/toys";
 export default function DevPanel({ onClose }: { onClose: () => void }) {
   const state = useSecrets();
   const [env, setEnv] = useState({ viewport: "", theme: "", motion: "" });
+  const close = useRef<HTMLButtonElement>(null);
+  useEffect(() => {
+    const opener = document.activeElement as HTMLElement | null;
+    close.current?.focus();
+    return () => {
+      if (opener?.isConnected) opener.focus({ preventScroll: true });
+    };
+  }, []);
 
   useEffect(() => {
     const read = () => {
@@ -45,7 +53,7 @@ export default function DevPanel({ onClose }: { onClose: () => void }) {
     <aside className="dev-panel mono" aria-label="Diagnostics">
       <header>
         <span>diagnostics</span>
-        <button type="button" onClick={onClose} aria-label="Close diagnostics">×</button>
+        <button ref={close} type="button" onClick={onClose} aria-label="Close diagnostics">×</button>
       </header>
       <dl>
         {rows.map(([key, value]) => (
