@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { Reveal } from "@/components/motion/Reveal";
+import { CaseScene } from "@/components/rivet/CaseScene";
 import { AppLink as Link } from "@/components/ui/AppLink";
 import { TechChip } from "@/components/ui/TechChip";
 import { CopyLink } from "@/components/work/CopyLink";
@@ -101,6 +102,8 @@ export default async function ProjectPage({ params }: { params: Promise<Params> 
             />
           )}
         </div>
+
+        {project.slug === "rivet" && <CaseScene />}
 
         <dl className="case-meta">
           <div>
