@@ -84,7 +84,7 @@ test("skill pages exist, show real code, and say when it is not what runs", () =
   assert.ok(built("skills/typescript.html").includes("MAX_ATTEMPTS"), shown);
   // the HTML/CSS demo uses the markup it shows
   const markup = read("content/snippets/card.html");
-  const demo = read("components/skills/ResponsiveDemo.tsx");
+  const demo = read("components/skills/MutationLab.tsx");
   for (const cls of markup.match(/class="([\w-]+)"/g)) assert.ok(demo.includes(cls.replace("class=", "className=")), `${cls} missing from the demo`);
 });
 
@@ -100,11 +100,11 @@ test("no live code execution anywhere", () => {
 test("demos stay on their own pages", () => {
   const chunks = (html) => [...html.matchAll(/chunks\/([A-Za-z0-9]+)-[\w-]+\.js/g)].map((match) => match[1]);
   const home = chunks(built("index.html"));
-  for (const demo of ["SnakeDemo", "ConnectionDemo", "ExperimentQueue", "SessionDemo", "ReviewDemo", "ResponsiveDemo", "CodePanel"]) {
+  for (const demo of ["SnakeDemo", "ConnectionDemo", "ExperimentQueue", "SessionLobby", "ReviewDesk", "MutationLab", "CodePanel"]) {
     assert.ok(!home.includes(demo), `${demo} loads on the home page`);
   }
   assert.ok(chunks(built("skills/python.html")).includes("SnakeDemo"));
-  assert.ok(!chunks(built("skills/python.html")).includes("ReviewDemo"), "a skill page loads only its own demo");
+  assert.ok(!chunks(built("skills/python.html")).includes("ReviewDesk"), "a skill page loads only its own demo");
 });
 
 test("every internal link points at a page that exists, and ids are unique", () => {
