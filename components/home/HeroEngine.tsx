@@ -1,30 +1,39 @@
 "use client";
 
-import { createDrawable, createScope, createTimeline, onScroll, stagger, utils } from "animejs";
+import { animate, createScope, onScroll } from "animejs";
 import { useEffect } from "react";
-import { animeEaseOut, heroEngineMotion, INTRO_SEEN_KEY } from "@/lib/anime";
+import { heroEngineMotion, INTRO_SEEN_KEY } from "@/lib/anime";
+import { BUILT, combine, INTRO, introPose, type IntroPose, parallax, PARTS, type PartId, type Pose, scrollPose, type ScrollPose } from "@/lib/engine-pose";
 import { heroStart } from "@/lib/hero-state";
-import { layers } from "./engine";
+import { CENTER, layers, mountPoint, partCenter, project, RING, ringKeys, ringTicks, TAG_X, type Point } from "./engine";
 
-const { intro: t, scroll: s } = heroEngineMotion;
-/** Scroll fractions to positions on a 1000ms timeline that scroll position drives. */
-const at = (fraction: number) => fraction * 1000;
-const span = (from: number, to: number) => (to - from) * 1000;
 const FIRST_YEAR = 2021;
 const LAST_YEAR = 2026;
+const IDLE_AFTER = 60_000;
+
+/** Height each part pivots around, for depth parallax and scaling. */
+const partZ: Record<PartId, number> = { frame: 0, local: -76, protocol: -38, ring: RING.z, core: -18, network: 0, privacy: 38, interface: 76 };
+
+const r2 = (n: number) => Math.round(n * 100) / 100;
+
+/** A part's pose applied to one of its points: scale about the part's centre, then move. */
+function posePoint([x, y]: Point, pose: Pose, z: number): Point {
+  const [cx, cy] = partCenter(z);
+  return [cx + (x - cx) * pose.scale + pose.x, cy + (y - cy) * pose.scale + pose.y];
+}
 
 /**
- * The hero's choreography, owned entirely by Anime.js. Two independent parts:
+ * The hero's choreography. The drawing (BuildEngine.tsx) is server rendered assembled; this
+ * takes it apart and puts it back, and nothing else:
  *
- * 1. Ignition (first visit in a session only, ~1.1s): meta, the drawing's construction lines,
- *    the headline words, lede, actions, underline. It sets the scene and never blocks scrolling.
- * 2. The build engine (every visit): scroll position drives one timeline that draws the machine,
- *    assembles it, tilts it, explodes it into labelled layers, connects real projects to those
- *    layers, then reassembles and lets the drawing recede as the hero releases.
+ * 1. Opening (first visit in a session, ~2.8s): guides, frame, core, protocol ring, storage,
+ *    network, interface, privacy shell, connectors, labels, then the headline's underline. The
+ *    text is readable from the first frame; only the machine is built.
+ * 2. Scroll (every visit): an engineering-manual exploded view with labels that stay attached,
+ *    then the real projects, then reassembly as the hero hands over to the work.
  *
- * Each part animates different elements, and Motion never touches any of them. Server-rendered
- * HTML is the finished state, so with no JS or with reduced motion nothing here runs and nothing
- * is hidden. Repeat visits and background tabs skip the ignition but keep the scroll engine.
+ * Both are pure poses (lib/engine-pose.ts) combined in one render function, so they never fight
+ * over the same transform. With no JS or reduced motion nothing here runs and nothing is hidden.
  */
 export function HeroEngine({ rootId }: { rootId: string }) {
   useEffect(() => {
@@ -36,23 +45,27 @@ export function HeroEngine({ rootId }: { rootId: string }) {
       heroReady: html.classList.contains("hero-ready"),
       hidden: document.visibilityState === "hidden",
     });
-    if (!root || start === "static") {
+    const svg = root?.querySelector<SVGSVGElement>(".eng");
+    if (!root || !svg || start === "static") {
       finish();
       return;
     }
 
-    const engine = buildEngine(root);
-    const ignition = start === "ignite" ? ignite(root, html) : null;
+    const rig = createRig(root, svg);
+    const engine = buildEngine(root, rig);
+    const ignition = start === "ignite" ? ignite(rig, html) : null;
     if (!ignition) finish();
+    const stopIdle = watchIdle(root, svg);
 
     return () => {
       ignition?.revert();
       engine.revert();
+      stopIdle();
+      rig.restore();
       for (const el of root.querySelectorAll<SVGElement>("[pathLength]")) {
         el.removeAttribute("pathLength");
         el.removeAttribute("stroke-dasharray");
         el.removeAttribute("stroke-dashoffset");
-        el.style.strokeLinecap = "";
       }
       finish();
     };
@@ -61,47 +74,205 @@ export function HeroEngine({ rootId }: { rootId: string }) {
   return null;
 }
 
-/** The short timed opening: sets the scene in about a second, then leaves everything to scroll. */
-function ignite(root: HTMLElement, html: HTMLElement) {
+type Rig = ReturnType<typeof createRig>;
+
+/** Finds every moving piece once and owns the only function that writes to them. */
+function createRig(root: HTMLElement, svg: SVGSVGElement) {
+  const q = <T extends Element>(selector: string) => [...svg.querySelectorAll<T>(selector)];
+  const one = <T extends Element>(selector: string) => svg.querySelector<T>(selector);
+  const machine = root.querySelector<HTMLElement>(".hero-machine");
+  const underline = root.querySelector<SVGPathElement>(".hero-underline path");
+  const cam = one<SVGGElement>(".eng-cam");
+  const parts = Object.fromEntries(PARTS.map((id) => [id, one<SVGGElement>(`[data-part="${id}"]`)])) as Record<PartId, SVGGElement | null>;
+  const ticks = one<SVGPathElement>(".eng-ring-ticks");
+  const keys = one<SVGPathElement>(".eng-ring-keys");
+  const rails = q<SVGPathElement>(".eng-rail");
+  const mounts = q<SVGCircleElement>(".eng-mount");
+  const bolts = q<SVGGElement>(".eng-bolt");
+  const guideLines = q<SVGPathElement>(".eng-guide:not(.eng-axis):not([data-dashed])");
+  const guideDashes = q<SVGPathElement>(".eng-axis, .eng-guide[data-dashed]");
+  const tags = layers.map((layer) => {
+    const el = one<SVGGElement>(`.eng-tag[data-layer="${layer.id}"]`);
+    return {
+      layer,
+      el,
+      leader: el?.querySelector<SVGPathElement>(".eng-leader") ?? null,
+      pin: el?.querySelector<SVGCircleElement>(".eng-pin") ?? null,
+      corner: project(layer.size, -layer.size, layer.z),
+    };
+  });
+  const coreTag = one<SVGGElement>(".eng-tag-core");
+  const notes = q<SVGTextElement>(".eng-note");
+  const projects = q<SVGTextElement>(".eng-projects");
+  const hot = q<SVGPathElement>(".eng-hot");
+
+  // stroke drawing: a normalised length lets one number say how much of a line is drawn
+  const drawn = [...guideLines, ...rails, ...tags.map((tag) => tag.leader).filter(Boolean), underline].filter(Boolean) as SVGPathElement[];
+  for (const el of drawn) {
+    el.setAttribute("pathLength", "1");
+    el.setAttribute("stroke-dasharray", "1 1");
+  }
+  const draw = (el: SVGPathElement | null, amount: number) => el?.setAttribute("stroke-dashoffset", String(r2(1 - amount)));
+
+  const written = new WeakMap<Element, string>();
+  const write = (el: Element | null, attr: string, value: string) => {
+    if (!el) return;
+    const key = `${attr}=${value}`;
+    if (written.get(el) === key) return;
+    written.set(el, key);
+    el.setAttribute(attr, value);
+  };
+  const opacity = (el: SVGElement | HTMLElement | null, value: number) => {
+    if (el) el.style.opacity = value >= 0.999 ? "" : String(r2(value));
+  };
+  /** For elements that are hidden by default in CSS (notes, project lines, the routed path). */
+  const reveal = (el: SVGElement | null, value: number) => {
+    if (el) el.style.opacity = String(r2(value));
+  };
+
+  const state = {
+    intro: BUILT as IntroPose,
+    scroll: scrollPose(0) as ScrollPose,
+    travel: 1,
+    drawIntro: false,
+  };
+
+  function render() {
+    const { intro, scroll, travel } = state;
+    const alt = document.documentElement.classList.contains("engine-alt");
+    const { camera } = scroll;
+
+    // framing: a few degrees, a few percent, never a flight
+    const camT = `translate(${r2(CENTER.x + camera.x)} ${CENTER.y}) rotate(${r2(camera.rotate)}) scale(${r2(camera.scale)}) translate(${-CENTER.x} ${-CENTER.y})`;
+    write(cam, "transform", camT);
+    const rad = (camera.rotate * Math.PI) / 180;
+    const [cos, sin] = [Math.cos(rad), Math.sin(rad)];
+    const viaCamera = ([x, y]: Point): Point => {
+      const dx = x - CENTER.x;
+      const dy = y - CENTER.y;
+      return [CENTER.x + camera.x + camera.scale * (dx * cos - dy * sin), CENTER.y + camera.scale * (dx * sin + dy * cos)];
+    };
+
+    const poses = {} as Record<PartId, Pose>;
+    for (const id of PARTS) {
+      const pose = combine(intro.parts[id], id, scroll.explode, travel, alt);
+      pose.x += parallax(camera.x, partZ[id]);
+      poses[id] = pose;
+      const el = parts[id];
+      if (!el) continue;
+      const [cx, cy] = partCenter(partZ[id]);
+      const scale = r2(pose.scale) === 1 ? "" : ` translate(${cx} ${cy}) scale(${r2(pose.scale)}) translate(${-cx} ${-cy})`;
+      write(el, "transform", `translate(${r2(pose.x)} ${r2(pose.y)})${scale}`);
+      opacity(el, pose.opacity);
+      el.style.setProperty("--flash", String(r2(pose.flash)));
+    }
+    write(ticks, "d", ringTicks(poses.ring.rotate));
+    write(keys, "d", ringKeys(poses.ring.rotate));
+
+    // rails stretch between the plates' moving mounts
+    const mountAt = layers.map((layer) => viaCamera(posePoint(mountPoint(layer), poses[layer.id], layer.z)));
+    mounts.forEach((mount, index) => {
+      write(mount, "cx", String(r2(mountAt[index][0])));
+      write(mount, "cy", String(r2(mountAt[index][1])));
+      opacity(mount, poses[layers[index].id].opacity);
+    });
+    rails.forEach((rail, index) => {
+      const [x0, y0] = mountAt[index];
+      const [x1, y1] = mountAt[index + 1];
+      write(rail, "d", `M${r2(x0)} ${r2(y0 + layers[index].thickness)}L${r2(x1)} ${r2(y1)}`);
+      draw(rail, intro.rails);
+    });
+
+    // tags follow their plate up and down; the leader stretches to keep them attached
+    tags.forEach(({ layer, el, leader, pin, corner }, index) => {
+      if (!el) return;
+      const [x, y] = viaCamera(posePoint(corner, poses[layer.id], layer.z));
+      write(el, "transform", `translate(0 ${r2(y - corner[1])})`);
+      write(leader, "d", `M${r2(x + 8)} ${corner[1]}H${TAG_X - 10}`);
+      write(pin, "cx", String(r2(x + 8)));
+      draw(leader, intro.tags[index]);
+      opacity(el, intro.tags[index] * scroll.labels);
+    });
+    opacity(coreTag, intro.tags[layers.length] * scroll.labels);
+    notes.forEach((note) => reveal(note, scroll.notes));
+    projects.forEach((line) => reveal(line, scroll.projects));
+    hot.forEach((line) => reveal(line, scroll.projects));
+
+    // the bolt-collector variant: the frame's bolts back themselves out as the view explodes
+    bolts.forEach((bolt, index) => {
+      if (!alt || scroll.explode < 0.001) {
+        write(bolt, "transform", "");
+        return;
+      }
+      const [x, y] = [index === 1 || index === 2 ? 1 : -1, index > 1 ? 1 : -1];
+      const box = bolt.querySelector("circle");
+      const [bx, by] = [Number(box?.getAttribute("cx")), Number(box?.getAttribute("cy"))];
+      const e = scroll.explode;
+      write(bolt, "transform", `translate(${r2(x * 16 * e)} ${r2(y * 12 * e)}) rotate(${r2(e * 150)} ${bx} ${by})`);
+    });
+
+    guideLines.forEach((line) => draw(line, intro.guides));
+    guideDashes.forEach((line) => opacity(line, intro.guides));
+    if (state.drawIntro) draw(underline, intro.underline);
+
+    if (machine) {
+      const { scale, opacity: alpha, y } = scroll.machine;
+      machine.style.transform = scale === 1 && y === 0 ? "" : `translateY(${r2(y)}%) scale(${r2(scale)})`;
+      opacity(machine, alpha);
+    }
+  }
+
+  /** Puts every attribute back exactly as the server rendered it. */
+  function restore() {
+    state.intro = BUILT;
+    state.scroll = scrollPose(0);
+    state.drawIntro = false;
+    render();
+    for (const el of [cam, ...Object.values(parts), ...tags.map((tag) => tag.el), ...bolts]) el?.removeAttribute("transform");
+    for (const el of svg.querySelectorAll<SVGElement>("[style]")) el.removeAttribute("style");
+    machine?.style.removeProperty("transform");
+    machine?.style.removeProperty("opacity");
+  }
+
+  return { state, render, restore };
+}
+
+/** The timed opening: about 2.8s, once per session. Scrolling during it just works. */
+function ignite(rig: Rig, html: HTMLElement) {
   try {
     window.sessionStorage.setItem(INTRO_SEEN_KEY, "1");
   } catch {
-    // Storage can be unavailable; the ignition simply plays again next time.
+    // storage can be unavailable; the opening simply plays again next time
   }
-
-  return createScope({ root }).add(() => {
-    const meta = root.querySelector<HTMLElement>("[data-hero='meta']");
-    const lede = root.querySelector<HTMLElement>("[data-hero='lede']");
-    const rail = root.querySelector<HTMLElement>("[data-hero='rail']");
-    const words = root.querySelectorAll<HTMLElement>(".word-inner");
-    const controls = root.querySelectorAll<HTMLElement>("[data-hero='actions'] > *");
-    const [underline] = createDrawable(".hero-underline path");
-    // Solid construction lines draw themselves; dashed ones (whose dashes a draw would erase) fade.
-    const guideLines = createDrawable(".eng-guide:not(.eng-axis):not([data-dashed])");
-    const guideDashes = root.querySelectorAll<SVGElement>(".eng-axis, .eng-guide[data-dashed]");
-    const fading = [meta, lede, rail, ...controls, ...guideDashes].filter(Boolean) as Element[];
-
-    // Hold the starting state inline, then drop the CSS holding class in the same frame.
-    utils.set(words, { y: "110%" });
-    utils.set(fading, { opacity: 0 });
-    utils.set(underline, { draw: "0 0" });
-    utils.set(guideLines, { draw: "0 0" });
+  const clock = { t: 0 };
+  return createScope().add(() => {
+    rig.state.drawIntro = true;
+    rig.state.intro = introPose(0, layers.length + 1);
+    rig.render();
     html.classList.add("hero-ready");
-
-    createTimeline({ defaults: { ease: animeEaseOut }, onComplete: () => html.classList.add("intro-done") })
-      .add(meta!, { opacity: [0, 1], y: [t.rise, 0], duration: t.metaDuration }, t.meta)
-      .add(guideDashes, { opacity: [0, 1], duration: t.machineDuration }, t.machine)
-      .add(guideLines, { draw: ["0 0", "0 1"], duration: t.machineDuration, ease: "inOut(2)", delay: stagger(40) }, t.machine)
-      .add(words, { y: ["110%", "0%"], duration: t.wordDuration, ease: "outExpo", delay: stagger(t.wordStagger) }, t.words)
-      .add(lede!, { opacity: [0, 1], y: [t.rise, 0], duration: t.ledeDuration }, t.lede)
-      .add(controls, { opacity: [0, 1], y: [4, 0], duration: t.actionsDuration, delay: stagger(50) }, t.actions)
-      .add(rail!, { opacity: [0, 1], duration: t.actionsDuration }, t.actions)
-      .add(underline, { draw: ["0 0", "0 1"], duration: t.underlineDuration, ease: "inOut(2.2)" }, t.underline);
+    animate(clock, {
+      t: [0, INTRO.total],
+      duration: INTRO.total,
+      ease: "linear",
+      onUpdate: () => {
+        rig.state.intro = introPose(clock.t, layers.length + 1);
+        rig.render();
+      },
+      onComplete: () => {
+        rig.state.intro = BUILT;
+        rig.render();
+        html.classList.add("intro-done");
+      },
+    });
+    return () => {
+      rig.state.intro = BUILT;
+      rig.state.drawIntro = false;
+    };
   });
 }
 
-/** The scroll-driven drawing. Rebuilt (not replayed) when the layout switches between modes. */
-function buildEngine(root: HTMLElement) {
+/** Scroll position drives the exploded view. Rebuilt (not replayed) when the layout mode changes. */
+function buildEngine(root: HTMLElement, rig: Rig) {
   return createScope({
     root,
     mediaQueries: {
@@ -110,59 +281,31 @@ function buildEngine(root: HTMLElement) {
     },
   }).add((scope) => {
     const sticky = Boolean(scope?.matches.sticky);
-    const compact = Boolean(scope?.matches.compact);
-    const svg = root.querySelector<SVGSVGElement>(".eng");
+    rig.state.travel = scope?.matches.compact ? 0.6 : 1;
     const machine = root.querySelector<HTMLElement>(".hero-machine");
     const sequence = root.querySelector<HTMLElement>(".hero-sequence");
     const rail = root.querySelector<HTMLElement>(".hero-rail");
     const dot = root.querySelector<HTMLElement>(".rail-dot");
-    if (!svg || !machine || !sequence) return;
-
-    const q = <T extends Element = SVGElement>(selector: string) => [...svg.querySelectorAll<T>(selector)];
-    const lines = createDrawable(q(".eng-body .eng-line:not(.eng-dashed)"));
-    const details = createDrawable(q(".eng-body .eng-detail:not(.eng-dashed)"));
-    const leaders = createDrawable(q(".eng-leader"));
-    const dashed = q(".eng-body .eng-dashed");
-    const faces = q(".eng-face");
-    const labels = q(".eng-label");
-    const pins = q(".eng-pin");
-    const notes = q(".eng-note");
-    const projects = q(".eng-projects");
-    const hot = q(".eng-hot");
-    const guides = svg.querySelector(".eng-guides")!;
-    const body = svg.querySelector(".eng-body")!;
-    const travel = compact ? 0.6 : 1;
-
-    const parts = layers.map((layer) => ({
-      layer,
-      group: svg.querySelector(`.eng-layer[data-layer="${layer.id}"]`)!,
-      plate: svg.querySelector(`.eng-layer[data-layer="${layer.id}"] .eng-plate`)!,
-      tag: svg.querySelector(`.eng-tag[data-layer="${layer.id}"]`)!,
-    }));
-
-    // Progress 0: faint construction lines only. The machine is not drawn yet.
-    utils.set([...lines, ...details, ...leaders], { draw: "0 0" });
-    utils.set([...dashed, ...faces, ...labels, ...pins, ...notes, ...projects, ...hot], { opacity: 0 });
-    utils.set(guides, { opacity: 0.55 });
-    for (const { layer, group, plate, tag } of parts) {
-      const from = { translateX: layer.from.x * travel, translateY: -layer.from.z * travel };
-      utils.set([group, tag], from);
-      if (layer.from.rotate) utils.set(plate, { rotate: layer.from.rotate });
-    }
+    if (!machine || !sequence) return;
 
     rail?.style.setProperty("--progress", "0");
     if (dot) dot.dataset.year = String(FIRST_YEAR);
     let year = FIRST_YEAR;
-    const tl = createTimeline({
-      defaults: { ease: "inOut(2)" },
+    const clock = { p: 0 };
+    animate(clock, {
+      p: [0, 1],
+      duration: 1000,
+      ease: "linear",
       autoplay: onScroll(
         sticky
-          ? { target: sequence, enter: "top top", leave: "bottom bottom", sync: s.smooth }
-          : { target: machine, enter: "bottom top", leave: "top bottom", sync: s.smooth },
+          ? { target: sequence, enter: "top top", leave: "bottom bottom", sync: heroEngineMotion.scroll.smooth }
+          : { target: machine, enter: "bottom top", leave: "top bottom", sync: heroEngineMotion.scroll.smooth },
       ),
-      onUpdate: (self) => {
-        rail?.style.setProperty("--progress", String(self.progress));
-        const current = FIRST_YEAR + Math.round(self.progress * (LAST_YEAR - FIRST_YEAR));
+      onUpdate: () => {
+        rig.state.scroll = scrollPose(clock.p);
+        rig.render();
+        rail?.style.setProperty("--progress", String(r2(clock.p)));
+        const current = FIRST_YEAR + Math.round(clock.p * (LAST_YEAR - FIRST_YEAR));
         if (dot && current !== year) {
           year = current;
           dot.dataset.year = String(current);
@@ -170,70 +313,40 @@ function buildEngine(root: HTMLElement) {
       },
     });
 
-    // 1. The outline constructs itself, then the detail; layer names arrive one by one.
-    tl.add(lines, { draw: ["0 0", "0 1"], duration: span(s.drawStart, s.drawEnd), ease: "linear", delay: stagger(3) }, at(s.drawStart))
-      .add(details, { draw: ["0 0", "0 1"], duration: span(s.drawStart + 0.06, s.detailEnd) - 120, ease: "linear", delay: stagger(1.5) }, at(s.drawStart + 0.06))
-      .add(faces, { opacity: [0, 1], duration: span(0.2, 0.32), ease: "linear" }, at(0.2))
-      .add([...labels, ...pins], { opacity: [0, 1], duration: 60, ease: "linear", delay: stagger(18) }, at(s.drawStart + 0.02))
-      .add(leaders, { draw: ["0 0", "0 1"], duration: 60, ease: "linear", delay: stagger(18) }, at(s.drawStart + 0.02));
-
-    // 2. Layers slide into the assembly; privacy closes over it as a thin shell.
-    for (const { layer, group, plate, tag } of parts) {
-      tl.add([group, tag], {
-        translateX: [layer.from.x * travel, 0],
-        translateY: [-layer.from.z * travel, 0],
-        duration: span(s.assemblyStart, s.assemblyEnd),
-      }, at(s.assemblyStart));
-      if (layer.from.rotate) {
-        tl.add(plate, { rotate: [layer.from.rotate, 0], duration: span(s.assemblyStart, s.assemblyEnd) }, at(s.assemblyStart));
-      }
-    }
-    tl.add(dashed, { opacity: [0, 1], duration: span(s.assemblyStart, s.assemblyEnd), ease: "linear" }, at(s.assemblyStart))
-      .add(guides, { opacity: [0.55, 0.3], duration: span(s.assemblyStart, s.assemblyEnd), ease: "linear" }, at(s.assemblyStart));
-
-    // 3. The headline's moment: the drawing tilts a few degrees and its labels step back.
-    tl.add(body, { rotate: [0, compact ? 0 : s.tilt], duration: span(s.assemblyEnd, s.emphasisEnd) }, at(s.assemblyEnd))
-      .add(labels, { opacity: [1, 0.55], duration: span(s.assemblyEnd, s.emphasisEnd), ease: "linear" }, at(s.assemblyEnd));
-
-    // 4. Exploded view: layers separate around the core, short annotations appear.
-    for (const { layer, group, tag } of parts) {
-      tl.add([group, tag], {
-        translateX: [0, layer.explode.x * travel],
-        translateY: [0, -layer.explode.z * travel],
-        duration: span(s.explodeStart, s.explodeEnd),
-      }, at(s.explodeStart));
-    }
-    tl.add(body, { rotate: [compact ? 0 : s.tilt, 0], duration: span(s.explodeStart, s.explodeStart + 0.08) }, at(s.explodeStart))
-      .add(labels, { opacity: [0.55, 1], duration: span(s.explodeStart, s.explodeStart + 0.06), ease: "linear" }, at(s.explodeStart))
-      .add(notes, { opacity: [0, 1], duration: 60, ease: "linear", delay: stagger(12) }, at(s.explodeStart + 0.02));
-
-    // 5. The real projects attach to the layers they lean on. Metaphor, not architecture.
-    tl.add(notes, { opacity: [1, 0], duration: 40, ease: "linear" }, at(s.projectsStart))
-      .add(projects, { opacity: [0, 1], duration: 50, ease: "linear", delay: stagger(10) }, at(s.projectsStart + 0.03))
-      .add(hot, { opacity: [0, 1], duration: 70, ease: "linear" }, at(s.projectsStart + 0.03));
-
-    // 6. Reassemble and recede: the drawing becomes background as the work takes over.
-    tl.add([...projects, ...hot], { opacity: [1, 0], duration: 60, ease: "linear" }, at(s.exitStart + 0.01));
-    for (const { layer, group, tag } of parts) {
-      tl.add([group, tag], {
-        translateX: [layer.explode.x * travel, 0],
-        translateY: [-layer.explode.z * travel, 0],
-        duration: span(s.exitStart, 0.96),
-      }, at(s.exitStart));
-    }
-    tl.add([...labels, ...pins], { opacity: [1, 0], duration: 80, ease: "linear" }, at(s.exitStart + 0.02))
-      .add(leaders, { draw: ["0 1", "1 1"], duration: 80, ease: "linear" }, at(s.exitStart + 0.02))
-      .add(machine, {
-        scale: [1, s.exitScale],
-        translateY: ["0%", "-4%"],
-        opacity: [1, s.exitOpacity],
-        duration: span(s.exitStart + 0.03, 1),
-        ease: "linear",
-      }, at(s.exitStart + 0.03));
-
     return () => {
+      rig.state.scroll = scrollPose(0);
+      rig.render();
       rail?.style.removeProperty("--progress");
       if (dot) dot.dataset.year = String(LAST_YEAR);
     };
   });
+}
+
+/**
+ * After a minute without input, while the hero is on screen, one diagnostic line sweeps the
+ * network plate and the core blinks. Any input stops it at once. CSS skips it for reduced motion.
+ */
+function watchIdle(root: HTMLElement, svg: SVGSVGElement) {
+  let last = Date.now();
+  let visible = true;
+  const wake = () => {
+    last = Date.now();
+    if (svg.dataset.idle) delete svg.dataset.idle;
+  };
+  const events = ["pointermove", "pointerdown", "keydown", "scroll", "touchstart"] as const;
+  for (const name of events) window.addEventListener(name, wake, { passive: true });
+  const observer = new IntersectionObserver(([entry]) => {
+    visible = entry.isIntersecting;
+    if (!visible) wake();
+  });
+  observer.observe(root);
+  const timer = window.setInterval(() => {
+    if (visible && document.visibilityState === "visible" && Date.now() - last > IDLE_AFTER) svg.dataset.idle = "on";
+  }, 5000);
+  return () => {
+    for (const name of events) window.removeEventListener(name, wake);
+    observer.disconnect();
+    window.clearInterval(timer);
+    delete svg.dataset.idle;
+  };
 }

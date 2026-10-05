@@ -16,51 +16,12 @@ export function prefersReducedMotion() {
 }
 
 /**
- * The hero, in one place.
- *
- * `intro` is the short timed ignition on a first visit (milliseconds; each value is when that
- * stage starts unless it says otherwise). It only sets the scene and is finished by ~1.1s.
- *
- * `scroll` is everything after that, as fractions of the hero's scroll distance (0 to 1).
- * Scroll owns the build engine completely; nothing here ever waits on a timer.
+ * The hero's scroll sync. Its timing (the opening and every scroll stage) lives in
+ * lib/engine-pose.ts as pure functions; this only says how closely the drawing follows the
+ * scrollbar (Anime.js `sync`, 0 to 1: higher is smoother and slightly later).
  */
 export const heroEngineMotion = {
-  intro: {
-    meta: 0,
-    metaDuration: 280,
-    machine: 90,
-    machineDuration: 760,
-    words: 120,
-    wordDuration: 560,
-    wordStagger: 50,
-    lede: 330,
-    ledeDuration: 380,
-    actions: 440,
-    actionsDuration: 300,
-    underline: 600,
-    underlineDuration: 500,
-    rise: 8,
-  },
-  scroll: {
-    drawStart: 0.1,
-    drawEnd: 0.25,
-    detailEnd: 0.34,
-    assemblyStart: 0.25,
-    assemblyEnd: 0.4,
-    emphasisEnd: 0.52,
-    explodeStart: 0.52,
-    explodeEnd: 0.68,
-    projectsStart: 0.68,
-    projectsEnd: 0.82,
-    exitStart: 0.82,
-    /** Degrees. A few, never dramatic. */
-    tilt: -2.5,
-    /** How far the drawing recedes as the hero releases. */
-    exitScale: 0.92,
-    exitOpacity: 0.4,
-    /** Smoothing between scroll position and drawing (Anime.js `sync`, 0 to 1). */
-    smooth: 0.8,
-  },
+  scroll: { smooth: 0.8 },
 } as const;
 
 /** Rivet's store-and-forward diagram: one pass, then it stops. */

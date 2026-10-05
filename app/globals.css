@@ -690,7 +690,7 @@ kbd {
     padding-top: clamp(1.5rem, 0.5rem + 3.5svh, 4rem);
     overflow: hidden;
   }
-  .motion-ok .hero-sequence { height: 250svh; }
+  .motion-ok .hero-sequence { height: 210svh; }
   .motion-ok .hero-scene { position: sticky; top: var(--header-h); height: calc(100svh - var(--header-h)); }
   .hero-title { font-size: var(--hero-fs); }
   .hero-copy { max-width: 30rem; }
@@ -724,15 +724,14 @@ kbd {
 }
 
 /*
- * Opening holding state. Only applies once the boot script has confirmed JS and motion are
- * welcome (.motion-ok); without JS the hero renders complete, drawing included. The headline
- * itself never goes transparent: its words wait below their masks, which only clip during the
- * ignition. A 2.5s failsafe in the boot script releases all of this if the bundle never runs.
+ * Opening holding state. The text is never held back: it is readable from the first frame.
+ * Only the machine waits (so it does not flash assembled and then vanish) until the opening
+ * takes it over. It applies only once the boot script has confirmed JS and motion are welcome
+ * (.motion-ok), and a 2.5s failsafe in the boot script releases it if the bundle never runs.
  */
-.motion-ok:not(.hero-ready) [data-hero]:not([data-hero="title"]) { opacity: 0; }
-.motion-ok:not(.hero-ready) .hero-title .word-inner { transform: translateY(110%); }
+.motion-ok:not(.hero-ready) .hero-machine, .motion-ok:not(.hero-ready) [data-hero="rail"] { opacity: 0; }
 .motion-ok:not(.hero-ready) .hero-underline { opacity: 0; }
-.motion-ok:not(.intro-done) .hero-title .word { overflow: clip; }
+.hero-rail { transition: opacity var(--dur-slow) var(--ease-out); }
 
 /* -------------------------------------------------------- build engine --- */
 
@@ -751,10 +750,19 @@ kbd {
   overflow: visible;
 }
 .eng path, .eng circle { vector-effect: non-scaling-stroke; }
-.eng-body, .eng-layer, .eng-plate, .eng-tag { transform-box: view-box; }
 .eng-face { fill: var(--bg); stroke: none; }
 .eng-face-open { fill: none; }
 .eng-line { fill: none; stroke: var(--eng-ink); stroke-width: 1.2; stroke-linejoin: round; stroke-linecap: round; }
+/* the moment a part seats, its outline briefly takes the accent (HeroEngine sets --flash 1 to 0) */
+.eng-part .eng-line { stroke: color-mix(in srgb, var(--accent) calc(var(--flash, 0) * 100%), var(--eng-ink)); }
+.eng-rail { fill: none; stroke: var(--eng-ink); stroke-width: 1; }
+.eng-mount { fill: var(--bg); stroke: var(--eng-ink); stroke-width: 1; }
+.eng-bracket { stroke-width: 1; }
+.eng-bolt path { fill: var(--bg); stroke: var(--eng-soft); stroke-width: 1; }
+.eng-bolt circle { fill: var(--eng-soft); }
+.engine-alt .eng-bolt path { stroke: var(--accent); }
+.engine-alt .eng-bolt circle { fill: var(--accent); }
+.eng-scan { fill: none; stroke: var(--accent); stroke-width: 1.4; opacity: 0; }
 .eng-detail { fill: none; stroke: var(--eng-soft); stroke-width: 1; stroke-linejoin: round; stroke-linecap: round; }
 .eng-dashed { stroke-dasharray: 4 5; }
 .eng-accent { stroke: var(--accent); }
@@ -771,6 +779,18 @@ kbd {
 .eng-note { fill: var(--fg-3); font-family: var(--font-sans); font-size: 13px; opacity: 0; }
 .eng-projects { fill: var(--accent); font-family: var(--font-mono); font-size: 11.5px; letter-spacing: 0.06em; opacity: 0; }
 .eng-short { display: none; }
+
+/* idle: after a minute of nothing, one diagnostic line sweeps the network plate */
+@media (prefers-reduced-motion: no-preference) {
+  .eng[data-idle] .eng-scan { animation: eng-scan 6s var(--ease-in-out) infinite; }
+  .eng[data-idle] .eng-core .eng-accent { animation: eng-blink 3s steps(2, jump-none) infinite; }
+}
+@keyframes eng-scan {
+  0% { opacity: 0; transform: translate(0, 0); }
+  12%, 80% { opacity: 0.7; }
+  100% { opacity: 0; transform: translate(-249px, 144px); }
+}
+@keyframes eng-blink { 50% { opacity: 0.2; } }
 
 /* how much the drawing says depends on how much room it has */
 .eng-tag[data-p="2"] .eng-note, .eng-tag[data-p="3"] .eng-note { display: none; }
