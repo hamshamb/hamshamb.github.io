@@ -1,0 +1,64 @@
+/* ------------------------------------------------- playground frame --- */
+/* shared by every skill page; each demo brings its own look inside the stage */
+
+.playground { display: grid; gap: var(--space-5); grid-template-areas: "switch" "demo" "code"; }
+@media (min-width: 1100px) {
+  .playground { grid-template-columns: minmax(0, 1fr) minmax(0, 1.08fr); grid-template-areas: "code demo"; align-items: start; gap: var(--space-6); }
+  .playground-demo { position: sticky; top: calc(var(--header-h) + var(--space-4)); }
+  .playground-switch { display: none !important; }
+}
+@media (max-width: 1099px) {
+  .playground[data-view="demo"] .playground-code, .playground[data-view="code"] .playground-demo { display: none; }
+}
+
+.playground-switch { grid-area: switch; display: inline-flex; justify-self: start; padding: 3px; border: 1px solid var(--line); border-radius: 999px; background: var(--bg-raised); }
+.playground-switch button { min-width: 5.5rem; min-height: 38px; padding: 0 var(--space-4); border: 0; border-radius: 999px; background: none; color: var(--fg-3); font-size: 0.72rem; letter-spacing: 0.08em; text-transform: uppercase; transition: background-color var(--dur-fast), color var(--dur-fast); }
+.playground-switch button[aria-selected="true"] { background: var(--fg); color: var(--bg); }
+
+.playground-demo {
+  grid-area: demo;
+  display: grid;
+  gap: var(--space-4);
+  min-width: 0;
+  padding: var(--space-5);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  background: var(--bg-raised);
+}
+.playground-demo:fullscreen { align-content: start; overflow: auto; padding: clamp(1rem, 3vw, 3rem); border: 0; border-radius: 0; background: var(--bg); }
+.playground-demo:fullscreen .playground-stage { width: min(100%, 72rem); justify-self: center; }
+.playground-code { grid-area: code; min-width: 0; }
+
+.playground-head { display: flex; flex-wrap: wrap; align-items: flex-start; justify-content: space-between; gap: var(--space-3); }
+.playground-head h2 { font-size: var(--text-xl); letter-spacing: -0.02em; }
+.playground-kicker { margin-bottom: var(--space-1); color: var(--accent); font-size: 0.68rem; }
+.playground-tools { display: flex; gap: var(--space-2); }
+.tool-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4em;
+  min-height: 36px;
+  padding: 0 var(--space-3);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  background: var(--bg);
+  color: var(--fg-2);
+  font-size: 0.68rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  transition: border-color var(--dur-fast), color var(--dur-fast), transform var(--dur-base) var(--spring-out);
+}
+.tool-button:hover { border-color: var(--line-strong); color: var(--fg); }
+.tool-button:active { transform: translateY(var(--press-y)); transition-duration: var(--dur-press); }
+.tool-button[aria-pressed="true"] { border-color: var(--accent); color: var(--accent); }
+
+.playground-stage { min-width: 0; }
+.playground-foot { display: grid; gap: var(--space-3); padding-top: var(--space-3); border-top: 1px dashed var(--line); }
+.playground-keys { display: flex; flex-wrap: wrap; gap: var(--space-2); margin: 0; color: var(--fg-3); font-size: 0.66rem; text-transform: none; letter-spacing: 0.02em; }
+.playground-keys span { padding: 0.2rem 0.5rem; border: 1px solid var(--line); border-bottom-width: 2px; border-radius: 5px; background: var(--bg); }
+@media (hover: none) { .playground-keys { display: none; } }
+.playground-info summary { display: inline-flex; align-items: center; gap: 0.5em; min-height: 32px; color: var(--fg-3); font-size: 0.68rem; cursor: pointer; list-style: none; }
+.playground-info summary::-webkit-details-marker { display: none; }
+.playground-info summary::before { content: "+"; display: inline-grid; width: 1.2em; place-items: center; transition: transform var(--dur-base) var(--ease-out); }
+.playground-info[open] summary::before { transform: rotate(45deg); }
+.playground-info p { max-width: 62ch; margin-top: var(--space-2); color: var(--fg-3); font-size: var(--text-sm); }

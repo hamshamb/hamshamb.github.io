@@ -92,16 +92,6 @@
 .skill-used { color: var(--fg-3); text-transform: none; letter-spacing: 0.02em; line-height: 1.8; }
 .lab-page-title .tech-icon { width: 0.7em; height: 0.7em; }
 
-.playground { display: grid; gap: var(--space-6); grid-template-areas: "demo" "code"; }
-@media (min-width: 1100px) {
-  .playground { grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr); grid-template-areas: "code demo"; align-items: start; }
-  .playground-demo { position: sticky; top: calc(var(--header-h) + var(--space-4)); }
-}
-.playground-demo { grid-area: demo; display: grid; gap: var(--space-4); min-width: 0; padding: var(--space-5); border: 1px solid var(--line); border-radius: var(--radius-lg); background: var(--bg-raised); }
-.playground-code { grid-area: code; min-width: 0; }
-.playground-head { display: grid; gap: var(--space-2); }
-.playground-head h2 { font-size: var(--text-xl); letter-spacing: -0.02em; }
-.playground-head p { max-width: 60ch; color: var(--fg-3); font-size: var(--text-sm); }
 .skill-foot { display: flex; flex-wrap: wrap; justify-content: space-between; gap: var(--space-4); margin-top: var(--space-8); padding-top: var(--space-5); border-top: 1px solid var(--line); }
 .skill-next { display: inline-flex; align-items: center; gap: var(--space-2); min-height: 44px; font-weight: 550; }
 .skill-next .mono { color: var(--fg-3); }

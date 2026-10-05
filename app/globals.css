@@ -56,6 +56,16 @@
   --dur-base: 280ms;
   --dur-slow: 520ms;
 
+  /* interaction (one place for every press, lift and tilt on the site) */
+  --spring-out: cubic-bezier(0.34, 1.32, 0.64, 1);   /* small, believable overshoot */
+  --dur-press: 90ms;
+  --press-y: 1px;           /* buttons sink this far while held */
+  --lift-y: -2px;           /* cards rise this far on hover */
+  --nudge-x: 3px;           /* arrows lean this far on hover */
+  --tilt-max: 2.5deg;       /* pointer tilt never exceeds this */
+  --focus-ring: 2px solid var(--accent);
+  --focus-gap: 3px;
+
   /* light theme: warm paper, green-black ink */
   color-scheme: light;
   --bg: #f5f4ef;
@@ -163,8 +173,8 @@ a, button { -webkit-tap-highlight-color: transparent; }
 ::selection { background: var(--accent); color: var(--accent-ink); }
 
 :focus-visible {
-  outline: 2px solid var(--accent);
-  outline-offset: 3px;
+  outline: var(--focus-ring);
+  outline-offset: var(--focus-gap);
   border-radius: 4px;
 }
 
@@ -256,11 +266,12 @@ a, button { -webkit-tap-highlight-color: transparent; }
   font-size: var(--text-sm);
   font-weight: 550;
   white-space: nowrap;
-  transition: background-color var(--dur-fast), border-color var(--dur-fast), color var(--dur-fast), transform var(--dur-fast) var(--ease-out);
+  box-shadow: 0 1px 0 var(--line);
+  transition: background-color var(--dur-fast), border-color var(--dur-fast), color var(--dur-fast), box-shadow var(--dur-fast), transform var(--dur-base) var(--spring-out);
 }
 .button:hover { border-color: var(--fg); }
-.button:active { transform: translateY(1px); }
-.button:hover .arrow { transform: translateX(3px); }
+.button:active { transform: translateY(var(--press-y)); box-shadow: none; transition-duration: var(--dur-press); }
+.button:hover .arrow { transform: translateX(var(--nudge-x)); }
 .button-primary { border-color: var(--fg); background: var(--fg); color: var(--bg); }
 .button-primary:hover { border-color: var(--accent); background: var(--accent); color: var(--accent-ink); }
 

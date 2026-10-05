@@ -4,12 +4,13 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import type { ComponentType } from "react";
 import { CodePanel } from "@/components/skills/CodePanel";
-import { ConnectionDemo } from "@/components/skills/ConnectionDemo";
-import { ExperimentQueue } from "@/components/skills/ExperimentQueue";
-import { ResponsiveDemo } from "@/components/skills/ResponsiveDemo";
-import { ReviewDemo } from "@/components/skills/ReviewDemo";
-import { SessionDemo } from "@/components/skills/SessionDemo";
-import { SnakeDemo } from "@/components/skills/SnakeDemo";
+import { ComponentLab } from "@/components/skills/ComponentLab";
+import { MutationLab } from "@/components/skills/MutationLab";
+import { PlaygroundShell } from "@/components/skills/PlaygroundShell";
+import { ReviewDesk } from "@/components/skills/ReviewDesk";
+import { SessionLobby } from "@/components/skills/SessionLobby";
+import { SignalSnake } from "@/components/skills/SignalSnake";
+import { TypeFactory } from "@/components/skills/TypeFactory";
 import { AppLink as Link } from "@/components/ui/AppLink";
 import { TechIcon } from "@/components/ui/TechChip";
 import { portfolio } from "@/content/portfolio";
@@ -21,12 +22,12 @@ type Params = { slug: string };
 
 /** Each demo is its own client island, so a page only loads the one it shows. */
 const demos: Record<SkillSlug, ComponentType> = {
-  python: SnakeDemo,
-  typescript: ConnectionDemo,
-  react: ExperimentQueue,
-  java: SessionDemo,
-  csharp: ReviewDemo,
-  "html-css": ResponsiveDemo,
+  python: SignalSnake,
+  typescript: TypeFactory,
+  react: ComponentLab,
+  java: SessionLobby,
+  csharp: ReviewDesk,
+  "html-css": MutationLab,
 };
 
 export const dynamicParams = false;
@@ -71,7 +72,7 @@ export default async function SkillPage({ params }: { params: Promise<Params> })
   const nextSkill = skillPages[(index + 1) % skillPages.length];
 
   return (
-    <main id="main" tabIndex={-1} className="lab-page skill-page">
+    <main id="main" tabIndex={-1} className="lab-page skill-page" data-skill={skill.slug}>
       <div className="container">
         <Link className="case-back" href="/skills">
           <span className="arrow" aria-hidden="true">←</span> all skills
@@ -101,18 +102,15 @@ export default async function SkillPage({ params }: { params: Promise<Params> })
           )}
         </header>
 
-        <section className="playground" aria-labelledby="demo-title">
-          <div className="playground-demo">
-            <div className="playground-head">
-              <h2 id="demo-title">{skill.demo.title}</h2>
-              <p>{skill.demo.note}</p>
-            </div>
-            <Demo />
-          </div>
-          <div className="playground-code">
-            <CodePanel files={files} />
-          </div>
-        </section>
+        <PlaygroundShell
+          title={skill.demo.title}
+          kicker={skill.demo.kicker}
+          note={skill.demo.note}
+          keys={skill.demo.keys}
+          code={<CodePanel files={files} />}
+        >
+          <Demo />
+        </PlaygroundShell>
 
         <nav className="skill-foot" aria-label="More">
           <a className="text-link" href={skill.docs.href} target="_blank" rel="noopener noreferrer">

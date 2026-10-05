@@ -15,7 +15,8 @@ export type SkillPage = {
   line: string;
   intro: string;
   files: SkillFile[];
-  demo: { title: string; note: string };
+  /** kicker: one honest line about what runs; keys: shown as keyboard hints under the demo. */
+  demo: { title: string; kicker: string; note: string; keys?: string[] };
   docs: { label: string; href: string };
 };
 
@@ -32,6 +33,7 @@ export const skillPages: SkillPage[] = [
     ],
     demo: {
       title: "snake",
+      kicker: "python · the browser game is TypeScript",
       note: "the game on this page runs in your browser, written in TypeScript (snake.ts). snake.py is the same game for a terminal: same board rules, same speed-up per apple. nothing here runs Python in the browser.",
     },
     docs: { label: "docs.python.org", href: "https://docs.python.org/3/" },
@@ -45,6 +47,7 @@ export const skillPages: SkillPage[] = [
     files: [{ name: "connection.ts", path: "lib/demos/connection.ts", lang: "typescript" }],
     demo: {
       title: "a typed connection lifecycle",
+      kicker: "typescript · runs the file it shows",
       note: "the panel on the right runs exactly the file on the left. every button is an event; disabled ones would not change anything from the current state.",
     },
     docs: { label: "typescriptlang.org", href: "https://www.typescriptlang.org/docs/" },
@@ -58,6 +61,7 @@ export const skillPages: SkillPage[] = [
     files: [{ name: "ExperimentQueue.tsx", path: "components/skills/ExperimentQueue.tsx", lang: "tsx" }],
     demo: {
       title: "experiment queue",
+      kicker: "react · runs the component it shows",
       note: "the board on the right is this component. state lives in one reducer; the counts and the \"probably broken\" warning are derived, not stored.",
     },
     docs: { label: "react.dev", href: "https://react.dev/" },
@@ -71,6 +75,7 @@ export const skillPages: SkillPage[] = [
     files: [{ name: "Session.java", path: "content/snippets/Session.java", lang: "java" }],
     demo: {
       title: "a session, step by step",
+      kicker: "java · illustrative model",
       note: "an illustrative Java model written for this page, not Nexus source. the visualisation beside it runs in the browser and follows the same allowed transitions.",
     },
     docs: { label: "dev.java", href: "https://dev.java/learn/" },
@@ -84,6 +89,7 @@ export const skillPages: SkillPage[] = [
     files: [{ name: "Review.cs", path: "content/snippets/Review.cs", lang: "csharp" }],
     demo: {
       title: "evidence-first review",
+      kicker: "c# · illustrative model",
       note: "an illustrative C# model written for this page, not CHC Review Studio source. the review panel beside it runs in the browser on made-up sample text.",
     },
     docs: { label: "learn.microsoft.com", href: "https://learn.microsoft.com/dotnet/csharp/" },
@@ -100,6 +106,7 @@ export const skillPages: SkillPage[] = [
     ],
     demo: {
       title: "one card, many widths",
+      kicker: "html / css · styled by the css it shows",
       note: "change the width, theme and density. the only JavaScript is the controls; the card itself adapts with a container query and CSS variables.",
     },
     docs: { label: "MDN", href: "https://developer.mozilla.org/docs/Web" },
