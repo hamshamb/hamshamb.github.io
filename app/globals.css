@@ -655,6 +655,15 @@ kbd {
 .currently dt { color: var(--fg-3); }
 .currently dd { color: var(--fg); }
 .latest-card { display: grid; gap: var(--space-2); font-size: var(--text-sm); }
+
+/* pointer tilt for [data-tilt] cards: PointerTilt.tsx sets --tx and --ty (-0.5 to 0.5) */
+[data-tilt] { transition: transform var(--dur-slow) var(--ease-out); }
+@media (hover: hover) and (pointer: fine) and (prefers-reduced-motion: no-preference) {
+  [data-tilt]:hover {
+    transform: perspective(900px) rotateX(calc(var(--ty, 0) * var(--tilt-max) * -2)) rotateY(calc(var(--tx, 0) * var(--tilt-max) * 2)) translateY(var(--lift-y));
+    transition-duration: var(--dur-fast);
+  }
+}
 .latest-card strong { font-size: var(--text-lg); font-weight: 600; letter-spacing: -0.01em; }
 .latest-card p { color: var(--fg-2); }
 .latest-card .meta-row { display: flex; flex-wrap: wrap; gap: var(--space-4); color: var(--fg-3); font-family: var(--font-mono); font-size: 0.7rem; letter-spacing: var(--tracking-meta); text-transform: uppercase; }
@@ -1241,7 +1250,9 @@ kbd {
 .stuff-facts dd span { display: block; }
 .stuff-shot img { width: 100%; height: 100%; object-fit: cover; image-rendering: auto; }
 .stuff-flex { display: grid; gap: var(--space-1); margin: var(--space-2) 0 var(--space-3); }
-.stuff-flex b { color: var(--accent); font-size: clamp(2rem, 1.4rem + 2.4vw, 3rem); font-weight: 600; line-height: 1; letter-spacing: -0.03em; text-transform: none; }
+.stuff-flex b { position: relative; justify-self: start; padding-bottom: 0.18em; color: var(--accent); font-size: clamp(2.6rem, 1.5rem + 3.6vw, 4.5rem); font-weight: 600; line-height: 1; letter-spacing: -0.04em; text-transform: none; font-variant-numeric: tabular-nums; }
+/* a pixel underline under the hours: the only blocky thing on the card */
+.stuff-flex b::after { content: ""; position: absolute; left: 0.04em; right: 0.04em; bottom: 0; height: 6px; background: repeating-linear-gradient(90deg, var(--accent) 0 6px, transparent 6px 9px); opacity: 0.55; }
 .stuff-card .stuff-flex span { color: var(--fg); font-size: var(--text-base); }
 .stuff-meta { display: flex; flex-wrap: wrap; gap: var(--space-1) var(--space-4); margin-bottom: var(--space-3); color: var(--fg-3) !important; font-size: 0.72rem !important; text-transform: none; letter-spacing: 0.02em; }
 

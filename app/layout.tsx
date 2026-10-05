@@ -15,6 +15,7 @@ import type { Metadata, Viewport } from "next";
 import { SiteFooter } from "@/components/layout/SiteFooter";
 import { SiteHeader } from "@/components/layout/SiteHeader";
 import { MotionProvider } from "@/components/motion/MotionProvider";
+import { PointerTilt } from "@/components/motion/PointerTilt";
 import { SecretLayer } from "@/components/toys/SecretLayer";
 import { CommandPalette } from "@/components/ui/CommandPalette";
 import { posts } from "@/content/blog";
@@ -110,6 +111,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
           <SiteHeader />
           {children}
           <SiteFooter />
+          <PointerTilt />
           <SecretLayer projectSlugs={portfolio.projects.map((project) => project.slug)} />
           <CommandPalette
             links={paletteLinks}

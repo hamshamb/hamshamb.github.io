@@ -130,7 +130,7 @@ export function Hero() {
 
           <div>
             <h2 className="mono">latest release</h2>
-            <Link className="latest-card" href={`/work/${latestProject.slug}`}>
+            <Link className="latest-card" data-tilt="" href={`/work/${latestProject.slug}`}>
               <strong>{latestProject.name} <span className="arrow" aria-hidden="true">→</span></strong>
               <p>{latestProject.hook}</p>
               <span className="meta-row">

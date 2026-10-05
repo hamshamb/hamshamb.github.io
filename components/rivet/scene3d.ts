@@ -747,7 +747,7 @@ export function createScene(host: HTMLElement, variant: SceneVariant, events: Sc
       const lit = holds || grabbed;
       view.group.position.set(view.display.x, 0, view.display.z);
       view.bodyMat.color.copy(derived.body);
-      view.screenMat.color.copy(derived.screen).lerp(p.accent, holds ? 0.42 : 0);
+      view.screenMat.color.copy(derived.screen).lerp(p.accent, holds ? 0.22 : 0);
       view.lineMat.color.copy(holds ? p.accent : p.fg3);
       view.edgeMat.color.copy(selected === view.id || grabbed ? p.fg : p.fg3);
       view.ringMat.color.copy(lit ? p.accent : p.fg3);

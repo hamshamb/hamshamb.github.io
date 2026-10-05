@@ -2,7 +2,7 @@
 
 import { AnimatePresence, m } from "motion/react";
 import { setTheme, useTheme } from "@/lib/client-stores";
-import { duration, easeOut } from "@/lib/motion";
+import { spring } from "@/lib/motion";
 import { MoonIcon, SunIcon } from "./icons";
 
 export function ThemeToggle() {
@@ -20,10 +20,11 @@ export function ThemeToggle() {
         <m.span
           key={theme ?? "unknown"}
           style={{ display: "grid" }}
-          initial={{ opacity: 0, rotate: -60, scale: 0.6 }}
-          animate={{ opacity: 1, rotate: 0, scale: 1 }}
-          exit={{ opacity: 0, rotate: 60, scale: 0.6 }}
-          transition={{ duration: duration.base, ease: easeOut }}
+          // a small mechanical swap: the old icon turns out, the new one turns in and seats
+          initial={{ opacity: 0, rotate: -90, y: 6 }}
+          animate={{ opacity: 1, rotate: 0, y: 0 }}
+          exit={{ opacity: 0, rotate: 90, y: -6 }}
+          transition={spring.soft}
         >
           {theme === "dark" ? <MoonIcon /> : <SunIcon />}
         </m.span>
