@@ -36,7 +36,8 @@ test("command responses are the ones promised, in the site voice", () => {
   assert.equal(run("panic").action.kind, "panic");
   for (let i = 0; i < 20; i += 1) assert.ok(fortunes.includes(matchCommand("fortune").run(() => i / 20).lines[0]));
   const words = commands.flatMap((c) => c.run(() => 0.5).lines).join(" ");
-  assert.doesNotMatch(words, /—|unleash|synergy|passionate|rockstar/i);
+  assert.ok(!words.includes(String.fromCharCode(0x2014)), "no em dash");
+  assert.doesNotMatch(words, /unleash|synergy|passionate|rockstar/i);
 });
 
 test("toys, achievements and secrets are consistent", () => {
