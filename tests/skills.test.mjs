@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { existsSync, readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import test from "node:test";
-import { accepts, initial, MAX_ATTEMPTS, transition } from "../lib/demos/connection.ts";
+import { canConnect, connect, missing, run } from "../lib/demos/factory.ts";
 import { DELAY_STEP, memoryStore, MIN_DELAY, newGame, recordScore, START_DELAY, steer, step } from "../lib/snake.ts";
 import { technologies } from "../content/tech.ts";
 
@@ -50,17 +50,27 @@ test("snake: best score persists through any store, including none", () => {
   assert.equal(store.get(), 7);
 });
 
-test("typescript demo: the connection machine only moves the way it says", () => {
-  let [state, ctx] = initial;
-  assert.deepEqual(accepts(state, ctx), ["connect"]);
-  [state, ctx] = transition(state, { type: "connect" }, ctx);
-  assert.equal(state, "connecting");
-  for (let i = 0; i < MAX_ATTEMPTS; i += 1) [state, ctx] = transition(state, { type: "timeout" }, ctx);
-  assert.equal(state, "retrying");
-  [state, ctx] = transition(state, { type: "timeout" }, ctx);
-  assert.equal(state, "failed");
-  assert.deepEqual(accepts(state, ctx), ["reset"]);
-  assert.deepEqual(transition("connected", { type: "connect" }, { attempts: 0 }), ["connected", { attempts: 0 }]);
+test("typescript demo: the factory only keeps wires the types allow", () => {
+  assert.equal(canConnect("CONNECT", "onConnect").ok, true);
+  const bad = canConnect("MESSAGE", "onConnect");
+  assert.equal(bad.ok, false);
+  assert.equal(bad.reason, "MessagePayload is not assignable to ConnectEvent");
+  // a rejected wire is never added, a good one is
+  assert.deepEqual(connect([], "MESSAGE", "onConnect").wires, []);
+  const wired = connect([], "ERROR", "retry");
+  assert.deepEqual(wired.wires, [{ from: "ERROR", to: "retry" }]);
+  assert.equal(missing(wired.wires).length, 3);
+  // handlers that do not compile yet cannot run
+  assert.equal(run(wired.wires, ["retry"])[0].ok, false);
+  assert.equal(run(wired.wires, [])[0].ok, true);
+});
+
+test("react demo: the lab file the page shows is the one that runs", () => {
+  const lab = read("components/skills/ComponentLab.tsx");
+  assert.match(lab, /from "@\/lib\/demos\/lab"/);
+  assert.match(lab, /useReducer\(reduce/);
+  assert.match(lab, /from "motion\/react"/);
+  assert.doesNotMatch(lab, /motion\.div/, "uses the lazy m. components");
 });
 
 test("skill pages exist, show real code, and say when it is not what runs", () => {
@@ -78,10 +88,12 @@ test("skill pages exist, show real code, and say when it is not what runs", () =
   assert.match(built("skills/python.html"), /nothing here runs Python in the browser/);
   assert.match(built("skills/java.html"), /not Nexus source/);
   assert.match(built("skills/csharp.html"), /not CHC Review Studio source/);
-  assert.match(built("skills/typescript.html"), /runs exactly the file on the left/);
-  // the TypeScript page shows the very file its demo imports
-  const shown = read("lib/demos/connection.ts").split("\n").find((line) => line.startsWith("export const MAX_ATTEMPTS"));
-  assert.ok(built("skills/typescript.html").includes("MAX_ATTEMPTS"), shown);
+  assert.match(built("skills/typescript.html"), /runs exactly the files on the left/);
+  // the TypeScript page shows the very files its demo imports
+  assert.ok(built("skills/typescript.html").includes("canConnect"), "factory.ts is in the code panel");
+  assert.ok(built("skills/typescript.html").includes("puzzles"), "compile.ts is in the code panel");
+  assert.match(read("components/skills/TypeFactory.tsx"), /from "@\/lib\/demos\/factory"/);
+  assert.match(read("components/skills/TypeFactory.tsx"), /from "@\/lib\/demos\/compile"/);
   // the HTML/CSS demo uses the markup it shows
   const markup = read("content/snippets/card.html");
   const demo = read("components/skills/MutationLab.tsx");
@@ -100,10 +112,11 @@ test("no live code execution anywhere", () => {
 test("demos stay on their own pages", () => {
   const chunks = (html) => [...html.matchAll(/chunks\/([A-Za-z0-9]+)-[\w-]+\.js/g)].map((match) => match[1]);
   const home = chunks(built("index.html"));
-  for (const demo of ["SnakeDemo", "ConnectionDemo", "ExperimentQueue", "SessionLobby", "ReviewDesk", "MutationLab", "CodePanel"]) {
+  for (const demo of ["SignalSnake", "TypeFactory", "ComponentLab", "SessionLobby", "ReviewDesk", "MutationLab", "CodePanel"]) {
     assert.ok(!home.includes(demo), `${demo} loads on the home page`);
   }
-  assert.ok(chunks(built("skills/python.html")).includes("SnakeDemo"));
+  assert.ok(chunks(built("skills/python.html")).includes("SignalSnake"));
+  assert.ok(!chunks(built("skills/python.html")).includes("TypeFactory"), "a skill page loads only its own demo");
   assert.ok(!chunks(built("skills/python.html")).includes("ReviewDesk"), "a skill page loads only its own demo");
 });
 
