@@ -1,1 +1,145 @@
-/* games: see the components that use these classes */
+/* ---------------------------------------------------------- game shelf --- */
+/*
+ * Title cards: a dark "library tile" (most published logos are drawn for dark backgrounds),
+ * an original motif, the game's own logo or a typographic title, then the exact hours.
+ */
+
+.stuff-games { grid-template-rows: none; }
+@media (min-width: 1040px) { .stuff-games { grid-template-columns: 0.62fr 1.38fr; align-items: start; } }
+
+.game-filters { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2); margin-bottom: var(--space-4); }
+.game-filters button {
+  min-height: 36px;
+  padding: 0 var(--space-4);
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--fg-2);
+  font-size: var(--text-sm);
+  transition: border-color var(--dur-fast), color var(--dur-fast), background-color var(--dur-fast), transform var(--dur-base) var(--spring-out);
+}
+.game-filters button:hover { border-color: var(--line-strong); color: var(--fg); }
+.game-filters button:active { transform: translateY(var(--press-y)); transition-duration: var(--dur-press); }
+.game-filters button[aria-pressed="true"] { border-color: var(--fg); background: var(--fg); color: var(--bg); }
+.game-total { margin-left: auto; color: var(--fg-3); font-size: 0.68rem; text-transform: none; letter-spacing: 0.02em; }
+
+.game-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 10.5rem), 1fr)); gap: var(--space-3); margin: 0; padding: 0; list-style: none; }
+@media (max-width: 1039px) { .game-list { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (min-width: 640px) and (max-width: 1039px) { .game-list { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+
+.game {
+  --tile-bg: hsl(var(--hue) 22% 10%);
+  --tile-ink: hsl(var(--hue) 40% 78%);
+  position: relative;
+  display: grid;
+  grid-template-rows: auto 1fr;
+  min-width: 0;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  background: var(--bg);
+  transition: border-color var(--dur-fast), transform var(--dur-base) var(--ease-out), box-shadow var(--dur-base) var(--ease-out);
+}
+.game[data-tile="light"] { --tile-bg: hsl(var(--hue) 18% 90%); --tile-ink: hsl(var(--hue) 40% 30%); }
+@media (hover: hover) and (pointer: fine) {
+  .game:hover { border-color: var(--line-strong); transform: translateY(var(--lift-y)); box-shadow: var(--shadow-pop); }
+}
+
+.game-tile {
+  position: relative;
+  display: grid;
+  aspect-ratio: 16 / 9;
+  place-items: center;
+  padding: 12% 10%;
+  overflow: hidden;
+  background:
+    radial-gradient(circle at calc(var(--mx, 0.5) * 100%) calc(var(--my, 0.3) * 100%), hsl(var(--hue) 50% 60% / 0.16), transparent 60%),
+    var(--tile-bg);
+  color: var(--tile-ink);
+}
+.game-tile .gm {
+  position: absolute;
+  inset: -6%;
+  width: 112%;
+  height: 112%;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  opacity: 0.3;
+  transform: translate(calc((var(--mx, 0.5) - 0.5) * -8px), calc((var(--my, 0.5) - 0.5) * -6px));
+  transition: opacity var(--dur-base);
+}
+.game-tile .gm circle { fill: currentColor; stroke: none; }
+.game-tile .gm circle[r="14"], .game-tile .gm circle[r="30"] { fill: none; stroke: currentColor; }
+.game:hover .gm { opacity: 0.5; }
+.game-logo {
+  position: absolute;
+  inset: 16% 12%;
+  width: 76%;
+  height: 68%;
+  object-fit: contain;
+  filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.35));
+  transition: transform var(--dur-slow) var(--ease-out);
+}
+.game:hover .game-logo { transform: translate(calc((var(--mx, 0.5) - 0.5) * 6px), calc((var(--my, 0.5) - 0.5) * 4px)) scale(1.03); }
+.game[data-tile="light"] .game-logo { filter: none; }
+
+/* typographic cards, for games with no published logo: a type treatment, not an imitation */
+.game-type { position: relative; display: grid; gap: 0.25em; color: hsl(var(--hue) 30% 94%); font-weight: 750; line-height: 0.95; text-align: center; text-wrap: balance; }
+.game-type small { color: var(--tile-ink); font-family: var(--font-mono); font-size: 0.56rem; font-weight: 500; letter-spacing: 0.24em; text-transform: uppercase; }
+.game-type[data-type="condensed"] { font-size: clamp(0.95rem, 0.7rem + 0.7vw, 1.25rem); font-stretch: 75%; letter-spacing: 0.04em; text-transform: uppercase; }
+.game-type[data-type="rounded"] { font-size: clamp(1.1rem, 0.8rem + 0.8vw, 1.45rem); letter-spacing: -0.03em; text-transform: lowercase; }
+.game-type[data-type="pixel"] { font-family: var(--font-mono); font-size: clamp(0.9rem, 0.7rem + 0.6vw, 1.15rem); letter-spacing: 0.14em; text-transform: uppercase; }
+.game-type[data-type="spectrum"] {
+  background: linear-gradient(90deg, hsl(290 70% 72%), hsl(180 70% 65%), hsl(90 70% 65%), hsl(30 80% 68%), hsl(290 70% 72%)) 0 0 / 200% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  font-size: clamp(1rem, 0.75rem + 0.7vw, 1.3rem);
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  transition: background-position 1.2s var(--ease-out);
+}
+.game:hover .game-type[data-type="spectrum"] { background-position: 100% 0; }
+
+.game-rank { position: absolute; top: var(--space-2); left: var(--space-2); padding: 0.1rem 0.4rem; border-radius: 4px; background: var(--accent); color: var(--accent-ink); font-size: 0.62rem; font-weight: 600; }
+
+.game-meta { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-content: start; align-items: baseline; gap: 0.15rem var(--space-2); padding: var(--space-2) var(--space-3) var(--space-3); }
+.game-title { color: var(--fg); font-size: var(--text-sm); line-height: 1.25; overflow-wrap: break-word; }
+.game-hours, .game-fav { color: var(--accent); font-size: 0.72rem; font-variant-numeric: tabular-nums; text-transform: none; letter-spacing: 0; }
+.game-bar { grid-column: 1 / -1; height: 2px; margin-top: var(--space-1); overflow: hidden; border-radius: 2px; background: var(--line); }
+.game-bar i { display: block; width: calc(var(--share) * 100%); height: 100%; background: var(--accent); }
+
+/* most played: ranked, and the top of the list gets room */
+.game-shelf[data-filter="most played"] .game[data-rank] .game-hours { font-size: 0.95rem; }
+@media (min-width: 1040px) {
+  .game-shelf[data-filter="most played"] .game[data-rank="1"] { grid-column: span 2; }
+  .game-shelf[data-filter="most played"] .game[data-rank="1"] .game-tile { aspect-ratio: auto; height: calc(100% - 0px); min-height: 9rem; }
+}
+
+/* one small reaction per motif, on hover only */
+@media (prefers-reduced-motion: no-preference) and (hover: hover) {
+  .gm-move { transition: transform 0.6s var(--spring-out); transform-box: fill-box; transform-origin: center; }
+  .game:hover [data-motif="jump"] .gm-move { transform: translateY(-14px) rotate(90deg); }
+  .game:hover [data-motif="orbit"] .gm-move { transform: translate(-128px, 0); transition-duration: 1.6s; }
+  .game:hover [data-motif="crosshair"] .gm-move { transform: scale(0.72); }
+  .game:hover [data-motif="soul"] .gm-move { transform: scale(1.12); }
+  .game:hover [data-motif="road"] .gm-move, .game:hover [data-motif="snow"] .gm-move { transform: translateY(6px); }
+  .game:hover [data-motif="sand"] .gm-move { transform: translateY(40px); transition-duration: 1.2s; }
+  .game:hover [data-motif="dig"] .gm-move { transform: rotate(-18deg); }
+  .game:hover [data-motif="props"] .gm-move { transform: translate(6px, -10px) rotate(14deg); }
+  .game:hover [data-motif="radio"] .gm-move { transform: scale(1.1); }
+  .game:hover [data-motif="shells"] .gm-move { transform: translateY(-8px); }
+  .game:hover [data-motif="crumple"] .gm-move { transform: rotate(24deg); }
+  .game:hover [data-motif="stars"] .gm-move { transform: translateY(-6px) scale(1.06); }
+  .game:hover [data-motif="contour"] .gm-move { transform: translate(-30px, 20px); }
+  .game:hover [data-motif="shift"] .gm-move { transform: translateX(40px); transition-duration: 1s; }
+}
+
+@media (max-width: 480px) {
+  .game-meta { padding: var(--space-2); }
+  .game-title { font-size: 0.8rem; }
+  .game-tile { padding: 12% 8%; }
+}
