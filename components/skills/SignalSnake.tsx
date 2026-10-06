@@ -180,7 +180,7 @@ export function SignalSnake() {
     hud.status === "over" ? `signal lost. score ${hud.score}. best ${best}.`
     : hud.status === "paused" ? `paused. score ${hud.score}.`
     : hud.status === "ready" ? "ready."
-    : `score ${hud.score}.`;
+    : `score ${Math.floor(hud.score / 5) * 5}.`;
 
   return (
     <div className="sg" data-skin={skin} ref={root}>

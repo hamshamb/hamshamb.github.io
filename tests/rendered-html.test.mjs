@@ -66,7 +66,8 @@ test("every flagship project has its own exported case study", () => {
   assert.match(notFound, /page not found/);
   assert.match(notFound, /packet lost/);
   assert.ok(notFound.includes('<a href="/" class="button button-primary">return home'), "the way home is obvious and comes before the game");
-  assert.ok(notFound.indexOf("return home") < notFound.indexOf("packet-game"));
+  assert.ok(notFound.indexOf("return home") < notFound.indexOf("route the packet home"), "the game is optional and comes after the way home");
+  assert.ok(!html.includes("chunks/PacketLost-"), "the 404 game is not preloaded on other pages");
 });
 
 test("rivet stays honestly unreleased", () => {

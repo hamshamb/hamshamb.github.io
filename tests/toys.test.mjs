@@ -113,3 +113,18 @@ test("the physics sandbox keeps bodies inside the box and settles", () => {
   }
   assert.ok(energy(world) < 40, `still moving: ${energy(world)}`);
 });
+
+test("keyboard focus is rescued and live regions stay quiet", () => {
+  for (const file of ["components/skills/PlaygroundShell.tsx", "components/cube/CubeLab.tsx"]) {
+    assert.match(read(file), /useFocusRescue\(/, `${file} drops focus when a control disables itself`);
+  }
+  const hook = read("components/ui/useFocusRescue.ts");
+  assert.match(hook, /MutationObserver/);
+  assert.match(hook, /attributeFilter: \["disabled"\]/);
+  // continuous readouts are not live; only their state changes are announced
+  assert.doesNotMatch(read("components/cube/CubeLab.tsx"), /className="cube-lab-status mono" aria-live/);
+  assert.doesNotMatch(read("components/rivet/PacketCourier.tsx"), /className="rv-status" aria-live/);
+  assert.doesNotMatch(read("components/skills/MutationLab.tsx"), /className="mlab-readout mono" aria-live/);
+  assert.match(read("components/skills/SignalSnake.tsx"), /Math\.floor\(hud\.score \/ 5\) \* 5/);
+  assert.match(read("components/cube/SolveTimer.tsx"), /event\.key === "Enter"/, "Enter works on the timer pad");
+});

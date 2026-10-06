@@ -20,6 +20,7 @@ import { CubeNet } from "./CubeNet";
 import { SessionHistory, SessionStats } from "./SessionPanel";
 import { addSolve } from "./session-store";
 import { SolveTimer } from "./SolveTimer";
+import { useFocusRescue } from "../ui/useFocusRescue";
 
 const speeds = { slow: 900, normal: 520, fast: 260 } as const;
 type Speed = keyof typeof speeds;
@@ -47,6 +48,8 @@ export function CubeLab() {
   const [free, setFree] = useState<Move[]>([]);
   const [quiet, setQuiet] = useState<string | null>(null);
   const cube = useRef<CubeHandle>(null);
+  const root = useRef<HTMLDivElement>(null);
+  useFocusRescue(root);
   const busy = useRef(false);
   const reduced = useRef(false);
   const generation = useRef(0); // bumped on every reset so a turn in flight cannot commit into a new scramble
@@ -181,7 +184,7 @@ export function CubeLab() {
   const locked = playing || touched;
 
   return (
-    <div className="cube-lab">
+    <div className="cube-lab" ref={root}>
       <section className="cube-lab-scramble" aria-label="Scramble">
         <p className="cube-lab-kicker mono">WCA-style 3x3 scramble</p>
         <ol className="cube-moves" aria-label={phase === "scramble" ? "Scramble" : "Scramble, reversed"}>
@@ -209,7 +212,10 @@ export function CubeLab() {
         <Cube3D ref={cube} state={state} label={label} />
         <CubeNet state={state} label={`Cube net after ${pos} of ${sequence.length} moves${touched ? ` and ${free.length} of yours` : ""}`} />
 
-        <p className="cube-lab-status mono" aria-live="polite">
+        <p className="sr-only" aria-live="polite">
+          {playing ? "" : done ? (phase === "undo" ? "back to solved" : "scrambled") : `move ${pos} of ${sequence.length}`}
+        </p>
+        <p className="cube-lab-status mono" aria-hidden="true">
           {phase === "undo" ? "undo scramble" : "scramble"} · {pos}/{sequence.length}
           {done && phase === "scramble" ? " · scrambled" : ""}
           {done && phase === "undo" ? " · back to solved" : ""}

@@ -97,7 +97,8 @@ export function MutationLab() {
             </article>
           </div>
         </div>
-        <p className="mlab-readout mono" aria-live="polite">
+        <p className="sr-only" aria-live="polite">{measured ? (measured.wide ? "container query on: art beside text" : "container query off: stacked") : ""}</p>
+        <p className="mlab-readout mono" aria-hidden="true">
           {measured ? `card ${measured.width}px · container query: ${measured.wide ? "art beside text" : "stacked"}` : "measuring..."}
         </p>
       </div>

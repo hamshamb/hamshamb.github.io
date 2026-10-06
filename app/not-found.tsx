@@ -1,4 +1,4 @@
-import { PacketLost } from "@/components/toys/PacketLost";
+import { PacketGame } from "@/components/toys/PacketGame";
 import { AppLink as Link } from "@/components/ui/AppLink";
 
 export default function NotFound() {
@@ -14,7 +14,7 @@ export default function NotFound() {
         </p>
         <section className="not-found-game" aria-labelledby="packet-title">
           <h2 id="packet-title" className="mono">optional: route the packet home yourself</h2>
-          <PacketLost />
+          <PacketGame />
         </section>
       </div>
     </main>

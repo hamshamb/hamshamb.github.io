@@ -1,6 +1,7 @@
 "use client";
 
 import { type ReactNode, useEffect, useId, useRef, useState } from "react";
+import { useFocusRescue } from "../ui/useFocusRescue";
 
 type View = "demo" | "code";
 
@@ -30,6 +31,7 @@ export function PlaygroundShell({
   const [full, setFull] = useState(false);
   const [canFull, setCanFull] = useState(false);
   const frame = useRef<HTMLDivElement>(null);
+  useFocusRescue(frame);
   const id = useId();
 
   useEffect(() => {

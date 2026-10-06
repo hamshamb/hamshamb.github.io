@@ -112,6 +112,8 @@ export function SolveTimer({ onSolve }: { onSolve: (result: { ms: number; penalt
       return target.closest(OTHER_CONTROLS) === null;
     };
     const isSpace = (event: KeyboardEvent) => event.code === "Space" || event.key === " ";
+    // the pad is a focusable control, so Enter on it behaves like the space bar
+    const isTrigger = (event: KeyboardEvent) => isSpace(event) || (event.key === "Enter" && event.target instanceof Node && Boolean(surface.current?.contains(event.target)));
 
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.metaKey || event.ctrlKey || event.altKey) return;
@@ -130,7 +132,7 @@ export function SolveTimer({ onSolve }: { onSolve: (result: { ms: number; penalt
         dispatch({ type: "press", at: stamp(event) });
         return;
       }
-      if (!isSpace(event) || !ownsSpace(event.target)) return;
+      if (!isTrigger(event) || !ownsSpace(event.target)) return;
       event.preventDefault(); // no page scroll, no button click
       if (event.repeat) return;
       spaceHeld.current = true;
@@ -138,7 +140,7 @@ export function SolveTimer({ onSolve }: { onSolve: (result: { ms: number; penalt
     };
 
     const onKeyUp = (event: KeyboardEvent) => {
-      if (!isSpace(event) || !spaceHeld.current) return;
+      if (!isTrigger(event) || !spaceHeld.current) return;
       spaceHeld.current = false;
       event.preventDefault(); // a button would otherwise click on the key coming up
       dispatch({ type: "release", at: stamp(event) });

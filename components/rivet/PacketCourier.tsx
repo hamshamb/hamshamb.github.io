@@ -104,7 +104,8 @@ export function PacketCourier() {
 
       <progress className="cr-clock" max={COURIER_DEADLINE} value={left} aria-label="Time left before every copy expires" />
 
-      <p className="rv-status" aria-live="polite">
+      <p className="sr-only" aria-live="polite">{game.status === "won" ? "delivered." : game.status === "lost" ? "expired. nothing was delivered." : ""}</p>
+      <p className="rv-status">
         {!started
           ? "the friend is out of range. press start, then hand a sealed copy to any phone that is close enough. keep going until the friend is close enough too."
           : last}
