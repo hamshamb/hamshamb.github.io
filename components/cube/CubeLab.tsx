@@ -209,97 +209,99 @@ export function CubeLab() {
       </section>
 
       <div className="cube-lab-stage">
-        <Cube3D ref={cube} state={state} label={label} />
-        <CubeNet state={state} label={`Cube net after ${pos} of ${sequence.length} moves${touched ? ` and ${free.length} of yours` : ""}`} />
-
+        <div className="cube-stage-view">
+          <Cube3D ref={cube} state={state} label={label} />
+          <p className="cube-lab-status mono" aria-hidden="true">
+            {phase === "undo" ? "undo scramble" : "scramble"} · {pos}/{sequence.length}
+            {done && phase === "scramble" ? " · scrambled" : ""}
+            {done && phase === "undo" ? " · back to solved" : ""}
+            {touched ? ` · +${free.length} of yours` : ""}
+          </p>
+        </div>
+        <div className="cube-stage-side">
+          <CubeNet state={state} label={`Cube net after ${pos} of ${sequence.length} moves${touched ? ` and ${free.length} of yours` : ""}`} />
+          <div className="cube-pad">
+            <p className="cube-pad-title mono">turn it yourself</p>
+            <div className="cube-pad-grid" role="group" aria-label="Turn a face. A letter is clockwise, a letter with a prime is counter-clockwise.">
+              {PAD.map((move) => (
+                <button
+                  key={formatMove(move)}
+                  type="button"
+                  className="cube-pad-key mono"
+                  disabled={playing}
+                  onClick={() => press(move)}
+                  aria-label={`turn ${move.face} ${move.turns === 3 ? "counter-clockwise" : "clockwise"}`}
+                >
+                  {formatMove(move)}
+                </button>
+              ))}
+            </div>
+            {touched && (
+              <div className="cube-pad-log">
+                <span className="mono">{formatAlg(free.slice(-18))}</span>
+                <button type="button" className="cube-pad-clear" onClick={clearMoves}>clear moves</button>
+              </div>
+            )}
+            <p className="cube-quiet" aria-live="polite">{quiet}</p>
+          </div>
+        </div>
         <p className="sr-only" aria-live="polite">
           {playing ? "" : done ? (phase === "undo" ? "back to solved" : "scrambled") : `move ${pos} of ${sequence.length}`}
         </p>
-        <p className="cube-lab-status mono" aria-hidden="true">
-          {phase === "undo" ? "undo scramble" : "scramble"} · {pos}/{sequence.length}
-          {done && phase === "scramble" ? " · scrambled" : ""}
-          {done && phase === "undo" ? " · back to solved" : ""}
-          {touched ? ` · +${free.length} of yours` : ""}
-        </p>
-
-        <div className="cube-controls">
-          <button type="button" className="button button-primary" onClick={() => setPlaying((value) => !value)} disabled={done || touched}>
-            {playing ? "pause" : pos === 0 ? (phase === "scramble" ? "play scramble" : "play undo") : "resume"}
-          </button>
-          <button type="button" className="button" onClick={() => void stepBy(-1)} disabled={pos === 0 || locked} aria-label="previous move">← prev</button>
-          <button type="button" className="button" onClick={() => void stepBy(1)} disabled={done || locked} aria-label="next move">next →</button>
-        </div>
-        <div className="cube-controls">
-          <button
-            type="button"
-            className="button"
-            disabled={phase === "undo" || !done || touched}
-            onClick={() => {
-              setPlaying(false);
-              setPhase("undo");
-              setPos(0);
-            }}
-          >
-            undo scramble
-          </button>
-          <button
-            type="button"
-            className="button"
-            disabled={done || locked}
-            onClick={() => {
-              generation.current += 1;
-              busy.current = false;
-              setPos(sequence.length);
-            }}
-          >
-            {phase === "scramble" ? "show scrambled" : "show solved"}
-          </button>
-          <button type="button" className="button" onClick={() => reset()}>reset</button>
-        </div>
-        <fieldset className="cube-speed">
-          <legend className="mono">speed</legend>
-          {(Object.keys(speeds) as Speed[]).map((key) => (
-            <label key={key}>
-              <input type="radio" name="cube-speed" value={key} checked={speed === key} onChange={() => setSpeed(key)} />
-              <span>{key}</span>
-            </label>
-          ))}
-        </fieldset>
-
-        <div className="cube-pad">
-          <p className="cube-pad-title mono">turn it yourself</p>
-          <div className="cube-pad-grid" role="group" aria-label="Turn a face. A letter is clockwise, a letter with a prime is counter-clockwise.">
-            {PAD.map((move) => (
-              <button
-                key={formatMove(move)}
-                type="button"
-                className="cube-pad-key mono"
-                disabled={playing}
-                onClick={() => press(move)}
-                aria-label={`turn ${move.face} ${move.turns === 3 ? "counter-clockwise" : "clockwise"}`}
-              >
-                {formatMove(move)}
-              </button>
-            ))}
+        <div className="cube-stage-bar">
+          <div className="cube-controls cube-controls-compact">
+            <button type="button" className="button button-primary" onClick={() => setPlaying((value) => !value)} disabled={done || touched}>
+              {playing ? "pause" : pos === 0 ? (phase === "scramble" ? "play scramble" : "play undo") : "resume"}
+            </button>
+            <button type="button" className="button" onClick={() => void stepBy(-1)} disabled={pos === 0 || locked} aria-label="previous move">← prev</button>
+            <button type="button" className="button" onClick={() => void stepBy(1)} disabled={done || locked} aria-label="next move">next →</button>
+            <button
+              type="button"
+              className="button"
+              disabled={phase === "undo" || !done || touched}
+              onClick={() => {
+                setPlaying(false);
+                setPhase("undo");
+                setPos(0);
+              }}
+            >
+              undo scramble
+            </button>
+            <button
+              type="button"
+              className="button"
+              disabled={done || locked}
+              onClick={() => {
+                generation.current += 1;
+                busy.current = false;
+                setPos(sequence.length);
+              }}
+            >
+              {phase === "scramble" ? "show scrambled" : "show solved"}
+            </button>
+            <button type="button" className="button" onClick={() => reset()}>reset</button>
           </div>
-          {touched && (
-            <div className="cube-pad-log">
-              <span className="mono">{formatAlg(free.slice(-18))}</span>
-              <button type="button" className="cube-pad-clear" onClick={clearMoves}>clear moves</button>
-            </div>
-          )}
-          <p className="cube-quiet" aria-live="polite">{quiet}</p>
+          <fieldset className="cube-speed">
+            <legend className="mono">speed</legend>
+            {(Object.keys(speeds) as Speed[]).map((key) => (
+              <label key={key}>
+                <input type="radio" name="cube-speed" value={key} checked={speed === key} onChange={() => setSpeed(key)} />
+                <span>{key}</span>
+              </label>
+            ))}
+          </fieldset>
         </div>
-
-        <p className="cube-lab-note">
-          scrambles use WCA notation and its move rules (no face twice in a row, no three turns on one axis), but they are
-          random moves, not the official WCA random-state scrambler. undo scramble just plays it backwards. it is not a solver.
-        </p>
       </div>
 
       <section className="cube-lab-history" aria-label="Solve history">
         <SessionHistory />
       </section>
+      <div className="cube-lab-foot">
+        <p className="cube-lab-note">
+          scrambles use WCA notation and its move rules (no face twice in a row, no three turns on one axis), but they are
+          random moves, not the official WCA random-state scrambler. undo scramble just plays it backwards. it is not a solver.
+        </p>
+      </div>
     </div>
   );
 }

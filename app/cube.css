@@ -31,15 +31,15 @@
 
 /* ------------------------------------------------------------- layout --- */
 
-.cube-lab { display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--space-6); }
+.cube-lab { display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--space-5); }
 .cube-lab > * { min-width: 0; }
 @media (min-width: 1000px) {
   .cube-lab {
-    grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr);
+    grid-template-columns: minmax(0, 0.85fr) minmax(0, 1.15fr);
     grid-template-areas: "scramble stage" "timer stage" "stats stage" "history stage";
     grid-template-rows: auto auto auto 1fr;
     align-items: start;
-    column-gap: var(--space-7);
+    column-gap: var(--space-6);
   }
   .cube-lab-scramble { grid-area: scramble; }
   .cube-lab-timer { grid-area: timer; }
@@ -69,7 +69,7 @@
   grid-template-rows: auto 1fr auto;
   justify-items: center;
   align-items: center;
-  min-height: clamp(220px, 36svh, 340px);
+  min-height: clamp(200px, 28svh, 280px);
   padding: var(--space-4);
   border: 1px solid var(--line-strong);
   border-radius: var(--radius-lg);
@@ -202,19 +202,33 @@
   background: var(--bg-raised);
 }
 @media (min-width: 640px) { .cube-lab-stage { padding: var(--space-5); } }
-.cube-lab-stage > .cube-controls,
-.cube-lab-stage > .cube-speed,
-.cube-lab-stage > .cube-pad,
-.cube-lab-stage > .cube-lab-note,
-.cube-lab-stage > .cube-lab-status { justify-self: stretch; }
-.cube-lab-stage > .cube-controls { justify-content: center; }
-.cube-lab-stage .cube-net { width: min(100%, 300px); }
+/*
+ * The stage is three parts: the cube (with its view buttons and status), a side column with the
+ * net and the turn pad, and one control bar underneath. Side by side from 640px, so the whole
+ * tool fits on one screen instead of a long column of buttons.
+ */
+.cube-stage-view, .cube-stage-side, .cube-stage-bar { display: grid; gap: var(--space-3); width: 100%; min-width: 0; }
+.cube-stage-view { justify-items: center; }
+.cube-stage-side { align-content: start; justify-items: center; }
+.cube-stage-bar { justify-items: center; padding-top: var(--space-3); border-top: 1px dashed var(--line); }
+@media (min-width: 640px) {
+  .cube-lab-stage { grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr); grid-template-areas: "view side" "bar bar"; align-items: center; column-gap: var(--space-5); }
+  .cube-stage-view { grid-area: view; }
+  .cube-stage-side { grid-area: side; }
+  .cube-stage-bar { grid-area: bar; }
+}
+.cube-lab-stage .cube-net { width: min(100%, 230px); }
 .cube-lab-status { color: var(--fg-3); text-align: center; text-transform: none; letter-spacing: 0.02em; }
-.cube-lab-note { max-width: 52ch; margin-inline: auto; color: var(--fg-3); font-size: var(--text-sm); }
+.cube-controls-compact { justify-content: center; gap: var(--space-2); }
+.cube-controls-compact .button { min-height: 38px; padding-inline: var(--space-3); font-size: 0.8rem; }
+@media (pointer: coarse) { .cube-controls-compact .button { min-height: 44px; } }
+.cube-lab-foot { grid-column: 1 / -1; }
+.cube-lab-note { max-width: 70ch; color: var(--fg-3); font-size: var(--text-sm); }
 
-.cube-speed { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: var(--space-1) var(--space-4); margin: 0; padding: 0; border: 0; }
+.cube-speed { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: var(--space-1) var(--space-3); margin: 0; padding: 0; border: 0; }
 .cube-speed legend { float: left; margin-right: var(--space-3); color: var(--fg-3); text-transform: none; letter-spacing: 0.02em; }
-.cube-speed label { display: inline-flex; align-items: center; gap: var(--space-2); min-height: 44px; color: var(--fg-2); font-size: var(--text-sm); cursor: pointer; }
+.cube-speed label { display: inline-flex; align-items: center; gap: var(--space-2); min-height: 38px; color: var(--fg-2); font-size: var(--text-sm); cursor: pointer; }
+@media (pointer: coarse) { .cube-speed label { min-height: 44px; } }
 .cube-speed input { width: 18px; height: 18px; accent-color: var(--accent); }
 
 /* ---------------------------------------------------------------- cube --- */
@@ -228,7 +242,7 @@
   user-select: none;
   -webkit-user-select: none;
 }
-@media (min-width: 640px) { .cube3d { width: min(100%, 380px); } }
+@media (min-width: 640px) { .cube3d { width: min(100%, 340px); } }
 .cube3d-gl { position: relative; }
 .cube3d-gl[data-mode="loading"] { opacity: 0.6; }
 .cube3d-canvas { display: block; width: 100%; height: 100%; cursor: grab; touch-action: none; }
@@ -281,10 +295,10 @@
 
 .cube-pad { display: grid; gap: var(--space-2); }
 .cube-pad-title { color: var(--fg-3); text-align: center; text-transform: none; letter-spacing: 0.02em; }
-.cube-pad-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: var(--space-2); }
-@media (min-width: 420px) { .cube-pad-grid { grid-template-columns: repeat(6, minmax(0, 1fr)); } }
+.cube-pad { width: 100%; }
+.cube-pad-grid { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 6px; }
 .cube-pad-key {
-  min-height: 44px;
+  min-height: 36px;
   border: 1px solid var(--line-strong);
   border-radius: var(--radius-sm);
   background: var(--bg);
@@ -297,6 +311,7 @@
 .cube-pad-key:hover:not(:disabled) { border-color: var(--fg); }
 .cube-pad-key:active:not(:disabled) { transform: translateY(var(--press-y)); transition-duration: var(--dur-press); }
 .cube-pad-key:disabled { opacity: 0.45; cursor: not-allowed; }
+@media (pointer: coarse) { .cube-pad-key { min-height: 44px; } }
 .cube-pad-log { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--space-2) var(--space-4); color: var(--fg-3); }
 .cube-pad-log .mono { text-transform: none; letter-spacing: 0.02em; word-spacing: 0.2em; }
 .cube-pad-clear { min-height: 44px; padding: 0 var(--space-2); color: var(--fg-2); font-size: var(--text-sm); text-decoration: underline; text-underline-offset: 3px; }
