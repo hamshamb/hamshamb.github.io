@@ -1,4 +1,9 @@
-"""snake, the terminal version. run it with: python snake.py"""
+"""snake, the terminal version. run it with: python snake.py
+
+the rules are the ones snake.ts uses in the browser: walls kill, your own body
+kills, no reversing into your neck, and every apple makes it a little faster
+(down to a floor). the browser version adds a combo, a rare bonus and a skin.
+"""
 import curses
 import random
 from collections import deque

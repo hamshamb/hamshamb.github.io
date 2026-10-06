@@ -10,6 +10,7 @@ export function WorkSection() {
           index="01"
           label="selected work"
           titleId="work-title"
+          bolt="work"
           title="things i made."
           intro="the simple version first. the technical rabbit hole is inside each one."
         />

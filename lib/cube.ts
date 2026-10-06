@@ -258,3 +258,18 @@ export function faceNormal(face: Face): [number, number, number] {
 export function inLayer(face: Face, index: number): boolean {
   return dot(FACELET_POS[index], FACE_NORMAL[face]) === 1;
 }
+
+// ---- sequences ----
+
+/** whether the tail of `history` is `pattern` repeated exactly `times` times in a row. */
+export function endsWithRepeats(history: Move[], pattern: Move[], times: number): boolean {
+  const need = pattern.length * times;
+  if (pattern.length === 0 || times < 1 || history.length < need) return false;
+  const start = history.length - need;
+  for (let i = 0; i < need; i++) {
+    const a = history[start + i];
+    const b = pattern[i % pattern.length];
+    if (a.face !== b.face || a.turns !== b.turns) return false;
+  }
+  return true;
+}

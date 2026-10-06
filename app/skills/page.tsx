@@ -29,7 +29,7 @@ export default function SkillsIndex() {
           <ul>
             {skillPages.map((skill) => (
               <li key={skill.slug}>
-                <Link className="skill-card" href={`/skills/${skill.slug}`}>
+                <Link className="skill-card" data-tilt="" href={`/skills/${skill.slug}`}>
                   <span className="skill-card-name">
                     <TechIcon iconId={getTech(skill.techId)?.icon} size={22} />
                     {skill.name}

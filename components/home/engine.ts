@@ -175,3 +175,68 @@ export const TAG_X = 748;
 export function tagY(layer: EngineLayer) {
   return project(layer.size, -layer.size, layer.z)[1];
 }
+
+/* ------------------------------------------------- engine 2.0 additions --- */
+
+/** The protocol ring is its own part: it turns in its plane and locks. */
+export const RING = { z: -38, outer: 84, inner: 62 } as const;
+
+/** Ring ticks at an in-plane angle (degrees). Re-projected every frame, so the ticks really travel. */
+export function ringTicks(angle: number) {
+  const offset = (angle * Math.PI) / 180;
+  const parts: string[] = [];
+  for (let i = 0; i < 24; i += 1) {
+    const a = (i / 24) * Math.PI * 2 + offset;
+    const outer = i % 3 === 0 ? 80 : 74;
+    parts.push(segment(Math.cos(a) * 66, Math.sin(a) * 66, Math.cos(a) * outer, Math.sin(a) * outer, RING.z));
+  }
+  return parts.join("");
+}
+
+/** The two accent keys on the ring that line up with the protocol plate's slots when locked. */
+export function ringKeys(angle: number) {
+  const offset = (angle * Math.PI) / 180;
+  return [0, Math.PI]
+    .map((base) => {
+      const a = base + offset;
+      return segment(Math.cos(a) * 62, Math.sin(a) * 62, Math.cos(a) * 84, Math.sin(a) * 84, RING.z);
+    })
+    .join("");
+}
+
+/** The outer frame: corner brackets in screen space around the assembled machine. */
+export const FRAME = { x0: 166, x1: 734, y0: 142, y1: 640, arm: 22 } as const;
+
+export function frameCorners(): Point[] {
+  return [[FRAME.x0, FRAME.y0], [FRAME.x1, FRAME.y0], [FRAME.x1, FRAME.y1], [FRAME.x0, FRAME.y1]];
+}
+
+export function frameBrackets() {
+  const { arm } = FRAME;
+  return frameCorners()
+    .map(([x, y]) => {
+      const sx = x < CENTER.x ? 1 : -1;
+      const sy = y < CENTER.y ? 1 : -1;
+      return `M${x + sx * arm} ${y}H${x}V${y + sy * arm}`;
+    })
+    .join("");
+}
+
+/** A small hex bolt head, as drawn in a manual. */
+export function hexBolt(x: number, y: number, r = 5) {
+  const points = Array.from({ length: 6 }, (_, i): Point => {
+    const a = (i / 6) * Math.PI * 2 + Math.PI / 6;
+    return [x + Math.cos(a) * r, y + Math.sin(a) * r * 0.82];
+  });
+  return path(points, true);
+}
+
+/** Where a plate's left corner (its rail mount) sits, assembled. */
+export function mountPoint(layer: EngineLayer): Point {
+  return project(-layer.size, layer.size, layer.z);
+}
+
+/** The point each part scales around. */
+export function partCenter(z: number): Point {
+  return project(0, 0, z);
+}

@@ -15,7 +15,8 @@ export type SkillPage = {
   line: string;
   intro: string;
   files: SkillFile[];
-  demo: { title: string; note: string };
+  /** kicker: one honest line about what runs; keys: shown as keyboard hints under the demo. */
+  demo: { title: string; kicker: string; note: string; keys?: string[] };
   docs: { label: string; href: string };
 };
 
@@ -31,8 +32,10 @@ export const skillPages: SkillPage[] = [
       { name: "snake.ts", path: "lib/snake.ts", lang: "typescript" },
     ],
     demo: {
-      title: "snake",
-      note: "the game on this page runs in your browser, written in TypeScript (snake.ts). snake.py is the same game for a terminal: same board rules, same speed-up per apple. nothing here runs Python in the browser.",
+      title: "signal snake",
+      kicker: "python · the browser game is TypeScript",
+      note: "the game on this page runs in your browser, written in TypeScript: snake.ts holds the rules and a canvas renderer (not shown here) draws them. snake.py is the same core game for a terminal: same walls, same self-collision, same speed-up per apple. nothing here runs Python in the browser. the browser version adds visual extras on top: a combo, a rare bonus item, particles and a skin. there may be a bug in the python.",
+      keys: ["arrows / wasd steer", "space / p pause", "r restarts", "swipe or use the pad on touch"],
     },
     docs: { label: "docs.python.org", href: "https://docs.python.org/3/" },
   },
@@ -42,10 +45,15 @@ export const skillPages: SkillPage[] = [
     techId: "typescript",
     line: "where most of the bigger projects here ended up.",
     intro: "StudyFilter, Rivet, AreUHuman, TinyPaste, Inkline and MX's app layer are all TypeScript. a lot of that code is state machines pretending to be something else.",
-    files: [{ name: "connection.ts", path: "lib/demos/connection.ts", lang: "typescript" }],
+    files: [
+      { name: "factory.ts", path: "lib/demos/factory.ts", lang: "typescript" },
+      { name: "compile.ts", path: "lib/demos/compile.ts", lang: "typescript" },
+    ],
     demo: {
-      title: "a typed connection lifecycle",
-      note: "the panel on the right runs exactly the file on the left. every button is an event; disabled ones would not change anything from the current state.",
+      title: "type factory",
+      kicker: "typescript · runs the files it shows",
+      note: "the machine runs exactly the files on the left: factory.ts decides whether a wire is allowed and compile.ts holds the three puzzles. the drawing around them is not shown. the type check is a tiny structural one written for this page, not the real TypeScript compiler.",
+      keys: ["tab to a port, enter to pick", "esc drops the selected source"],
     },
     docs: { label: "typescriptlang.org", href: "https://www.typescriptlang.org/docs/" },
   },
@@ -54,11 +62,16 @@ export const skillPages: SkillPage[] = [
     name: "React",
     techId: "react",
     line: "for interfaces that have to keep track of more than they show.",
-    intro: "StudyFilter, AreUHuman and Inkline are React; Rivet is React Native. this demo is a tiny board for where my ideas tend to end up.",
-    files: [{ name: "ExperimentQueue.tsx", path: "components/skills/ExperimentQueue.tsx", lang: "tsx" }],
+    intro: "StudyFilter, AreUHuman and Inkline are React; Rivet is React Native. this demo is a toy: add parts to a canvas and see which state is shared, which is passed down and which is derived.",
+    files: [
+      { name: "ComponentLab.tsx", path: "components/skills/ComponentLab.tsx", lang: "tsx" },
+      { name: "lab.ts", path: "lib/demos/lab.ts", lang: "typescript" },
+    ],
     demo: {
-      title: "experiment queue",
-      note: "the board on the right is this component. state lives in one reducer; the counts and the \"probably broken\" warning are derived, not stored.",
+      title: "component lab",
+      kicker: "react · runs the component it shows",
+      note: "the lab on the right is this component: ComponentLab.tsx is the file on the left and lab.ts is its reducer. counters and toggles keep their own useState, shared counters read one store, panels pass a label prop down, and the numbers under the canvas are derived on every render. the motion library does the animation.",
+      keys: ["tab through the parts", "enter adds or presses", "← → reorder"],
     },
     docs: { label: "react.dev", href: "https://react.dev/" },
   },
@@ -70,8 +83,10 @@ export const skillPages: SkillPage[] = [
     intro: "Nexus is a Fabric mod, so it is Java: session state machines, a versioned protocol and short-lived invites.",
     files: [{ name: "Session.java", path: "content/snippets/Session.java", lang: "java" }],
     demo: {
-      title: "a session, step by step",
-      note: "an illustrative Java model written for this page, not Nexus source. the visualisation beside it runs in the browser and follows the same allowed transitions.",
+      title: "session lobby",
+      kicker: "java · illustrative model",
+      note: "an illustrative Java model written for this page, not Nexus source. the lobby beside it runs in the browser as a TypeScript state machine that follows the same allowed transitions as SessionState.next(); a test keeps the two in step. tokens are invented and expire after 90 seconds.",
+      keys: ["enter  next step", "tab  to the fault buttons"],
     },
     docs: { label: "dev.java", href: "https://dev.java/learn/" },
   },
@@ -83,8 +98,10 @@ export const skillPages: SkillPage[] = [
     intro: "CHC Review Studio is C# and WPF. the idea it is built on: a finding should always point at the exact text that caused it.",
     files: [{ name: "Review.cs", path: "content/snippets/Review.cs", lang: "csharp" }],
     demo: {
-      title: "evidence-first review",
-      note: "an illustrative C# model written for this page, not CHC Review Studio source. the review panel beside it runs in the browser on made-up sample text.",
+      title: "review desk",
+      kicker: "c# · illustrative model",
+      note: "an illustrative C# model written for this page, not CHC Review Studio source. the desk beside it runs in the browser on a made-up paragraph; its rules (evidence must sit inside the text, open counts by severity) mirror Review.cs and are tested against it.",
+      keys: ["← →  move between phrases", "space  select", "shift + arrows  extend", "c  create finding", "esc  clear"],
     },
     docs: { label: "learn.microsoft.com", href: "https://learn.microsoft.com/dotnet/csharp/" },
   },
@@ -99,8 +116,10 @@ export const skillPages: SkillPage[] = [
       { name: "card.css", path: "app/demo-card.css", lang: "css" },
     ],
     demo: {
-      title: "one card, many widths",
-      note: "change the width, theme and density. the only JavaScript is the controls; the card itself adapts with a container query and CSS variables.",
+      title: "ui mutation lab",
+      kicker: "html / css · styled by the css it shows",
+      note: "the controls only write custom properties and data attributes. the card is the markup in card.html, adapting through app/demo-card.css: variables for the numbers, a container query for the layout. the one thing the lab will not stop you doing is making it worse.",
+      keys: ["tab + arrows  sliders", "click a preset for quick widths"],
     },
     docs: { label: "MDN", href: "https://developer.mozilla.org/docs/Web" },
   },

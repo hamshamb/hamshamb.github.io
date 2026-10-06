@@ -1,0 +1,211 @@
+/* ------------------------------------------------------------- rivet3d --- */
+
+/*
+ * The Rivet spatial scenes: the 3D table, the opening route, the envelope x-ray, the packet
+ * courier and the case-study slot. Components live in components/rivet. Everything reads the
+ * site's own tokens, so light and dark are the same drawing in two palettes.
+ */
+
+.rv { display: grid; gap: var(--space-3); min-width: 0; }
+.rv-head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--space-2) var(--space-3); }
+.rv-tag { color: var(--fg-3); text-transform: none; letter-spacing: 0.02em; }
+.rv-chip { padding: 0.15rem 0.6rem; border: 1px solid var(--line); border-radius: 999px; color: var(--fg-2); text-transform: none; letter-spacing: 0.02em; transition: border-color var(--dur-base), color var(--dur-base), background-color var(--dur-base); }
+.rv-chip[data-state="delivered"] { border-color: var(--accent); background: var(--accent-soft); color: var(--accent); }
+.rv-note { max-width: 62ch; color: var(--fg-3); font-size: var(--text-xs); line-height: 1.5; }
+.rv-status { min-height: 3em; color: var(--fg-2); font-size: var(--text-sm); line-height: 1.55; }
+
+/* the stage: a fixed box, so nothing shifts when the scene arrives */
+:where(.rv-stage, .rv-route, .rv-envelope-stage) {
+  position: relative;
+  width: 100%;
+  overflow: hidden;
+  border-radius: var(--radius-md);
+  contain: layout paint;
+}
+.rv-stage { aspect-ratio: 16 / 9; min-height: 260px; }
+.rv-route { aspect-ratio: 2 / 1; min-height: 220px; }
+.rv-envelope-stage { aspect-ratio: 16 / 9; min-height: 240px; }
+@media (max-width: 640px) {
+  .rv-stage { aspect-ratio: 5 / 7; max-height: 82svh; }
+  .rv-route { aspect-ratio: 4 / 5; }
+  .rv-envelope-stage { aspect-ratio: 4 / 3; }
+}
+.rv-host { position: absolute; inset: 0; }
+.rv-canvas { position: absolute; inset: 0; display: block; width: 100%; height: 100%; touch-action: pan-y; -webkit-user-select: none; user-select: none; }
+
+/* the static drawing: what shows before the scene loads, and for good without WebGL */
+.rv-poster { position: absolute; inset: 0; display: grid; place-items: center; }
+.rv-poster-svg, .rv-poster .route-svg { width: 100%; height: 100%; }
+.rv-poster .route-svg[data-layout="tall"], .rv-poster-tall { display: none; }
+@media (max-width: 640px) {
+  .rv-poster .route-svg[data-layout="wide"], .rv-poster-wide { display: none; }
+  .rv-poster .route-svg[data-layout="tall"], .rv-poster-tall { display: block; }
+}
+.rv-poster-table { fill: var(--plate); stroke: var(--line-strong); stroke-width: 1.5; }
+.rv-poster-phone rect:first-child { fill: var(--bg-raised); stroke: var(--fg-3); stroke-width: 2; }
+.rv-poster-phone .rv-poster-screen { fill: var(--surface); stroke: none; }
+.rv-poster-phone[data-holds] rect:first-child { stroke: var(--accent); }
+.rv-poster-phone[data-holds] .rv-poster-screen { fill: var(--accent-soft); }
+.rv-poster-phone text, .rv-poster-note { fill: var(--fg-3); font-family: var(--font-mono); font-size: 13px; letter-spacing: 0.06em; text-transform: uppercase; }
+.rv-poster-range { fill: var(--accent-soft); stroke: var(--accent); stroke-opacity: 0.4; stroke-dasharray: 3 8; }
+.rv-poster-link { stroke: var(--fg-3); stroke-width: 2; stroke-linecap: round; }
+.rv-poster-link[data-live] { stroke: var(--accent); }
+.rv-poster-env-small rect { fill: var(--accent); }
+.rv-poster-env-small path { fill: none; stroke: var(--accent-ink); stroke-width: 1.5; }
+.rv-poster-env rect { fill: var(--surface); stroke: var(--fg-3); stroke-width: 1.5; }
+.rv-poster-env rect[data-zone="sealed"] { fill: var(--accent-soft); stroke: var(--accent); }
+.rv-poster-env text { fill: var(--fg-2); font-family: var(--font-mono); font-size: 15px; }
+
+/* HTML labels that follow 3D points. They never take the pointer: the canvas does. */
+.rv-labels { position: absolute; inset: 0; overflow: hidden; pointer-events: none; }
+.rv-label {
+  position: absolute;
+  left: 0;
+  top: 0;
+  display: grid;
+  justify-items: center;
+  gap: 1px;
+  min-width: 44px;
+  min-height: 28px;
+  padding: 0.2rem 0.55rem;
+  border: 1px solid var(--line-strong);
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--bg-raised) 86%, transparent);
+  color: var(--fg-2);
+  font: inherit;
+  white-space: nowrap;
+  pointer-events: none;
+  opacity: 0;
+  will-change: transform;
+  transition: opacity var(--dur-base) var(--ease-out), border-color var(--dur-base), color var(--dur-base);
+}
+.rv-label[data-placed] { opacity: 1; }
+.rv-label-name { color: inherit; font-size: 0.66rem; text-transform: none; letter-spacing: 0.04em; }
+.rv-label-copy { color: var(--accent); font-size: 0.6rem; text-transform: none; letter-spacing: 0.02em; }
+.rv-label[data-holds], .rv-label[data-active] { border-color: var(--accent); color: var(--fg); }
+.rv-label:focus-visible { outline: var(--focus-ring); outline-offset: var(--focus-gap); }
+.rv-hint {
+  position: absolute;
+  left: 0;
+  top: 0;
+  padding: 0.2rem 0.6rem;
+  border-radius: 999px;
+  background: var(--accent);
+  color: var(--accent-ink);
+  font-size: 0.64rem;
+  text-transform: none;
+  letter-spacing: 0.03em;
+  white-space: nowrap;
+  pointer-events: none;
+}
+@media (max-width: 480px) {
+  .rv-label { padding-inline: 0.4rem; }
+  .rv-label-name { font-size: 0.6rem; }
+  .rv-label-copy { font-size: 0.54rem; }
+}
+
+/* controls: everything the pointer can do, as plain buttons */
+.rv-controls { display: grid; gap: var(--space-4); }
+@media (min-width: 720px) { .rv-controls { grid-template-columns: 1fr 1fr; } }
+.rv-group { display: grid; align-content: start; gap: var(--space-2); }
+.rv-group-title { color: var(--fg-3); text-transform: none; letter-spacing: 0.02em; }
+.rv-row { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2); }
+.rv-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  min-width: 44px;
+  min-height: 44px;
+  padding: 0.4rem 0.85rem;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--fg-2);
+  font-size: var(--text-sm);
+  line-height: 1.2;
+  transition: border-color var(--dur-fast), color var(--dur-fast), background-color var(--dur-fast), transform var(--dur-press);
+}
+.rv-btn:hover { border-color: var(--line-strong); color: var(--fg); }
+.rv-btn:active { transform: translateY(var(--press-y)); }
+.rv-btn[aria-pressed="true"] { border-color: var(--accent); background: var(--accent-soft); color: var(--fg); }
+.rv-btn[aria-disabled="true"] { opacity: 0.45; cursor: default; }
+.rv-btn[data-near] { border-color: var(--accent); color: var(--fg); }
+.rv-btn-square { width: 44px; padding: 0; font-size: 1.1rem; }
+.rv-btn-primary { border-color: var(--fg); background: var(--fg); color: var(--bg); }
+.rv-btn-primary:hover { border-color: var(--accent); background: var(--accent); color: var(--accent-ink); }
+.rv-dpad { gap: var(--space-1); }
+
+/* x-ray: the documented fields, by region */
+.rv-xray { display: grid; gap: var(--space-3); padding: var(--space-4); border: 1px solid var(--line-strong); border-radius: var(--radius-md); background: var(--bg); }
+.rv-xray-title { color: var(--fg-3); text-transform: none; letter-spacing: 0.02em; }
+.rv-xray-grid { display: grid; gap: var(--space-3); }
+@media (min-width: 720px) { .rv-xray-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+.rv-xray-zone { display: grid; align-content: start; gap: var(--space-1); padding: var(--space-3); border: 1px dashed var(--line-strong); border-radius: var(--radius-sm); }
+.rv-xray-zone[data-zone="sealed"] { border-style: solid; border-color: var(--accent); background: var(--accent-soft); }
+.rv-xray-name { color: var(--fg); font-size: var(--text-sm); font-weight: 600; }
+.rv-xray-readers { color: var(--fg-3); font-size: 0.66rem; text-transform: none; letter-spacing: 0.02em; }
+.rv-xray-zone ul { display: grid; gap: 0.15rem; margin: var(--space-1) 0 0; padding: 0; list-style: none; color: var(--fg-2); font-size: var(--text-xs); }
+.rv-xray-zone li .mono { color: var(--fg-3); font-size: 0.62rem; text-transform: none; }
+.rv-xray-copy { color: var(--fg-2); font-size: var(--text-sm); line-height: 1.5; }
+.rv-xray-copy .mono { color: var(--fg-3); text-transform: none; letter-spacing: 0.02em; }
+
+.rv-envelope { display: grid; gap: var(--space-3); }
+.rv-envelope-controls { justify-content: flex-start; }
+
+/* the case study slot */
+.case-rivet { display: grid; gap: var(--space-5); margin-top: clamp(2rem, 1.5rem + 2vw, 3.5rem); padding: clamp(1rem, 0.5rem + 2vw, 2rem); border: 1px solid var(--line); border-radius: var(--radius-lg); background: var(--bg-raised); }
+.case-rivet-head { display: grid; gap: var(--space-2); max-width: 46rem; }
+.case-rivet-head .case-label { margin-bottom: 0; }
+.case-rivet-head h2 { font-size: var(--text-xl); letter-spacing: -0.02em; }
+.case-rivet-head p:last-child { color: var(--fg-2); font-size: var(--text-sm); line-height: 1.55; }
+
+/* the packet courier */
+.cr { display: grid; gap: var(--space-3); min-width: 0; }
+.cr-track { padding: var(--space-4) 36px; border: 1px solid var(--line); border-radius: var(--radius-md); background: var(--bg); overflow: hidden; }
+.cr-lanes { position: relative; height: calc(6 * 34px - 6px); }
+.cr-band {
+  position: absolute;
+  top: -8px;
+  bottom: -8px;
+  border-inline: 1px dashed var(--accent);
+  background: var(--accent-soft);
+  pointer-events: none;
+  transition: left 1.5s linear, width 1.5s linear;
+}
+.cr-phone {
+  position: absolute;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  height: 28px;
+  padding: 0 0.6rem 0 0.5rem;
+  border: 1px solid var(--line-strong);
+  border-radius: 999px;
+  background: var(--bg-raised);
+  color: var(--fg-3);
+  white-space: nowrap;
+  transform: translateX(-50%);
+  transition: left 1.5s linear, border-color var(--dur-base), color var(--dur-base), background-color var(--dur-base);
+}
+.cr-phone .mono { color: inherit; font-size: 0.64rem; text-transform: none; letter-spacing: 0.03em; }
+.cr-phone-icon { display: block; width: 8px; height: 14px; border: 1.5px solid currentColor; border-radius: 2px; }
+.cr-phone[data-near] { border-color: var(--accent); border-style: dashed; color: var(--fg); }
+.cr-phone[data-holds] { border-style: solid; border-color: var(--accent); background: var(--accent-soft); color: var(--accent); }
+.cr-phone[data-end]:not([data-holds]) { color: var(--fg); }
+.cr-clock { width: 100%; height: 6px; border: 0; border-radius: 3px; background: var(--surface); accent-color: var(--accent); appearance: none; overflow: hidden; }
+.cr-clock::-webkit-progress-bar { background: var(--surface); }
+.cr-clock::-webkit-progress-value { background: var(--accent); transition: width 1.5s linear; }
+.cr-clock::-moz-progress-bar { background: var(--accent); }
+.cr-btn-state { color: var(--fg-3); font-size: 0.6rem; text-transform: none; letter-spacing: 0.02em; }
+.cr-controls { gap: var(--space-3); }
+.cr-rules { color: var(--fg-3); text-transform: none; letter-spacing: 0.02em; }
+@media (max-width: 480px) {
+  .cr-track { padding-inline: 30px; }
+  .cr-phone { padding: 0 0.45rem 0 0.4rem; }
+  .cr-phone .mono { font-size: 0.58rem; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .rv-label, .rv-chip, .rv-btn, .cr-phone, .cr-band, .cr-clock::-webkit-progress-value { transition: none; }
+}

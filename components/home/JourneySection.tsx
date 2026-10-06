@@ -63,6 +63,7 @@ export function JourneySection() {
           index="04"
           label="journey"
           titleId="journey-title"
+          bolt="journey"
           title="five years of learning by building."
           intro="some projects followed me through years of rewrites. Nexus and StudyFilter are much newer and moved far faster."
         />

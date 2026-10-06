@@ -178,3 +178,25 @@ test("heavy islands stay off the home page", () => {
   assert.ok(chunksOf(built("stuff/cubing.html")).includes("CubeLab"));
   assert.ok(chunksOf(built("blog/why-i-made-rivet.html")).includes("RelayPlayground"));
 });
+
+test("game cards: every game has art, every logo is local and documented, no logo is invented", async () => {
+  const { gameArt } = await import("../content/game-art.ts");
+  const doc = read("docs/game-assets.md");
+  for (const game of personal.games) {
+    const art = gameArt[game.title];
+    assert.ok(art, `${game.title} has no title card`);
+    if (art.logo) {
+      assert.match(art.logo.src, /^\/games\/[\w-]+\.webp$/, "logos are self-hosted");
+      assert.ok(existsSync(new URL(`public${art.logo.src}`, root)), `${art.logo.src} is missing`);
+      assert.ok(doc.includes(`public${art.logo.src}`), `${art.logo.src} has no recorded source`);
+    } else {
+      assert.ok(art.type, `${game.title} needs a typographic card`);
+      assert.ok(doc.includes(game.title), `${game.title} is not explained in docs/game-assets.md`);
+    }
+  }
+  assert.ok(personal.games.some((game) => game.title === "Meccha Chameleon"));
+  assert.ok(!personal.games.some((game) => /MECHA CAMELEON|Mecha Cameleon/i.test(game.title)), "the title is Meccha Chameleon");
+  const home = built("index.html");
+  assert.match(home, /src="\/games\/cs2\.webp"/);
+  assert.doesNotMatch(home, /steamstatic\.com/, "logos are never hotlinked");
+});

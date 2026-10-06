@@ -3,7 +3,7 @@ import { CubeLab } from "@/components/cube/CubeLab";
 import { AppLink as Link } from "@/components/ui/AppLink";
 import { personal } from "@/content/personal";
 
-const description = "a WCA-style 3x3 scrambler with a cube net and a 3D cube that plays the scramble, and plays it back.";
+const description = "a WCA-style 3x3 scrambler, a solve timer with session stats, a cube net and a 3D cube that plays the scramble, and plays it back.";
 
 export const metadata: Metadata = {
   title: "cube lab",
@@ -31,8 +31,8 @@ export default function CubingPage() {
           <p className="section-label mono"><b>~/stuff/</b><span>cubing</span></p>
           <h1 className="lab-page-title">cube lab.</h1>
           <p className="lab-page-intro">
-            a scrambler, a net and a cube you can spin. press play to watch the scramble happen one move at a time, then
-            undo it the lazy way: backwards.
+            a scrambler, a solve timer, a net and a cube you can spin. time a few solves, or press play to watch a
+            scramble happen one move at a time and undo it the lazy way: backwards.
           </p>
           {facts.length > 0 && (
             <dl className="stuff-facts">
@@ -44,6 +44,7 @@ export default function CubingPage() {
               ))}
             </dl>
           )}
+          <p className="lab-page-aside">the numbers above are mine. the ones under the timer are yours, and stay in your browser.</p>
         </header>
         <CubeLab />
       </div>

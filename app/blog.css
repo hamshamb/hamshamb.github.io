@@ -165,7 +165,66 @@
 .rivet-path strong { color: var(--fg); font-size: var(--text-base); }
 .rivet-path-detail { grid-column: 3; color: var(--fg-2); font-size: var(--text-sm); }
 .rivet-path li[data-state="open"] strong { color: var(--lab); }
+/* the rail between stages: solid where it happened, dashed where it has not */
+.rivet-path li:not(:last-child)::before {
+  content: "";
+  position: absolute;
+  top: calc(var(--space-2) + 0.8rem);
+  left: calc(3.5rem + var(--space-3) + 4.5px);
+  width: 2px;
+  height: 100%;
+  border-radius: 1px;
+  background: var(--accent);
+  transform-origin: top;
+}
+.rivet-path li[data-state="open"]:not(:last-child)::before { background: repeating-linear-gradient(to bottom, var(--lab) 0 4px, transparent 4px 9px); }
+@supports (animation-timeline: view()) {
+  @media (prefers-reduced-motion: no-preference) {
+    .rivet-path li:not(:last-child)::before { transform: scaleY(0); animation: rivet-rail linear both; animation-timeline: view(); animation-range: entry 55% cover 60%; }
+    .rivet-path-dot { animation: rivet-dot linear both; animation-timeline: view(); animation-range: entry 35% entry 100%; }
+  }
+}
+@keyframes rivet-rail { to { transform: scaleY(1); } }
+@keyframes rivet-dot { from { transform: translateY(1px) scale(0.35); opacity: 0.4; } to { transform: translateY(1px) scale(1); opacity: 1; } }
+
+/* spatial figures: the breakout moments. a faint engineering grid, nothing louder. */
+.post-figure:where([data-figure="rivet-route"], [data-figure="relay-playground"], [data-figure="envelope"], [data-figure="courier"]) > :first-child {
+  background-image: radial-gradient(color-mix(in srgb, var(--fg) 9%, transparent) 1px, transparent 1px);
+  background-size: 22px 22px;
+}
+.post-figure:where([data-figure="rivet-route"], [data-figure="relay-playground"], [data-figure="envelope"]) { max-width: min(72rem, 100%); }
+.post-figure[data-figure="courier"] { scroll-margin-top: calc(var(--header-h) + var(--space-5)); }
+.post-figure:where([data-figure="rivet-route"], [data-figure="relay-playground"], [data-figure="envelope"], [data-figure="courier"]) > :first-child { min-width: 0; }
+@media (max-width: 640px) {
+  .post-figure > :first-child { padding: var(--space-3); }
+}
+
+/* figure 4 again: where each item lives */
+.threat-map { --hit: var(--accent); width: 100%; height: auto; }
+.threat-map[data-kind="no"] { --hit: var(--lab); }
+.threat-map text { fill: var(--fg-3); font-family: var(--font-mono); font-size: 16px; letter-spacing: 0.06em; text-transform: uppercase; transition: fill var(--dur-base); }
+.threat-map [data-place] { transition: opacity var(--dur-base); }
+.threat-map [data-place] :is(path, rect) { transition: stroke var(--dur-base), fill var(--dur-base); }
+.threat-map [data-place="safety"] path { fill: none; stroke: var(--line-strong); stroke-width: 2; stroke-dasharray: 4 8; stroke-linecap: round; }
+.threat-map [data-place="server"] rect { fill: none; stroke: var(--line-strong); stroke-width: 2; stroke-dasharray: 5 6; }
+.threat-map [data-place="server"] path { stroke: var(--line-strong); stroke-width: 2; }
+.threat-map [data-place="links"] path { fill: none; stroke: var(--line-strong); stroke-width: 2; stroke-linecap: round; }
+.threat-map [data-place="radio"] path { fill: none; stroke: var(--line); stroke-width: 3; stroke-linecap: round; }
+.threat-map [data-place="envelope"] rect { fill: var(--fg-3); stroke: none; }
+.threat-map [data-place="envelope"] path { fill: none; stroke: var(--bg-raised); stroke-width: 2; }
+.threat-map .threat-map-slab { fill: var(--bg-raised); stroke: var(--fg-3); stroke-width: 2; }
+.threat-map .threat-map-screen { fill: var(--surface); stroke: none; }
+.threat-map [data-on] text { fill: var(--hit); }
+.threat-map [data-on] :is(path) { stroke: var(--hit); }
+.threat-map [data-place="server"][data-on] rect { stroke: var(--hit); }
+.threat-map [data-place="radio"][data-on] path { stroke-width: 4; }
+.threat-map [data-place="envelope"][data-on] rect { fill: var(--hit); }
+.threat-map [data-place="envelope"][data-on] path { stroke: var(--bg-raised); }
+.threat-map [data-place="phone"][data-on] .threat-map-slab { stroke: var(--hit); }
+.threat-map [data-place="phone"][data-on] .threat-map-screen { fill: var(--accent-soft); }
+.threat-map[data-kind="no"] [data-place="phone"][data-on] .threat-map-screen { fill: color-mix(in srgb, var(--lab) 14%, transparent); }
 
 @media (prefers-reduced-motion: reduce) {
   .route-envelope { transition: none; }
+  .threat-map text, .threat-map [data-place], .threat-map [data-place] :is(path, rect) { transition: none; }
 }

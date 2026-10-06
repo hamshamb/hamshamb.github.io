@@ -2,6 +2,7 @@ import type { CSSProperties } from "react";
 import { latestProject, phaseLabel, portfolio } from "@/content/portfolio";
 import { AppLink as Link } from "../ui/AppLink";
 import { CopyEmail } from "../ui/CopyEmail";
+import { Bolt } from "../toys/Bolt";
 import { LocalTime } from "../ui/LocalTime";
 import { BuildEngine } from "./BuildEngine";
 import { HeroEngine } from "./HeroEngine";
@@ -108,6 +109,7 @@ export function Hero() {
 
           <div className="container hero-rail-row">
             <HeroRail />
+            <Bolt id="hero" className="bolt-rail" />
           </div>
         </div>
       </div>
@@ -128,7 +130,7 @@ export function Hero() {
 
           <div>
             <h2 className="mono">latest release</h2>
-            <Link className="latest-card" href={`/work/${latestProject.slug}`}>
+            <Link className="latest-card" data-tilt="" href={`/work/${latestProject.slug}`}>
               <strong>{latestProject.name} <span className="arrow" aria-hidden="true">→</span></strong>
               <p>{latestProject.hook}</p>
               <span className="meta-row">

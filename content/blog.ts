@@ -5,7 +5,7 @@ import { rivetPost } from "./posts/why-i-made-rivet";
  * Interactive figures are named here and rendered as small client islands; the prose stays static.
  */
 
-export type FigureId = "rivet-route" | "relay-playground" | "envelope" | "threat-model" | "rivet-path";
+export type FigureId = "rivet-route" | "relay-playground" | "envelope" | "threat-model" | "rivet-path" | "courier";
 
 /** Inline text supports `code` and [links](/path). Nothing else, and never raw HTML. */
 export type Block =

@@ -1,4 +1,5 @@
 import type { Block, FigureId } from "@/content/blog";
+import { PacketCourier } from "@/components/rivet/PacketCourier";
 import { EnvelopeExplorer } from "./EnvelopeExplorer";
 import { Inline } from "./Inline";
 import { RelayPlayground } from "./RelayPlayground";
@@ -13,6 +14,7 @@ const figures: Record<FigureId, () => React.ReactNode> = {
   envelope: () => <EnvelopeExplorer />,
   "threat-model": () => <ThreatModel />,
   "rivet-path": () => <RivetPath />,
+  courier: () => <PacketCourier />,
 };
 
 export function ArticleBody({ blocks }: { blocks: Block[] }) {
@@ -48,7 +50,7 @@ export function ArticleBody({ blocks }: { blocks: Block[] }) {
             );
           case "figure":
             return (
-              <figure key={index} className="post-figure" data-figure={block.figure}>
+              <figure key={index} id={block.figure === "courier" ? "courier" : undefined} className="post-figure" data-figure={block.figure}>
                 {figures[block.figure]()}
                 <figcaption>{block.caption}</figcaption>
               </figure>

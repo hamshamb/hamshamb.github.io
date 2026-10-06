@@ -2,10 +2,14 @@
 
 import { AnimatePresence, m } from "motion/react";
 import { usePathname } from "next/navigation";
-import { type KeyboardEvent, useEffect, useId, useMemo, useRef, useState } from "react";
+import { type KeyboardEvent, useCallback, useEffect, useId, useMemo, useRef, useState } from "react";
+import { type Command, matchCommand, suggestCommands } from "@/content/commands";
 import { owner, type PaletteLink, type PaletteProject, sections } from "@/content/site";
 import { PALETTE_EVENT, setTheme } from "@/lib/client-stores";
 import { duration, easeOut, spring } from "@/lib/motion";
+import { panic } from "@/lib/panic";
+import { discover, toast, unlockToy, useSecrets } from "@/lib/secrets";
+import { openToy, randomDestination, setGravity } from "@/lib/toys";
 
 type Item = {
   id: string;
@@ -32,6 +36,8 @@ export function CommandPalette({ projects, links = [] }: { projects: PaletteProj
   useEffect(() => {
     const onOpen = () => setOpen(true);
     const onKey = (event: globalThis.KeyboardEvent) => {
+      // a fullscreen demo would hide the palette while it holds focus
+      if (document.fullscreenElement) return;
       if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "k") {
         event.preventDefault();
         setOpen((value) => !value);
@@ -57,6 +63,8 @@ function Palette({ projects, links, onClose }: { projects: PaletteProject[]; lin
   const [query, setQuery] = useState("");
   const [rawIndex, setIndex] = useState(0);
   const listId = useId();
+  const secrets = useSecrets();
+  const [output, setOutput] = useState<{ lines: string[]; email?: boolean } | null>(null);
   const returnFocus = useRef<Element | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -126,14 +134,62 @@ function Palette({ projects, links, onClose }: { projects: PaletteProject[]; lin
     ];
   }, [isHome, links, onClose, projects]);
 
+  /**
+   * Hidden commands. An undiscovered command only appears when typed in full; once it has run,
+   * it shows up as a suggestion like anything else. Normal search is unchanged.
+   */
+  const runCommand = useCallback((command: Command) => {
+    const { lines, action } = command.run(Math.random);
+    discover(command.secret);
+    setQuery("");
+    switch (action.kind) {
+      case "toy":
+        unlockToy(action.toy);
+        onClose();
+        openToy(action.toy);
+        return;
+      case "gravity":
+        onClose();
+        setGravity(action.on);
+        toast(lines[0]);
+        return;
+      case "navigate":
+        unlockToy(action.to === "random" ? "rabbit" : "snake");
+        onClose();
+        window.location.assign(action.to === "snake" ? "/skills/python" : randomDestination());
+        return;
+      case "panic":
+        panic();
+        setOutput({ lines });
+        return;
+      case "email":
+        setOutput({ lines, email: true });
+        return;
+      default:
+        setOutput({ lines });
+    }
+  }, [onClose]);
+
   const results = useMemo(() => {
+    const exact = matchCommand(query);
+    const found = query.trim() ? suggestCommands(query, secrets?.secrets ?? []) : [];
+    const hidden: Item[] = [...new Set([...(exact ? [exact] : []), ...found])].map((command) => ({
+      id: `cmd-${command.id}`,
+      group: "commands",
+      label: command.names[0],
+      hint: command.hint,
+      run: () => runCommand(command),
+    }));
     const terms = query.trim().toLowerCase().replace(/^(open|cd|go|goto)\s+/, "").split(/\s+/).filter(Boolean);
     if (!terms.length) return items;
-    return items.filter((item) => {
-      const haystack = `${item.label} ${item.hint ?? ""} ${item.keywords ?? ""} ${item.group}`.toLowerCase();
-      return terms.every((term) => haystack.includes(term));
-    });
-  }, [items, query]);
+    return [
+      ...hidden,
+      ...items.filter((item) => {
+        const haystack = `${item.label} ${item.hint ?? ""} ${item.keywords ?? ""} ${item.group}`.toLowerCase();
+        return terms.every((term) => haystack.includes(term));
+      }),
+    ];
+  }, [items, query, runCommand, secrets]);
 
   const index = Math.min(rawIndex, Math.max(results.length - 1, 0));
   const activeItem = results[index];
@@ -146,7 +202,8 @@ function Palette({ projects, links, onClose }: { projects: PaletteProject[]; lin
     inputRef.current?.focus();
     return () => {
       root.style.overflow = previousOverflow;
-      if (returnFocus.current instanceof HTMLElement) returnFocus.current.focus({ preventScroll: true });
+      // a toy opened from the palette owns focus now; do not pull it back behind the dialog
+      if (returnFocus.current instanceof HTMLElement && !document.querySelector("[data-toy]")) returnFocus.current.focus({ preventScroll: true });
     };
   }, []);
 
@@ -218,6 +275,7 @@ function Palette({ projects, links, onClose }: { projects: PaletteProject[]; lin
             onChange={(event) => {
               setQuery(event.target.value);
               setIndex(0);
+              setOutput(null);
             }}
             onKeyDown={onKeyDown}
             autoComplete="off"
@@ -225,6 +283,13 @@ function Palette({ projects, links, onClose }: { projects: PaletteProject[]; lin
           />
           <kbd>esc</kbd>
         </div>
+
+        {output && (
+          <div className="palette-output mono" role="status">
+            {output.lines.map((line, index) => <p key={index}>{line}</p>)}
+            {output.email && <a className="button button-primary" href={`mailto:${owner.email}`}>email hamshamb</a>}
+          </div>
+        )}
 
         {results.length ? (
           <ul id={listId} className="palette-list" role="listbox" aria-label="Results">

@@ -56,6 +56,16 @@
   --dur-base: 280ms;
   --dur-slow: 520ms;
 
+  /* interaction (one place for every press, lift and tilt on the site) */
+  --spring-out: cubic-bezier(0.34, 1.32, 0.64, 1);   /* small, believable overshoot */
+  --dur-press: 90ms;
+  --press-y: 1px;           /* buttons sink this far while held */
+  --lift-y: -2px;           /* cards rise this far on hover */
+  --nudge-x: 3px;           /* arrows lean this far on hover */
+  --tilt-max: 2.5deg;       /* pointer tilt never exceeds this */
+  --focus-ring: 2px solid var(--accent);
+  --focus-gap: 3px;
+
   /* light theme: warm paper, green-black ink */
   color-scheme: light;
   --bg: #f5f4ef;
@@ -163,8 +173,8 @@ a, button { -webkit-tap-highlight-color: transparent; }
 ::selection { background: var(--accent); color: var(--accent-ink); }
 
 :focus-visible {
-  outline: 2px solid var(--accent);
-  outline-offset: 3px;
+  outline: var(--focus-ring);
+  outline-offset: var(--focus-gap);
   border-radius: 4px;
 }
 
@@ -256,11 +266,12 @@ a, button { -webkit-tap-highlight-color: transparent; }
   font-size: var(--text-sm);
   font-weight: 550;
   white-space: nowrap;
-  transition: background-color var(--dur-fast), border-color var(--dur-fast), color var(--dur-fast), transform var(--dur-fast) var(--ease-out);
+  box-shadow: 0 1px 0 var(--line);
+  transition: background-color var(--dur-fast), border-color var(--dur-fast), color var(--dur-fast), box-shadow var(--dur-fast), transform var(--dur-base) var(--spring-out);
 }
 .button:hover { border-color: var(--fg); }
-.button:active { transform: translateY(1px); }
-.button:hover .arrow { transform: translateX(3px); }
+.button:active { transform: translateY(var(--press-y)); box-shadow: none; transition-duration: var(--dur-press); }
+.button:hover .arrow { transform: translateX(var(--nudge-x)); }
 .button-primary { border-color: var(--fg); background: var(--fg); color: var(--bg); }
 .button-primary:hover { border-color: var(--accent); background: var(--accent); color: var(--accent-ink); }
 
@@ -644,6 +655,15 @@ kbd {
 .currently dt { color: var(--fg-3); }
 .currently dd { color: var(--fg); }
 .latest-card { display: grid; gap: var(--space-2); font-size: var(--text-sm); }
+
+/* pointer tilt for [data-tilt] cards: PointerTilt.tsx sets --tx and --ty (-0.5 to 0.5) */
+[data-tilt] { transition: transform var(--dur-slow) var(--ease-out); }
+@media (hover: hover) and (pointer: fine) and (prefers-reduced-motion: no-preference) {
+  [data-tilt]:hover {
+    transform: perspective(900px) rotateX(calc(var(--ty, 0) * var(--tilt-max) * -2)) rotateY(calc(var(--tx, 0) * var(--tilt-max) * 2)) translateY(var(--lift-y));
+    transition-duration: var(--dur-fast);
+  }
+}
 .latest-card strong { font-size: var(--text-lg); font-weight: 600; letter-spacing: -0.01em; }
 .latest-card p { color: var(--fg-2); }
 .latest-card .meta-row { display: flex; flex-wrap: wrap; gap: var(--space-4); color: var(--fg-3); font-family: var(--font-mono); font-size: 0.7rem; letter-spacing: var(--tracking-meta); text-transform: uppercase; }
@@ -679,7 +699,7 @@ kbd {
     padding-top: clamp(1.5rem, 0.5rem + 3.5svh, 4rem);
     overflow: hidden;
   }
-  .motion-ok .hero-sequence { height: 250svh; }
+  .motion-ok .hero-sequence { height: 210svh; }
   .motion-ok .hero-scene { position: sticky; top: var(--header-h); height: calc(100svh - var(--header-h)); }
   .hero-title { font-size: var(--hero-fs); }
   .hero-copy { max-width: 30rem; }
@@ -713,15 +733,14 @@ kbd {
 }
 
 /*
- * Opening holding state. Only applies once the boot script has confirmed JS and motion are
- * welcome (.motion-ok); without JS the hero renders complete, drawing included. The headline
- * itself never goes transparent: its words wait below their masks, which only clip during the
- * ignition. A 2.5s failsafe in the boot script releases all of this if the bundle never runs.
+ * Opening holding state. The text is never held back: it is readable from the first frame.
+ * Only the machine waits (so it does not flash assembled and then vanish) until the opening
+ * takes it over. It applies only once the boot script has confirmed JS and motion are welcome
+ * (.motion-ok), and a 2.5s failsafe in the boot script releases it if the bundle never runs.
  */
-.motion-ok:not(.hero-ready) [data-hero]:not([data-hero="title"]) { opacity: 0; }
-.motion-ok:not(.hero-ready) .hero-title .word-inner { transform: translateY(110%); }
+.motion-ok:not(.hero-ready) .hero-machine, .motion-ok:not(.hero-ready) [data-hero="rail"] { opacity: 0; }
 .motion-ok:not(.hero-ready) .hero-underline { opacity: 0; }
-.motion-ok:not(.intro-done) .hero-title .word { overflow: clip; }
+.hero-rail { transition: opacity var(--dur-slow) var(--ease-out); }
 
 /* -------------------------------------------------------- build engine --- */
 
@@ -740,10 +759,19 @@ kbd {
   overflow: visible;
 }
 .eng path, .eng circle { vector-effect: non-scaling-stroke; }
-.eng-body, .eng-layer, .eng-plate, .eng-tag { transform-box: view-box; }
 .eng-face { fill: var(--bg); stroke: none; }
 .eng-face-open { fill: none; }
 .eng-line { fill: none; stroke: var(--eng-ink); stroke-width: 1.2; stroke-linejoin: round; stroke-linecap: round; }
+/* the moment a part seats, its outline briefly takes the accent (HeroEngine sets --flash 1 to 0) */
+.eng-part .eng-line { stroke: color-mix(in srgb, var(--accent) calc(var(--flash, 0) * 100%), var(--eng-ink)); }
+.eng-rail { fill: none; stroke: var(--eng-ink); stroke-width: 1; }
+.eng-mount { fill: var(--bg); stroke: var(--eng-ink); stroke-width: 1; }
+.eng-bracket { stroke-width: 1; }
+.eng-bolt path { fill: var(--bg); stroke: var(--eng-soft); stroke-width: 1; }
+.eng-bolt circle { fill: var(--eng-soft); }
+.engine-alt .eng-bolt path { stroke: var(--accent); }
+.engine-alt .eng-bolt circle { fill: var(--accent); }
+.eng-scan { fill: none; stroke: var(--accent); stroke-width: 1.4; opacity: 0; }
 .eng-detail { fill: none; stroke: var(--eng-soft); stroke-width: 1; stroke-linejoin: round; stroke-linecap: round; }
 .eng-dashed { stroke-dasharray: 4 5; }
 .eng-accent { stroke: var(--accent); }
@@ -760,6 +788,18 @@ kbd {
 .eng-note { fill: var(--fg-3); font-family: var(--font-sans); font-size: 13px; opacity: 0; }
 .eng-projects { fill: var(--accent); font-family: var(--font-mono); font-size: 11.5px; letter-spacing: 0.06em; opacity: 0; }
 .eng-short { display: none; }
+
+/* idle: after a minute of nothing, one diagnostic line sweeps the network plate */
+@media (prefers-reduced-motion: no-preference) {
+  .eng[data-idle] .eng-scan { animation: eng-scan 6s var(--ease-in-out) infinite; }
+  .eng[data-idle] .eng-core .eng-accent { animation: eng-blink 3s steps(2, jump-none) infinite; }
+}
+@keyframes eng-scan {
+  0% { opacity: 0; transform: translate(0, 0); }
+  12%, 80% { opacity: 0.7; }
+  100% { opacity: 0; transform: translate(-249px, 144px); }
+}
+@keyframes eng-blink { 50% { opacity: 0.2; } }
 
 /* how much the drawing says depends on how much room it has */
 .eng-tag[data-p="2"] .eng-note, .eng-tag[data-p="3"] .eng-note { display: none; }
@@ -1210,30 +1250,13 @@ kbd {
 .stuff-facts dd span { display: block; }
 .stuff-shot img { width: 100%; height: 100%; object-fit: cover; image-rendering: auto; }
 .stuff-flex { display: grid; gap: var(--space-1); margin: var(--space-2) 0 var(--space-3); }
-.stuff-flex b { color: var(--accent); font-size: clamp(2rem, 1.4rem + 2.4vw, 3rem); font-weight: 600; line-height: 1; letter-spacing: -0.03em; text-transform: none; }
+.stuff-flex b { position: relative; justify-self: start; padding-bottom: 0.18em; color: var(--accent); font-size: clamp(2.6rem, 1.5rem + 3.6vw, 4.5rem); font-weight: 600; line-height: 1; letter-spacing: -0.04em; text-transform: none; font-variant-numeric: tabular-nums; }
+/* a pixel underline under the hours: the only blocky thing on the card */
+.stuff-flex b::after { content: ""; position: absolute; left: 0.04em; right: 0.04em; bottom: 0; height: 6px; background: repeating-linear-gradient(90deg, var(--accent) 0 6px, transparent 6px 9px); opacity: 0.55; }
 .stuff-card .stuff-flex span { color: var(--fg); font-size: var(--text-base); }
 .stuff-meta { display: flex; flex-wrap: wrap; gap: var(--space-1) var(--space-4); margin-bottom: var(--space-3); color: var(--fg-3) !important; font-size: 0.72rem !important; text-transform: none; letter-spacing: 0.02em; }
 
-/* games: a shelf of typographic marks, no borrowed artwork */
-.stuff-games { grid-template-rows: none; }
-@media (min-width: 1040px) { .stuff-games { grid-template-columns: 0.8fr 1.4fr; align-items: start; } }
-.game-filters { display: flex; flex-wrap: wrap; gap: var(--space-2); margin-bottom: var(--space-3); }
-.game-filters button { min-height: 32px; padding: 0 var(--space-3); border: 1px solid var(--line); border-radius: 999px; background: transparent; color: var(--fg-2); font-size: var(--text-sm); }
-.game-filters button[aria-pressed="true"] { border-color: var(--accent); color: var(--fg); }
-.game-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 9.5rem), 1fr)); gap: var(--space-2); margin: 0; padding: 0; list-style: none; }
-.game { display: grid; grid-template-columns: 2rem minmax(0, 1fr); grid-template-rows: auto auto; align-items: center; column-gap: var(--space-3); row-gap: 0.1rem; padding: var(--space-2); border: 1px solid var(--line); border-radius: var(--radius-sm); background: var(--bg); }
-.game-mark { grid-row: 1 / span 2; }
-@media (max-width: 1039px) { .game-list { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
-@media (max-width: 480px) {
-  .game { grid-template-columns: 1.5rem minmax(0, 1fr); column-gap: var(--space-2); padding: var(--space-2) 0.45rem; }
-  .game .game-mark { width: 1.5rem; height: 1.5rem; border-radius: 5px; font-size: 0.56rem; }
-}
-.game-mark { display: grid; place-items: center; width: 2rem; height: 2rem; border-radius: 6px; background: hsl(var(--hue) 45% 42% / 0.22); color: hsl(var(--hue) 60% 70%); font-size: 0.66rem; font-weight: 600; }
-:root[data-theme="light"] .game-mark { color: hsl(var(--hue) 55% 32%); }
-@media (prefers-color-scheme: light) { :root:not([data-theme="dark"]) .game-mark { color: hsl(var(--hue) 55% 32%); } }
-.game-title { color: var(--fg); font-size: var(--text-sm); line-height: 1.25; overflow-wrap: break-word; }
-.game-hours, .game-fav { grid-column: 2; color: var(--accent); font-size: 0.72rem; font-variant-numeric: tabular-nums; text-transform: none; }
-.game-note { grid-column: 2 / -1; color: var(--fg-3); font-size: 0.75rem; }
+/* games: title cards live in app/games.css */
 
 .stuff-socials { display: flex; flex-wrap: wrap; align-items: baseline; gap: var(--space-3) var(--space-6); margin-top: var(--space-6); padding-top: var(--space-5); border-top: 1px solid var(--line); }
 .stuff-socials > .mono { color: var(--fg-3); text-transform: none; letter-spacing: 0.02em; }
