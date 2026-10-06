@@ -5,7 +5,10 @@
  */
 
 .stuff-games { grid-template-rows: none; }
-@media (min-width: 1040px) { .stuff-games { grid-template-columns: 0.62fr 1.38fr; align-items: start; } }
+/* games always get a whole row: a short intro beside a wide shelf */
+.stuff-games { align-items: start; }
+@media (min-width: 900px) { .stuff-games { grid-template-columns: minmax(11rem, 15rem) minmax(0, 1fr); } }
+@media (min-width: 720px) and (max-width: 899px) { .stuff-games { grid-template-columns: minmax(0, 1fr); } }
 
 .game-filters { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2); margin-bottom: var(--space-4); }
 .game-filters button {
@@ -23,9 +26,8 @@
 .game-filters button[aria-pressed="true"] { border-color: var(--fg); background: var(--fg); color: var(--bg); }
 .game-total { margin-left: auto; color: var(--fg-3); font-size: 0.68rem; text-transform: none; letter-spacing: 0.02em; }
 
-.game-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 10.5rem), 1fr)); gap: var(--space-3); margin: 0; padding: 0; list-style: none; }
-@media (max-width: 1039px) { .game-list { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
-@media (min-width: 640px) and (max-width: 1039px) { .game-list { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+.game-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 9.25rem), 1fr)); gap: var(--space-3); margin: 0; padding: 0; list-style: none; }
+@media (max-width: 559px) { .game-list { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 
 .game {
   --tile-bg: hsl(var(--hue) 22% 10%);

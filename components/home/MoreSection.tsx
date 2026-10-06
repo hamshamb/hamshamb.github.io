@@ -3,6 +3,18 @@ import { Reveal } from "../motion/Reveal";
 import { MediaFrame } from "../work/ProjectMedia";
 import { SectionHead } from "./SectionHead";
 
+/** A repository fork: one upstream line, branching into a copy. Drawn here, not borrowed. */
+function ForkIcon() {
+  return (
+    <svg viewBox="0 0 16 16" width="15" height="15" aria-hidden="true" focusable="false">
+      <circle cx="4" cy="3" r="1.9" />
+      <circle cx="12" cy="3" r="1.9" />
+      <circle cx="8" cy="13" r="1.9" />
+      <path d="M4 4.9v1.6c0 1.4 1 2.2 2.4 2.2h3.2c1.4 0 2.4-.8 2.4-2.2V4.9M8 8.7v2.4" />
+    </svg>
+  );
+}
+
 /** Smaller original work, then forks kept visibly separate so nobody mistakes them for mine. */
 export function MoreSection() {
   const { smallThings, forks } = portfolio;
@@ -74,7 +86,10 @@ export function MoreSection() {
           <ul className="forks-list">
             {forks.map((fork) => (
               <li key={fork.name}>
-                <span className="fork-badge mono">fork</span>
+                <span className="fork-badge mono" title="fork">
+                  <ForkIcon />
+                  <span className="sr-only">fork</span>
+                </span>
                 <span className="fork-name">{fork.name}</span>
                 <span className="fork-about">
                   {fork.about} <span className="fork-by">by {fork.upstreamOwner}</span>

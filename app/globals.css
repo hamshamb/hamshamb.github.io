@@ -1025,7 +1025,9 @@ kbd {
   color: var(--fg-3);
   font-size: var(--text-sm);
 }
-.fork-badge { padding: 0.1rem 0.45rem; border: 1px solid var(--lab); border-radius: 4px; color: var(--lab); font-size: 0.66rem; }
+.fork-badge { display: inline-grid; place-items: center; width: 28px; height: 28px; border: 1px solid color-mix(in srgb, var(--lab) 55%, transparent); border-radius: 7px; background: color-mix(in srgb, var(--lab) 10%, transparent); color: var(--lab); }
+.fork-badge svg { fill: none; stroke: currentColor; stroke-width: 1.4; stroke-linecap: round; stroke-linejoin: round; }
+.forks-list li:hover .fork-badge { background: color-mix(in srgb, var(--lab) 18%, transparent); }
 .fork-name { color: var(--fg-2); font-weight: 500; }
 .fork-about { grid-column: 2; color: var(--fg-3); }
 .fork-by { color: var(--fg-2); }
@@ -1176,11 +1178,18 @@ kbd {
 
 /* -------------------------------------------------------------- stuff --- */
 
-.stuff-grid { display: grid; gap: var(--space-4); margin: 0; padding: 0; list-style: none; }
-@media (min-width: 720px) { .stuff-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+/*
+ * Dense packing, so a wide card never leaves a hole: on three columns a wide card shares its
+ * row with one small card, games and the abandoned-things strip take whole rows.
+ */
+.stuff-grid { display: grid; grid-auto-flow: row dense; gap: var(--space-4); margin: 0; padding: 0; list-style: none; }
+@media (min-width: 720px) {
+  .stuff-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .stuff-grid > .stuff-wide, .stuff-grid > .stuff-full { grid-column: 1 / -1; }
+}
 @media (min-width: 1040px) {
   .stuff-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
-  .stuff-wide { grid-column: span 2; }
+  .stuff-grid > .stuff-wide { grid-column: span 2; }
 }
 .stuff-grid > li > .stuff-card { height: 100%; }
 .stuff-card {
@@ -1206,9 +1215,12 @@ kbd {
 .stuff-card p + p { margin-top: var(--space-2); }
 .stuff-card small { display: block; margin-top: var(--space-3); color: var(--fg-3); font-size: var(--text-sm); font-style: italic; }
 .stuff-path { display: block; margin-bottom: var(--space-2); color: var(--fg-3); font-family: var(--font-mono); font-size: 0.7rem; }
-@media (min-width: 1040px) {
+@media (min-width: 720px) {
   .stuff-wide { grid-template-columns: 1.1fr 1fr; grid-template-rows: none; align-items: center; }
   .stuff-wide .stuff-art { height: 100%; min-height: 220px; }
+  /* a short card on a whole row: art on the left, words beside it */
+  .stuff-strip { grid-template-columns: minmax(0, 20rem) minmax(0, 1fr); }
+  .stuff-strip .stuff-art { min-height: 150px; }
 }
 
 /* pixel scene */

@@ -116,6 +116,19 @@ export function StuffSection() {
             </Reveal>
           </li>
 
+          <li>
+            <Reveal className="stuff-card">
+              <div className="stuff-art"><MapArt /></div>
+              <div>
+                <span className="stuff-path">~/stuff/maps</span>
+                <h3>maps</h3>
+                <p>i open maps more than any reasonable person probably should.</p>
+                <p>sometimes OSINT. sometimes geopolitics. sometimes literally just looking at places.</p>
+                <small>i have no better explanation.</small>
+              </div>
+            </Reveal>
+          </li>
+
           <li className="stuff-wide">
             <Reveal className="stuff-card stuff-wide stuff-cubing">
               <div className="stuff-art"><ScrambleCard /></div>
@@ -126,30 +139,6 @@ export function StuffSection() {
                 <p>i don&rsquo;t have a smart cube, which immediately made me wonder if i could analyse solves without one. for now it has a scrambler and a cube you can spin.</p>
                 <Facts items={[["pb", cubing.pb && `${cubing.pb}s`], ["avg", cubing.average && `${cubing.average}s`], ["cubes", cubing.cubes]]} />
                 <Link className="stuff-link" href="/stuff/cubing">open the cube lab <span className="arrow" aria-hidden="true">→</span></Link>
-              </div>
-            </Reveal>
-          </li>
-
-          <li className="stuff-wide">
-            <Reveal className="stuff-card stuff-wide stuff-games">
-              <div>
-                <span className="stuff-path">~/stuff/games</span>
-                <h3>games</h3>
-                <p>games i keep coming back to. some because they are brilliant. some because physics engines are funny. some because apparently frustration is a hobby.</p>
-              </div>
-              <GameShelf games={games} />
-            </Reveal>
-          </li>
-
-          <li>
-            <Reveal className="stuff-card">
-              <div className="stuff-art"><MapArt /></div>
-              <div>
-                <span className="stuff-path">~/stuff/maps</span>
-                <h3>maps</h3>
-                <p>i open maps more than any reasonable person probably should.</p>
-                <p>sometimes OSINT. sometimes geopolitics. sometimes literally just looking at places.</p>
-                <small>i have no better explanation.</small>
               </div>
             </Reveal>
           </li>
@@ -173,8 +162,19 @@ export function StuffSection() {
             </Reveal>
           </li>
 
-          <li>
-            <Reveal className="stuff-card" delay={0.12}>
+          <li className="stuff-full">
+            <Reveal className="stuff-card stuff-wide stuff-games">
+              <div>
+                <span className="stuff-path">~/stuff/games</span>
+                <h3>games</h3>
+                <p>games i keep coming back to. some because they are brilliant. some because physics engines are funny. some because apparently frustration is a hobby.</p>
+              </div>
+              <GameShelf games={games} />
+            </Reveal>
+          </li>
+
+          <li className="stuff-full">
+            <Reveal className="stuff-card stuff-wide stuff-strip" delay={0.12}>
               <div className="stuff-art" aria-hidden="true">
                 <div className="failed-window">
                   <div><i /><i /><i /></div>
