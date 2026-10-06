@@ -1,18 +1,15 @@
 "use client";
 
-import { createScope, createTimeline, stagger, utils } from "animejs";
-import { useLayoutEffect, useRef } from "react";
-import { animeEaseOut, meshMotion as t } from "@/lib/anime";
+import { RivetLoop } from "../rivet/RivetLoop";
 
 /**
  * Rivet has no public logo yet, so it gets a typographic treatment and a diagram of what it
  * actually does: phones (the rounded rectangles) pass an envelope from a sender, through nearby
  * relay phones, to its recipient. Dashed lines are peers in range that this message did not use.
  *
- * Anime.js plays the store-and-forward story once when the mark comes into view: the peers
- * appear, the envelope leaves the sender, each relay takes it and passes it on, the recipient
- * receives it, and it stops. With reduced motion (or in small thumbnails) the envelope simply
- * rests mid-route so the still image still reads as "in transit".
+ * Where there is room, the diagram is replaced by the same 3D route scene as the Rivet post,
+ * playing on a loop (RivetLoop). Thumbnails, reduced motion and browsers without WebGL keep the
+ * flat diagram, with the envelope resting mid-route so it still reads as "in transit".
  */
 const nodes = [
   { x: 40, y: 140, role: "sender" },
@@ -39,86 +36,50 @@ function Envelope() {
   );
 }
 
-export function RivetMark({ animated = true, size = "md" }: { animated?: boolean; size?: "md" | "lg" }) {
-  const ref = useRef<HTMLDivElement>(null);
-
-  // Layout effect: the starting state is applied before the browser paints a freshly mounted mark.
-  useLayoutEffect(() => {
-    const root = ref.current;
-    if (!root || !animated) return;
-    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
-
-    const phones = [...root.querySelectorAll<SVGRectElement>(".mesh-phone")];
-    const envelope = root.querySelector<SVGGElement>(".mesh-packet");
-    if (!envelope) return;
-
-    const scope = createScope({ root }).add(() => {
-      utils.set(phones, { scale: 0.4, opacity: 0 });
-      utils.set(envelope, { x: nodes[0].x, y: nodes[0].y - lift, opacity: 0 });
-    });
-
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        if (!entry.isIntersecting) return;
-        observer.disconnect();
-        scope.add(() => {
-          const tl = createTimeline({ defaults: { ease: animeEaseOut } })
-            .add(phones, { scale: [0.4, 1], opacity: [0, 1], duration: t.nodeDuration, delay: stagger(t.nodeStagger) }, 0)
-            .add(envelope, { opacity: [0, 1], duration: 200 }, "+=80");
-          route.slice(1).forEach((index) => {
-            const node = nodes[index];
-            tl.add(envelope, { x: node.x, y: node.y - lift, duration: t.hopDuration, ease: "inOut(2)" }, `+=${t.hopPause}`)
-              .add(phones[index], { scale: [1, 1.18, 1], duration: t.receiveDuration }, "<");
-          });
-          tl.add(root.querySelector(".mesh-received")!, { opacity: [0, 1], duration: t.receiveDuration }, "<");
-        });
-      },
-      { threshold: 0.5 },
-    );
-    observer.observe(root);
-
-    return () => {
-      observer.disconnect();
-      scope.revert();
-    };
-  }, [animated]);
-
+/** The flat diagram: the poster before the 3D loop is ready, and the thumbnail everywhere else. */
+function MeshDiagram() {
   return (
-    <div ref={ref} className="mark mark-rivet" data-size={size} aria-hidden="true">
-      <span className="mark-word">RIVET</span>
-      <svg viewBox="0 0 400 200" focusable="false">
-        {links.map(([a, b]) => (
-          <line
-            key={`${a}-${b}`}
-            x1={nodes[a].x}
-            y1={nodes[a].y}
-            x2={nodes[b].x}
-            y2={nodes[b].y}
-            className={onRoute(a, b) ? "mesh-route" : "mesh-link"}
+    <svg viewBox="0 0 400 200" focusable="false">
+      {links.map(([a, b]) => (
+        <line
+          key={`${a}-${b}`}
+          x1={nodes[a].x}
+          y1={nodes[a].y}
+          x2={nodes[b].x}
+          y2={nodes[b].y}
+          className={onRoute(a, b) ? "mesh-route" : "mesh-link"}
+        />
+      ))}
+      {nodes.map((node, index) => (
+        <g key={index}>
+          <rect
+            x={node.x - 7}
+            y={node.y - 11}
+            width="14"
+            height="22"
+            rx="3.5"
+            className={`mesh-phone ${node.role === "sender" || node.role === "recipient" ? "mesh-end" : "mesh-node"}`}
           />
-        ))}
-        {nodes.map((node, index) => (
-          <g key={index}>
-            <rect
-              x={node.x - 7}
-              y={node.y - 11}
-              width="14"
-              height="22"
-              rx="3.5"
-              className={`mesh-phone ${node.role === "sender" || node.role === "recipient" ? "mesh-end" : "mesh-node"}`}
-            />
-            {node.role && (
-              <text x={node.x} y={node.y + 28} textAnchor="middle" className={node.role === "relay" ? "mesh-label mesh-label-quiet" : "mesh-label"}>
-                {node.role}
-              </text>
-            )}
-          </g>
-        ))}
-        <circle cx={nodes[4].x} cy={nodes[4].y} r="15" className="mesh-received" />
-        <g className="mesh-packet" style={{ transform: `translate(${rest.x}px, ${rest.y}px)` }}>
-          <Envelope />
+          {node.role && (
+            <text x={node.x} y={node.y + 28} textAnchor="middle" className={node.role === "relay" ? "mesh-label mesh-label-quiet" : "mesh-label"}>
+              {node.role}
+            </text>
+          )}
         </g>
-      </svg>
+      ))}
+      <circle cx={nodes[4].x} cy={nodes[4].y} r="15" className="mesh-received" />
+      <g className="mesh-packet" style={{ transform: `translate(${rest.x}px, ${rest.y}px)` }}>
+        <Envelope />
+      </g>
+    </svg>
+  );
+}
+
+export function RivetMark({ animated = true, size = "md" }: { animated?: boolean; size?: "md" | "lg" }) {
+  return (
+    <div className="mark mark-rivet" data-size={size} aria-hidden="true">
+      <span className="mark-word">RIVET</span>
+      {animated ? <RivetLoop poster={<MeshDiagram />} /> : <MeshDiagram />}
     </div>
   );
 }

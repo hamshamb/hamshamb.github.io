@@ -33,8 +33,8 @@ export interface SceneHandle {
   setScene(scene: Scene): void;
   /** Shell turns translucent and the documented fields show inside. */
   setXray(on: boolean): void;
-  /** route variant: 0 is the sender, 1 is the recipient. */
-  setProgress(progress: number): void;
+  /** route variant: 0 is the sender, 1 is the recipient. `jump` skips the smoothing. */
+  setProgress(progress: number, jump?: boolean): void;
   /** envelope variant: which region to light up. */
   setZoneFocus(zone: Zone | null): void;
   /** envelope variant: turn the envelope, in radians from its resting angle. */

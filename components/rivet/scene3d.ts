@@ -1048,8 +1048,10 @@ export function createScene(host: HTMLElement, variant: SceneVariant, events: Sc
       xrayTarget = on ? 1 : 0;
       invalidate();
     },
-    setProgress(value) {
+    setProgress(value, jump = false) {
       progressTarget = clamp01(value);
+      // a jump skips the smoothing, so a looping scene can start over without travelling backwards
+      if (jump) progressNow = progressTarget;
       invalidate();
     },
     setZoneFocus(zone) {

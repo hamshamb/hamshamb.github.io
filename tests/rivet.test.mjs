@@ -187,7 +187,7 @@ test("three is only imported by the two scene modules, and only dynamically", ()
 });
 
 test("every scene says what it is", () => {
-  for (const path of ["components/rivet/RelayStage.tsx", "components/rivet/EnvelopeStage.tsx", "components/blog/RouteFigure.tsx"]) {
+  for (const path of ["components/rivet/RelayStage.tsx", "components/rivet/EnvelopeInstrument.tsx", "components/blog/RouteFigure.tsx"]) {
     assert.match(read(path), /conceptual visualization/, `${path} is labelled`);
   }
   assert.match(read("components/rivet/PacketCourier.tsx"), /conceptual simulation/);
@@ -222,4 +222,38 @@ test("the post has the courier, the scenes' honesty labels, and no scene code on
   assert.match(caseStudy, /conceptual visualization/);
   assert.match(caseStudy, /move the phones/);
   assert.doesNotMatch(built("work/nexus.html"), /conceptual visualization/, "the scene is Rivet only");
+});
+
+test("the envelope instrument is arithmetic on the documented fields, nothing measured", async () => {
+  const { parts } = await import("../components/rivet/envelope-fields.ts");
+  const { envelopeModel, bars, stations, MAX_HOPS, meeting, missing } = await import("../components/rivet/envelope-model.ts");
+  const model = envelopeModel(parts);
+  assert.equal(model.headerBytes, 4 + 16 + 6 + 4 + 2 + 2, "a relay reads the header and only the header");
+  assert.equal(model.outerBytes, 32 + 24);
+  assert.equal(model.sealedFixedBytes, 128);
+  assert.equal(model.fixedBytes, 218);
+  assert.equal(model.ticks.length, model.fixedBytes, "one tick per real byte");
+  assert.equal(model.offerBytes, meeting.offered.length * 16, "offers are envelope ids");
+  assert.deepEqual(missing, ["a3f1", "e5b2"]);
+  for (let i = 1; i < model.ticks.length; i += 1) assert.ok(model.ticks[i].angle > model.ticks[i - 1].angle, "ticks run clockwise");
+  assert.ok(model.ticks.at(-1).angle < 270, "the ring closes without overlapping");
+  assert.equal(stations.length, MAX_HOPS + 1);
+  assert.ok(bars.some((bar) => bar.padding) && bars.some((bar) => !bar.padding), "the opened body shows message and padding");
+  const source = read("components/rivet/EnvelopeInstrument.tsx");
+  assert.doesNotMatch(source, /\bms\b.*latency|kbps|mbps|battery life|throughput/i, "no invented performance numbers");
+});
+
+test("the looping Rivet scene waits, travels phone to phone, rests and starts again", async () => {
+  const { loopProgress } = await import("../components/rivet/loop.ts");
+  assert.equal(loopProgress(0), 0);
+  assert.equal(loopProgress(0.28), 1 / 3, "stops at the first relay");
+  assert.equal(loopProgress(0.52), 2 / 3, "stops at the second relay");
+  assert.equal(loopProgress(0.9), 1, "rests at the recipient");
+  assert.equal(loopProgress(1), 0, "and starts over");
+  let last = 0;
+  for (let t = 0; t < 0.99; t += 0.005) {
+    const p = loopProgress(t);
+    assert.ok(p >= last - 1e-9, "never travels backwards within a cycle");
+    last = p;
+  }
 });
