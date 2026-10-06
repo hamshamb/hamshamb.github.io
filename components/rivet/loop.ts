@@ -25,3 +25,35 @@ export function loopProgress(t: number) {
   }
   return progress;
 }
+
+/* --------------------------------------------- the case study's relay demo --- */
+
+export type DemoStep =
+  | { kind: "hand"; to: "relay-a" | "relay-b" | "recipient" }
+  | { kind: "move"; id: "relay-b" | "recipient"; x: number; z: number }
+  | { kind: "wait"; ms: number }
+  | { kind: "reset" };
+
+/**
+ * What the relay table does on its own until someone touches it: pass the envelope to relay a,
+ * slide relay b into range and pass it on, slide the recipient into range and deliver, rest,
+ * start over. It plays the real rules (lib/relay-sim.ts), so a move out of range would fail
+ * here exactly as it does for a visitor.
+ */
+export const relayDemo: DemoStep[] = [
+  { kind: "wait", ms: 1400 },
+  { kind: "hand", to: "relay-a" },
+  { kind: "wait", ms: 1300 },
+  { kind: "move", id: "relay-b", x: 1.4, z: 0.4 },
+  { kind: "wait", ms: 500 },
+  { kind: "hand", to: "relay-b" },
+  { kind: "wait", ms: 1300 },
+  { kind: "move", id: "recipient", x: 4.6, z: -0.6 },
+  { kind: "wait", ms: 500 },
+  { kind: "hand", to: "recipient" },
+  { kind: "wait", ms: 3200 },
+  { kind: "reset" },
+];
+
+/** How long a scripted phone slide takes, in milliseconds. */
+export const DEMO_MOVE_MS = 1100;

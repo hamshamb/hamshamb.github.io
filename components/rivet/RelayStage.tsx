@@ -13,6 +13,7 @@ import {
   sceneStart,
 } from "@/lib/relay-sim";
 import { parts, zoneLabel, zoneReaders, zones } from "./envelope-fields";
+import { DEMO_MOVE_MS, relayDemo } from "./loop";
 import { Poster } from "./Poster";
 import { type AnchorMap, isPortraitStage, screenStep } from "./scene-types";
 import { useScene } from "./useScene";
@@ -37,8 +38,12 @@ function rangeNote(scene: Scene, id: PhoneId) {
  * the labels take arrow keys, and there are plain buttons for every action.
  *
  * It is a conceptual visualization. Nothing here is Bluetooth.
+ *
+ * With `autoplay` it plays a loop (loop.ts: relayDemo) under the same rules until the visitor
+ * touches anything, then hands over control. Reduced motion never autoplays.
  */
-export function RelayStage({ fallback }: { fallback: ReactNode }) {
+export function RelayStage({ fallback, autoplay = false }: { fallback: ReactNode; autoplay?: boolean }) {
+  const [auto, setAuto] = useState(autoplay);
   const [scene, setScene] = useState<Scene>(sceneStart);
   const sceneRef = useRef(scene);
   const [xray, setXray] = useState(false);
@@ -54,6 +59,14 @@ export function RelayStage({ fallback }: { fallback: ReactNode }) {
 
   const report = (outcome: string) => {
     if (outcome === "delivered") achieve("network-engineer");
+  };
+
+  /** Any real input ends the demo; from then on the table is the visitor's. */
+  const takeOver = () => {
+    if (auto) {
+      setAuto(false);
+      commit(sceneStart());
+    }
   };
 
   const place = (anchors: AnchorMap) => {
@@ -83,6 +96,53 @@ export function RelayStage({ fallback }: { fallback: ReactNode }) {
   useEffect(() => {
     handle?.setScene(scene);
   }, [handle, scene]);
+
+  // the demo loop: real hand-overs and real moves, on a clock, until someone takes over
+  useEffect(() => {
+    if (!auto || status !== "ready") return;
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+      const timer = window.setTimeout(() => setAuto(false), 0);
+      return () => window.clearTimeout(timer);
+    }
+    let cancelled = false;
+    let timer = 0;
+    let frame = 0;
+    const run = (index: number) => {
+      if (cancelled) return;
+      const step = relayDemo[index % relayDemo.length];
+      const next = () => run(index + 1);
+      if (step.kind === "wait") timer = window.setTimeout(next, step.ms);
+      else if (step.kind === "reset") {
+        commit(sceneStart());
+        next();
+      } else if (step.kind === "hand") {
+        commit(sceneHandOver(sceneRef.current, step.to).scene);
+        next();
+      } else {
+        const from = phoneById(sceneRef.current, step.id);
+        const started = performance.now();
+        const slide = (now: number) => {
+          if (cancelled) return;
+          const t = Math.min((now - started) / DEMO_MOVE_MS, 1);
+          const k = t < 0.5 ? 2 * t * t : 1 - (-2 * t + 2) ** 2 / 2;
+          commit(sceneMove(sceneRef.current, step.id, from.x + (step.x - from.x) * k, from.z + (step.z - from.z) * k));
+          if (t < 1) frame = requestAnimationFrame(slide);
+          else next();
+        };
+        frame = requestAnimationFrame(slide);
+      }
+    };
+    // start on the next tick, so the first reset is not a state update inside the effect itself
+    timer = window.setTimeout(() => {
+      commit(sceneStart());
+      run(0);
+    }, 0);
+    return () => {
+      cancelled = true;
+      window.clearTimeout(timer);
+      cancelAnimationFrame(frame);
+    };
+  }, [auto, status]);
   useEffect(() => {
     handle?.setXray(xray);
   }, [handle, xray]);
@@ -134,9 +194,14 @@ export function RelayStage({ fallback }: { fallback: ReactNode }) {
   const ready = status === "ready";
 
   return (
-    <div className="rv" data-status={status}>
+    <div className="rv" data-status={status} data-auto={auto || undefined} onPointerDownCapture={takeOver} onKeyDownCapture={takeOver}>
       <div className="rv-head">
         <span className="rv-tag mono">conceptual visualization</span>
+        {ready && autoplay && (auto ? (
+          <span className="rv-chip mono">playing a demo · touch anything to take over</span>
+        ) : (
+          <button type="button" className="rv-btn rv-replay" onClick={() => setAuto(true)}>replay demo</button>
+        ))}
         <span className="rv-chip mono" data-state={scene.delivered ? "delivered" : "idle"}>{ready ? state : "loading the 3d view"}</span>
       </div>
 
@@ -168,7 +233,7 @@ export function RelayStage({ fallback }: { fallback: ReactNode }) {
                 </button>
               );
             })}
-            {!hinted && (
+            {!hinted && !auto && (
               <span className="rv-hint mono" aria-hidden="true" ref={(element) => { labels.current["env:sender"] = element; }}>
                 drag the envelope
               </span>

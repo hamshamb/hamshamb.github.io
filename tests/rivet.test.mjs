@@ -257,3 +257,23 @@ test("the looping Rivet scene waits, travels phone to phone, rests and starts ag
     last = p;
   }
 });
+
+test("the case study demo plays the real rules and always delivers", async () => {
+  const { relayDemo } = await import("../components/rivet/loop.ts");
+  const { sceneStart, sceneHandOver, sceneMove } = await import("../lib/relay-sim.ts");
+  let scene = sceneStart();
+  const outcomes = [];
+  for (const step of relayDemo) {
+    if (step.kind === "move") scene = sceneMove(scene, step.id, step.x, step.z);
+    if (step.kind === "hand") {
+      const result = sceneHandOver(scene, step.to);
+      outcomes.push(result.outcome);
+      scene = result.scene;
+    }
+    if (step.kind === "reset") break;
+  }
+  assert.deepEqual(outcomes, ["stored", "stored", "delivered"], "every scripted hand-over is legal under the same rules a visitor plays by");
+  assert.equal(scene.delivered, true);
+  assert.equal(sceneHandOver(sceneStart(), "relay-b").outcome, "out-of-range", "the demo has to move a phone, which is the point");
+  assert.equal(relayDemo.at(-1).kind, "reset", "and it loops");
+});
