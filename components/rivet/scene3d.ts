@@ -1,9 +1,10 @@
 import * as THREE from "three";
 import { phoneIds, type PhoneId, type Scene, SCENE_HALF, SCENE_RANGE, sceneDistance, sceneInRange, sceneStart } from "@/lib/relay-sim";
 import { type AnchorMap, isPortraitStage, type SceneEvents, type SceneHandle, type SceneVariant, type Zone } from "./scene-types";
+import { createRenderer, readPalette, rounded, trace } from "./three-kit";
 
 /**
- * The Rivet scenes, in plain three.js. This is the only module that imports three, and it is only
+ * The Rivet relay and route scenes, in plain three.js (shared setup in three-kit.ts). It is only
  * ever loaded through a dynamic import, so the renderer never reaches a page that does not show a
  * scene. Everything is procedural: no models, no textures from disk, no environment maps, no
  * shadow maps, no postprocessing. It renders only while something is moving, and stops when the
@@ -45,72 +46,7 @@ const easeBack = (k: number) => {
 };
 const clamp01 = (v: number) => Math.max(0, Math.min(1, v));
 
-/* ------------------------------------------------------------------------- palette --- */
-
-type Palette = {
-  dark: boolean;
-  plate: THREE.Color;
-  raised: THREE.Color;
-  surface: THREE.Color;
-  bg: THREE.Color;
-  fg: THREE.Color;
-  fg2: THREE.Color;
-  fg3: THREE.Color;
-  accent: THREE.Color;
-  accentInk: THREE.Color;
-};
-
-let swatch: CanvasRenderingContext2D | null = null;
-
-/** Resolves any CSS colour (hex, rgb, oklch, ...) to sRGB through a one pixel canvas. */
-function resolve(value: string, fallback: string): THREE.Color {
-  swatch ??= document.createElement("canvas").getContext("2d", { willReadFrequently: true });
-  const color = new THREE.Color();
-  if (!swatch) return color.set(fallback);
-  swatch.clearRect(0, 0, 1, 1);
-  swatch.fillStyle = fallback;
-  swatch.fillStyle = value;
-  swatch.fillRect(0, 0, 1, 1);
-  const [r, g, b] = swatch.getImageData(0, 0, 1, 1).data;
-  return color.setRGB(r / 255, g / 255, b / 255, THREE.SRGBColorSpace);
-}
-
-function readPalette(): Palette {
-  const style = getComputedStyle(document.documentElement);
-  const pick = (name: string, fallback: string) => resolve(style.getPropertyValue(name).trim() || fallback, fallback);
-  const bg = pick("--bg", "#f5f4ef");
-  return {
-    dark: bg.r + bg.g + bg.b < 0.9,
-    plate: pick("--plate", "#e6e5dd"),
-    raised: pick("--bg-raised", "#fbfaf6"),
-    surface: pick("--surface", "#ecebe4"),
-    bg,
-    fg: pick("--fg", "#141613"),
-    fg2: pick("--fg-2", "#464941"),
-    fg3: pick("--fg-3", "#686b62"),
-    accent: pick("--accent", "#1c7341"),
-    accentInk: pick("--accent-ink", "#f5f4ef"),
-  };
-}
-
 /* ---------------------------------------------------------------------- geometry --- */
-
-function trace(path: THREE.Path, w: number, h: number, r: number) {
-  const x = -w / 2;
-  const y = -h / 2;
-  path.moveTo(x + r, y);
-  path.lineTo(x + w - r, y);
-  path.quadraticCurveTo(x + w, y, x + w, y + r);
-  path.lineTo(x + w, y + h - r);
-  path.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
-  path.lineTo(x + r, y + h);
-  path.quadraticCurveTo(x, y + h, x, y + h - r);
-  path.lineTo(x, y + r);
-  path.quadraticCurveTo(x, y, x + r, y);
-  return path;
-}
-
-const rounded = (w: number, h: number, r: number) => trace(new THREE.Shape(), w, h, r) as THREE.Shape;
 
 /** Extruded shapes grow along +z; laid flat they grow upward from the table. */
 function slab(shape: THREE.Shape, depth: number) {
@@ -268,14 +204,8 @@ export function createScene(host: HTMLElement, variant: SceneVariant, events: Sc
   const onReduced = () => { reduced = reducedQuery.matches; };
   reducedQuery.addEventListener("change", onReduced);
 
-  const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, powerPreference: "low-power" });
-  renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.5));
-  renderer.setClearColor(0x000000, 0);
+  const renderer = createRenderer(host, "rv-canvas", variant === "route" ? "auto" : "pan-y");
   const canvas = renderer.domElement;
-  canvas.className = "rv-canvas";
-  canvas.setAttribute("aria-hidden", "true");
-  canvas.style.touchAction = variant === "route" ? "auto" : "pan-y";
-  host.appendChild(canvas);
 
   const three = new THREE.Scene();
   const camera = new THREE.PerspectiveCamera(26, 1, 1, 100);
