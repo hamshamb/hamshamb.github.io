@@ -7,66 +7,56 @@ export type SceneStatus = "idle" | "loading" | "ready" | "failed";
 const LOAD_MARGIN = "700px 0px";
 
 type Connection = { saveData?: boolean };
+type Lifecycle = { setRunning(running: boolean): void; dispose(): void };
 
 /**
- * Loads one Rivet scene when its host element gets near the viewport, and tears it down when the
- * component goes away. three.js is only ever reached through the dynamic import below, so a page
- * that never mounts a scene never downloads it. If anything goes wrong (no WebGL, a lost context,
- * Save-Data on) the status becomes "failed" and the caller shows its fallback instead.
- *
- * `events` may change every render; the scene always calls the latest ones.
+ * Loads a three.js scene when its host element gets near the viewport, runs it only while it is
+ * on screen in a visible tab, and tears it down when the component goes away. Every Rivet scene
+ * goes through here, so they all share one policy. `load` must reach three through a dynamic
+ * import; a page that never mounts a scene never downloads it. If anything goes wrong (no WebGL, a
+ * lost context, Save-Data on) the status becomes "failed" and the caller shows its fallback.
  */
-export function useScene(variant: SceneVariant, events: SceneEvents): {
+export function useLazyScene<H extends Lifecycle>(load: (host: HTMLElement, lost: () => void) => Promise<H>): {
   hostRef: RefObject<HTMLDivElement | null>;
   status: SceneStatus;
-  handle: SceneHandle | null;
+  handle: H | null;
 } {
   const hostRef = useRef<HTMLDivElement>(null);
-  const eventsRef = useRef(events);
+  const loadRef = useRef(load);
   const [status, setStatus] = useState<SceneStatus>("idle");
-  const [handle, setHandle] = useState<SceneHandle | null>(null);
-
-  useEffect(() => {
-    eventsRef.current = events;
-  });
+  const [handle, setHandle] = useState<H | null>(null);
 
   useEffect(() => {
     const host = hostRef.current;
     if (!host) return;
     let disposed = false;
-    let scene: SceneHandle | null = null;
+    let scene: H | null = null;
     let inView = true;
     let watcher: IntersectionObserver | null = null;
 
-    const proxy: SceneEvents = {
-      movePhone: (id, x, z) => eventsRef.current.movePhone?.(id, x, z),
-      dropEnvelope: (from, to) => eventsRef.current.dropEnvelope?.(from, to) ?? false,
-      project: (anchors) => eventsRef.current.project?.(anchors),
-      grab: (held) => eventsRef.current.grab?.(held),
-      lost: () => {
-        eventsRef.current.lost?.();
-        if (disposed) return;
-        scene?.dispose();
-        scene = null;
-        setHandle(null);
-        setStatus("failed");
-      },
+    const lost = () => {
+      if (disposed) return;
+      scene?.dispose();
+      scene = null;
+      setHandle(null);
+      setStatus("failed");
     };
-
     const sync = () => scene?.setRunning(inView && document.visibilityState === "visible");
 
     const start = async () => {
-      const saver = (navigator as Navigator & { connection?: Connection }).connection?.saveData;
-      if (saver) {
+      if ((navigator as Navigator & { connection?: Connection }).connection?.saveData) {
         setStatus("failed");
         return;
       }
       setStatus("loading");
       try {
-        const { createScene } = await import("./scene3d");
-        if (disposed) return;
-        scene = createScene(host, variant, proxy);
-        setHandle(scene);
+        const created = await loadRef.current(host, lost);
+        if (disposed) {
+          created.dispose();
+          return;
+        }
+        scene = created;
+        setHandle(created);
         setStatus("ready");
         watcher = new IntersectionObserver(
           (entries) => {
@@ -99,7 +89,31 @@ export function useScene(variant: SceneVariant, events: SceneEvents): {
       document.removeEventListener("visibilitychange", sync);
       scene?.dispose();
     };
-  }, [variant]);
+  }, []);
 
   return { hostRef, status, handle };
+}
+
+/**
+ * The relay and route scenes (scene3d.ts). `events` may change every render; the scene always
+ * calls the latest ones.
+ */
+export function useScene(variant: SceneVariant, events: SceneEvents) {
+  const eventsRef = useRef(events);
+  useEffect(() => {
+    eventsRef.current = events;
+  });
+  return useLazyScene<SceneHandle>(async (host, lost) => {
+    const { createScene } = await import("./scene3d");
+    return createScene(host, variant, {
+      movePhone: (id, x, z) => eventsRef.current.movePhone?.(id, x, z),
+      dropEnvelope: (from, to) => eventsRef.current.dropEnvelope?.(from, to) ?? false,
+      project: (anchors) => eventsRef.current.project?.(anchors),
+      grab: (held) => eventsRef.current.grab?.(held),
+      lost: () => {
+        eventsRef.current.lost?.();
+        lost();
+      },
+    });
+  });
 }

@@ -169,25 +169,28 @@ test("no em dashes, eval or raw HTML anywhere in the Rivet work", () => {
   }
 });
 
-test("three is only imported by the two scene modules, and only dynamically", () => {
-  // one 3D stack: the Rivet scenes and the cube lab each have one module that touches three
-  const sceneModules = ["components/rivet/scene3d.ts", "components/cube/three-cube.ts"];
+test("three is only imported by the scene modules, and only dynamically", () => {
+  // one 3D stack: the Rivet scenes share three-kit.ts; the cube lab has its own single module
+  const sceneModules = ["components/rivet/scene3d.ts", "components/rivet/envelope3d.ts", "components/rivet/three-kit.ts", "components/cube/three-cube.ts"];
   for (const path of files("components/").concat(files("lib/"), files("app/"))) {
     if (!/\.(ts|tsx)$/.test(path)) continue;
     const text = read(path);
     const importsThree = /from\s+["']three["']|import\(\s*["']three["']\s*\)/.test(text);
     assert.equal(importsThree, sceneModules.includes(path), `${path} imports three`);
   }
-  const hook = read("components/rivet/useScene.ts");
-  assert.match(hook, /await import\("\.\/scene3d"\)/);
-  const scene = read("components/rivet/scene3d.ts");
-  assert.doesNotMatch(scene, /shadowMap\.enabled\s*=\s*true|EffectComposer|PMREMGenerator|RGBELoader/, "no shadow maps, postprocessing or environment maps");
-  assert.match(scene, /Math\.min\(window\.devicePixelRatio \|\| 1, 1\.5\)/, "pixel ratio is clamped to 1.5");
-  assert.match(scene, /dispose\(\)/);
+  assert.ok(read("components/rivet/useScene.ts").includes('await import("./scene3d")'));
+  assert.ok(read("components/rivet/EnvelopeFigure.tsx").includes('await import("./envelope3d")'));
+  for (const path of ["components/rivet/scene3d.ts", "components/rivet/envelope3d.ts"]) {
+    const scene = read(path);
+    assert.doesNotMatch(scene, /shadowMap\.enabled\s*=\s*true|EffectComposer|PMREMGenerator|RGBELoader|GLTFLoader|\.glb|\.hdr/, `${path}: no shadow maps, postprocessing, environment maps or models`);
+    assert.ok(scene.includes("createRenderer("), `${path} uses the shared renderer setup`);
+    assert.ok(scene.includes("dispose()"));
+  }
+  assert.ok(read("components/rivet/three-kit.ts").includes("Math.min(window.devicePixelRatio || 1, 1.5)"), "pixel ratio is clamped to 1.5");
 });
 
 test("every scene says what it is", () => {
-  for (const path of ["components/rivet/RelayStage.tsx", "components/rivet/EnvelopeInstrument.tsx", "components/blog/RouteFigure.tsx"]) {
+  for (const path of ["components/rivet/RelayStage.tsx", "components/rivet/EnvelopeFigure.tsx", "components/blog/RouteFigure.tsx"]) {
     assert.match(read(path), /conceptual visualization/, `${path} is labelled`);
   }
   assert.match(read("components/rivet/PacketCourier.tsx"), /conceptual simulation/);
@@ -224,23 +227,128 @@ test("the post has the courier, the scenes' honesty labels, and no scene code on
   assert.doesNotMatch(built("work/nexus.html"), /conceptual visualization/, "the scene is Rivet only");
 });
 
-test("the envelope instrument is arithmetic on the documented fields, nothing measured", async () => {
+test("the envelope's numbers are sums of the documented fields, nothing measured", async () => {
   const { parts } = await import("../components/rivet/envelope-fields.ts");
-  const { envelopeModel, bars, stations, MAX_HOPS, meeting, missing } = await import("../components/rivet/envelope-model.ts");
+  const { envelopeModel, meeting, missing } = await import("../components/rivet/envelope-model.ts");
   const model = envelopeModel(parts);
   assert.equal(model.headerBytes, 4 + 16 + 6 + 4 + 2 + 2, "a relay reads the header and only the header");
   assert.equal(model.outerBytes, 32 + 24);
   assert.equal(model.sealedFixedBytes, 128);
   assert.equal(model.fixedBytes, 218);
-  assert.equal(model.ticks.length, model.fixedBytes, "one tick per real byte");
   assert.equal(model.offerBytes, meeting.offered.length * 16, "offers are envelope ids");
   assert.deepEqual(missing, ["a3f1", "e5b2"]);
-  for (let i = 1; i < model.ticks.length; i += 1) assert.ok(model.ticks[i].angle > model.ticks[i - 1].angle, "ticks run clockwise");
-  assert.ok(model.ticks.at(-1).angle < 270, "the ring closes without overlapping");
-  assert.equal(stations.length, MAX_HOPS + 1);
-  assert.ok(bars.some((bar) => bar.padding) && bars.some((bar) => !bar.padding), "the opened body shows message and padding");
-  const source = read("components/rivet/EnvelopeInstrument.tsx");
-  assert.doesNotMatch(source, /\bms\b.*latency|kbps|mbps|battery life|throughput/i, "no invented performance numbers");
+});
+
+test("every documented field has a physical piece, and no piece invents a field", async () => {
+  const { parts } = await import("../components/rivet/envelope-fields.ts");
+  const { fieldPieces, pieceField, PIECES, STRUCTURAL, unmappedFields } = await import("../components/rivet/envelope-parts.ts");
+  assert.deepEqual(unmappedFields(parts), [], "a field with no piece");
+  const ids = parts.map((part) => part.id);
+  assert.deepEqual(Object.keys(fieldPieces).sort(), [...ids].sort(), "the mapping covers exactly the documented fields");
+  for (const [field, pieces] of Object.entries(fieldPieces)) for (const piece of pieces) assert.ok(PIECES.includes(piece), `${field} points at ${piece}`);
+  for (const piece of PIECES) {
+    if (STRUCTURAL.includes(piece)) continue;
+    const field = pieceField[piece];
+    assert.ok(field && ids.includes(field), `${piece} stands for no documented field`);
+  }
+});
+
+test("selection stays in step: a field lights its pieces, and each piece selects back to a field that owns it", async () => {
+  const { fieldPieces, pieceField } = await import("../components/rivet/envelope-parts.ts");
+  for (const [piece, field] of Object.entries(pieceField)) {
+    if (piece === "header") continue; // the label itself selects the magic bytes printed on it
+    assert.ok(fieldPieces[field].includes(piece), `${piece} selects ${field}, which does not light it`);
+  }
+  const figure = read("components/rivet/EnvelopeFigure.tsx");
+  const explorer = read("components/blog/EnvelopeExplorer.tsx");
+  assert.ok(figure.includes("hover: (field) => events.current.onHover(field)"), "hovering a piece reports its field");
+  assert.ok(figure.includes("select: (field) => events.current.onSelect(field)"), "clicking a piece selects its field");
+  assert.ok(explorer.includes("onMouseEnter={() => setHovered(item.id)}"), "hovering a row lights the piece");
+  assert.ok(explorer.includes("data-hover={hovered === item.id"), "the row lights when its piece is hovered");
+  assert.ok(explorer.includes("onFocus={() => setHovered(item.id)}"), "the keyboard list drives the 3D state too");
+});
+
+test("pack, seal, relay and open each end in a coherent state", async () => {
+  const { nextStage, stageEnd, STAGES, ROUTE_STOPS } = await import("../components/rivet/envelope-parts.ts");
+  assert.deepEqual([...STAGES], ["pack", "seal", "relay", "open"]);
+  assert.deepEqual(STAGES.map(nextStage), ["seal", "relay", "open", "pack"], "play next goes round");
+  const pack = stageEnd("pack");
+  assert.equal(pack.cipher.message, 0, "packing: readable");
+  assert.equal(pack.inside, 0);
+  assert.equal(pack.seal, 0);
+  const seal = stageEnd("seal");
+  assert.deepEqual(seal.cipher, { sender: 1, message: 1, padding: 1 }, "sealed: everything inside is encrypted");
+  assert.equal(seal.fold, 1);
+  assert.equal(seal.inside, 1);
+  assert.equal(seal.flap, 0);
+  assert.equal(seal.seal, 1);
+  const relay = stageEnd("relay");
+  assert.deepEqual(relay.cipher, seal.cipher, "relays never see the letter opened");
+  assert.equal(relay.seal, 1);
+  assert.equal(relay.hops, ROUTE_STOPS, "sender, relay a, relay b, recipient: three hops");
+  assert.ok(relay.hops <= 6);
+  const open = stageEnd("open");
+  assert.deepEqual(open.cipher, { sender: 0, message: 0, padding: 0 }, "the recipient reads it");
+  assert.equal(open.flap, 1);
+  assert.equal(open.seal, 0);
+  assert.equal(open.apart, 1, "the padding falls away from the message");
+});
+
+test("the exploded view moves every field piece on its own, less on a phone", async () => {
+  const { explodedPose, PIECES } = await import("../components/rivet/envelope-parts.ts");
+  const moves = new Set();
+  for (const id of PIECES) {
+    const pose = explodedPose(id, false);
+    const travel = Math.hypot(pose.x, pose.y, pose.z) + Math.abs(pose.rx) + Math.abs(pose.ry) + Math.abs(pose.rz);
+    if (id === "shell") assert.equal(travel, 0, "the shell is the fixed point");
+    else {
+      assert.ok(travel > 0, `${id} does not move when exploded`);
+      moves.add(JSON.stringify(pose));
+    }
+    const phone = explodedPose(id, true);
+    assert.ok(Math.hypot(phone.x, phone.y, phone.z) <= Math.hypot(pose.x, pose.y, pose.z) + 1e-9, `${id} moves further on a phone`);
+  }
+  assert.equal(moves.size, PIECES.length - 1, "two pieces share one movement");
+  const figure = read("components/rivet/EnvelopeFigure.tsx");
+  assert.ok(figure.includes("order.forEach((id, i) =>"), "pieces are staggered one by one");
+});
+
+test("reduced motion gets a still, exploded envelope and no idle sway", async () => {
+  const { initialView } = await import("../components/rivet/envelope-parts.ts");
+  assert.deepEqual(initialView(true), { stage: "seal", exploded: true });
+  assert.deepEqual(initialView(false), { stage: "seal", exploded: false });
+  const figure = read("components/rivet/EnvelopeFigure.tsx");
+  const still = figure.indexOf("// reduced motion: the envelope already taken apart");
+  const sway = figure.indexOf("const sway = animate(rig, { idle");
+  assert.ok(still > 0 && sway > still, "the reduced-motion branch returns before any idle animation exists");
+  assert.ok(/if \(reducedMotion\(\)\) \{\s+snap\(rig, target, open\);\s+return;/.test(figure), "stage changes jump instead of animating");
+});
+
+test("the envelope scene cleans up after itself, and there is one renderer per scene", () => {
+  const scene = read("components/rivet/envelope3d.ts");
+  for (const cleanup of ["resizer.disconnect()", "theme.disconnect()", "renderer.forceContextLoss()", "canvas.remove()", "disposables.forEach((item) => item.dispose())", 'canvas.removeEventListener("pointerdown", onDown)']) {
+    assert.ok(scene.includes(cleanup), `missing cleanup: ${cleanup}`);
+  }
+  assert.ok(scene.includes("if (!raf && running && !disposed)"), "renders only on demand, only while running");
+  const lazy = read("components/rivet/useScene.ts");
+  assert.ok(lazy.includes("scene?.dispose()"));
+  assert.ok(/if \(disposed\) \{\s+created\.dispose\(\);/.test(lazy), "a scene that finishes loading after unmount is disposed at once");
+  const count = files("components/rivet/").filter((path) => /\.(ts|tsx)$/.test(path)).map((path) => (read(path).match(/new THREE\.WebGLRenderer/g) ?? []).length);
+  assert.equal(count.reduce((a, b) => a + b, 0), 1, "the Rivet scenes create their renderer in one place");
+});
+
+test("the figure explains packing, padding and sealing, and never claims compression", () => {
+  for (const path of ["components/rivet/EnvelopeFigure.tsx", "components/rivet/envelope-parts.ts", "components/rivet/envelope3d.ts", "components/blog/EnvelopeExplorer.tsx"]) {
+    assert.doesNotMatch(read(path), /compress/i, `${path} mentions compression`);
+  }
+  const parts = read("components/rivet/envelope-parts.ts");
+  for (const word of ["pack", "padding", "seal", "relay", "open"]) assert.match(parts, new RegExp(word));
+  assert.ok(!existsSync(new URL("components/rivet/EnvelopeInstrument.tsx", root)), "the byte dial is gone");
+  const post = built("blog/why-i-made-rivet.html");
+  if (post) {
+    assert.match(post, /class="envx"/);
+    assert.doesNotMatch(post, /env-tick|class="env"/, "no dial in the page");
+  }
 });
 
 test("the looping Rivet scene waits, travels phone to phone, rests and starts again", async () => {
